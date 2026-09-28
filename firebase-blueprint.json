@@ -1,0 +1,37 @@
+{
+  "entities": {
+    "users": {
+      "title": "Kullanıcı Profilleri",
+      "description": "Kullanıcı kimlik, abonelik ve ayar verileri",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "subscriptionTier": { "type": "string", "enum": ["free", "starter", "pro", "enterprise"] },
+        "subscriptionStatus": { "type": "string", "enum": ["active", "trial", "past_due", "cancelled"] },
+        "tokensUsed": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid", "email", "subscriptionTier"]
+    },
+    "userData": {
+      "title": "Kullanıcı Bireysel Verileri",
+      "description": "Görevler, check-in durumu, denge ve ayarlar",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "balanceScore": { "type": "number" },
+        "smartGuardActive": { "type": "boolean" },
+        "checkin": { "type": "object" },
+        "tasks": { "type": "array" },
+        "dilemmas": { "type": "array" },
+        "coachGoal": { "type": "object" },
+        "services": { "type": "array" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["uid"]
+    }
+  }
+}

@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192" width="192" height="192">
+  <defs>
+    <linearGradient id="bg192" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0b2447"/>
+      <stop offset="50%" stop-color="#07142d"/>
+      <stop offset="100%" stop-color="#0a0f24"/>
+    </linearGradient>
+    <linearGradient id="cyanRibbon192" x1="0%" y1="100%" x2="50%" y2="0%">
+      <stop offset="0%" stop-color="#06b6d4"/>
+      <stop offset="100%" stop-color="#38bdf8"/>
+    </linearGradient>
+    <linearGradient id="purpleRibbon192" x1="50%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38bdf8"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#ec4899"/>
+    </linearGradient>
+  </defs>
+  <rect width="192" height="192" rx="44" fill="url(#bg192)" stroke="#38bdf8" stroke-width="4"/>
+  <path d="M90 42 C110 44 140 80 148 135 C146 148 130 152 118 142 C108 132 116 100 98 68 Z" fill="url(#purpleRibbon192)" opacity="0.9"/>
+  <path d="M62 135 C70 115 95 108 130 137 C114 148 76 150 62 135 Z" fill="#0284c7"/>
+  <path d="M45 141 C33 120 58 78 87 45 C97 34 106 38 104 50 C89 84 55 130 45 141 Z" fill="url(#cyanRibbon192)"/>
+  <polygon points="140,44 146,30 152,44 166,50 152,56 146,70 140,56 126,50" fill="#a5f3fc"/>
+</svg>

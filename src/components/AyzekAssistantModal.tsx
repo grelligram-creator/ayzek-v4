@@ -1,0 +1,259 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { useApp } from '../context/AppContext';
+import { AyzekLogo } from './AyzekLogo';
+import {
+  X,
+  Send,
+  Sparkles,
+  Mic,
+  MicOff,
+  Zap,
+  CheckCircle2,
+  Clock,
+  ArrowRight,
+} from 'lucide-react';
+
+export const AyzekAssistantModal: React.FC = () => {
+  const {
+    isAssistantOpen,
+    setIsAssistantOpen,
+    messages,
+    sendMessage,
+    isChatLoading,
+    balance,
+    checkin,
+  } = useApp();
+
+  const [input, setInput] = useState('');
+  const [isListening, setIsListening] = useState(false);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (isAssistantOpen) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, isAssistantOpen]);
+
+  const handleSend = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!input.trim() || isChatLoading) return;
+    const textToSend = input;
+    setInput('');
+    await sendMessage(textToSend);
+  };
+
+  const handlePromptChip = (chip: string) => {
+    sendMessage(chip);
+  };
+
+  // Web Speech API for voice dictation
+  const handleToggleVoice = () => {
+    if (!('webkitSpeechRecognition' in window) && !('SpeechRecognition' in window)) {
+      return;
+    }
+
+    if (isListening) {
+      setIsListening(false);
+      return;
+    }
+
+    try {
+      const SpeechRecognition =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      const recognition = new SpeechRecognition();
+      recognition.lang = 'tr-TR';
+      recognition.continuous = false;
+      recognition.interimResults = false;
+
+      recognition.onstart = () => {
+        setIsListening(true);
+      };
+
+      recognition.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        setInput((prev) => (prev ? `${prev} ${transcript}` : transcript));
+        setIsListening(false);
+      };
+
+      recognition.onerror = () => {
+        setIsListening(false);
+      };
+
+      recognition.onend = () => {
+        setIsListening(false);
+      };
+
+      recognition.start();
+    } catch {
+      setIsListening(false);
+    }
+  };
+
+  if (!isAssistantOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
+      <div className="w-full max-w-2xl h-[92vh] sm:h-[82vh] rounded-t-[36px] sm:rounded-[36px] bg-[#0d0205] border border-rose-500/30 text-white shadow-2xl flex flex-col overflow-hidden transition-colors">
+        {/* Header */}
+        <div className="px-5 py-4 border-b border-rose-500/20 flex items-center justify-between bg-[#14050a]/90 backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <AyzekLogo size={36} theme="crimson" variant="boxed" glow={false} />
+            <div>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                  AYZEK Bilişsel Mentör
+                </h3>
+                <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1 font-mono">
+                  <Zap className="w-3 h-3 text-rose-400 fill-rose-400" />
+                  <span>Canlı Senkronize</span>
+                </span>
+              </div>
+              <p className="text-[11px] text-rose-200/70 mt-0.5">
+                Konuştuğun her şey uygulamaya anında işlenir ve takvimin dengelenir
+              </p>
+            </div>
+          </div>
+
+          <button
+            onClick={() => setIsAssistantOpen(false)}
+            className="w-9 h-9 rounded-full flex items-center justify-center text-rose-300 hover:text-white hover:bg-white/10 transition-colors cursor-pointer"
+          >
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        {/* Message stream */}
+        <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar">
+          {messages.map((msg) => {
+            const isUser = msg.role === 'user';
+            return (
+              <div
+                key={msg.id}
+                className={`flex gap-3 ${isUser ? 'justify-end' : 'justify-start'}`}
+              >
+                {!isUser && (
+                  <div className="mt-1 shrink-0">
+                    <AyzekLogo size={28} theme="crimson" variant="iconOnly" glow={false} />
+                  </div>
+                )}
+
+                <div
+                  className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 text-xs sm:text-sm leading-relaxed ${
+                    isUser
+                      ? 'coral-gradient text-white font-medium shadow-lg shadow-rose-950/60 rounded-br-xs'
+                      : 'bg-[#18050e]/90 border border-rose-500/25 text-white shadow-xl rounded-tl-xs space-y-2'
+                  }`}
+                >
+                  <p className="whitespace-pre-wrap">{msg.content}</p>
+
+                  {/* Actions / confirmations if performed */}
+                  {msg.actionsTaken && msg.actionsTaken.length > 0 && (
+                    <div className="pt-2 border-t border-rose-500/20 space-y-1.5 text-xs">
+                      <span className="font-bold text-rose-300 block text-[11px] uppercase tracking-wider font-mono">
+                        ⚡ Gerçekleşen Canlı Eylemler:
+                      </span>
+                      {msg.actionsTaken.map((act, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-1.5 text-emerald-300 text-[11px] font-medium"
+                        >
+                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                          <span>{act}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <span
+                    className={`block text-[10px] text-right mt-1 ${
+                      isUser ? 'text-rose-100/70' : 'text-rose-300/50'
+                    }`}
+                  >
+                    {msg.timestamp}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+
+          {isChatLoading && (
+            <div className="flex gap-3 justify-start items-center text-xs text-rose-300">
+              <AyzekLogo size={28} theme="crimson" variant="iconOnly" glow={false} />
+              <div className="p-3.5 rounded-2xl bg-[#18050e]/90 border border-rose-500/25 flex items-center gap-2 shadow-lg">
+                <div className="w-2 h-2 rounded-full bg-rose-500 animate-bounce" />
+                <div
+                  className="w-2 h-2 rounded-full bg-orange-500 animate-bounce"
+                  style={{ animationDelay: '0.15s' }}
+                />
+                <div
+                  className="w-2 h-2 rounded-full bg-amber-400 animate-bounce"
+                  style={{ animationDelay: '0.3s' }}
+                />
+                <span className="ml-1 text-[11px] text-rose-200">AYZEK düşünüyor ve senkronize ediyor...</span>
+              </div>
+            </div>
+          )}
+
+          <div ref={messagesEndRef} />
+        </div>
+
+        {/* Quick prompt suggestions */}
+        <div className="p-3 border-t border-rose-500/20 bg-[#120409]/90 overflow-x-auto no-scrollbar flex items-center gap-2">
+          <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider shrink-0 font-mono">
+            Hızlı Eylemler:
+          </span>
+          {[
+            '🛒 Akşama market listeme süt ve filtre kahve ekle',
+            '😴 Bugün çok yorgunum, programımı hafiflet',
+            '⚖️ Grispi şirketinden ayrılmalı mıyım? Karar matrisi oluştur',
+            '🛡️ 18:00 sonrası toplantıları blokla (Smart Guard)',
+          ].map((promptText, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => handlePromptChip(promptText)}
+              className="frosted-pill-button text-[11px] font-medium px-3.5 py-1.5 rounded-full whitespace-nowrap text-rose-200 hover:text-white border-rose-500/25 shrink-0 cursor-pointer shadow-xs"
+            >
+              {promptText}
+            </button>
+          ))}
+        </div>
+
+        {/* Input box with frosted glass and crimson gradients */}
+        <form
+          onSubmit={handleSend}
+          className="p-3 sm:p-4 border-t border-rose-500/25 flex items-center gap-2 bg-[#0d0205] backdrop-blur-xl"
+        >
+          <button
+            type="button"
+            onClick={handleToggleVoice}
+            title={isListening ? 'Ses dinlemeyi durdur' : 'Sesle konuş'}
+            className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors border cursor-pointer shrink-0 ${
+              isListening
+                ? 'bg-rose-500 text-white border-rose-400 animate-pulse shadow-[0_0_18px_rgba(225,29,72,0.8)]'
+                : 'bg-white/5 hover:bg-white/10 text-rose-300 border-rose-500/25'
+            }`}
+          >
+            {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+          </button>
+
+          <input
+            type="text"
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+            placeholder="AYZEK'e bir şey söyle, takvim düzenlet veya görev ata..."
+            className="flex-1 px-4 py-2.5 rounded-full text-xs sm:text-sm bg-[#15050b] border border-rose-500/25 text-white placeholder:text-rose-200/40 focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
+          />
+
+          <button
+            type="submit"
+            disabled={!input.trim() || isChatLoading}
+            className="w-10 h-10 rounded-full flex items-center justify-center coral-gradient hover:opacity-95 text-white shadow-lg shadow-rose-950/60 transition-all disabled:opacity-40 cursor-pointer shrink-0"
+          >
+            <Send className="w-4 h-4" />
+          </button>
+        </form>
+      </div>
+    </div>
+  );
+};

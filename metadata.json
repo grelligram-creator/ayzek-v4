@@ -1,0 +1,6 @@
+{
+  "name": "AYZEK OS - Akıllı Yaşam Asistanı & Bilişsel Mentör",
+  "description": "Bilişsel kararlar, iş-özel hayat dengesi, kurumsal entegrasyonlar ve senkronize yapay zeka asistanı.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

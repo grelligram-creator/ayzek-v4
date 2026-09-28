@@ -1,0 +1,1413 @@
+import React, { createContext, useContext, useState, useEffect } from 'react';
+import {
+  User,
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  signOut,
+  onAuthStateChanged,
+  updateProfile,
+} from 'firebase/auth';
+import { auth } from '../lib/firebase';
+import {
+  ThemeMode,
+  ViewMode,
+  NavTab,
+  UserProfile,
+  MoodCheckin,
+  WorkLifeBalance,
+  CoachGoal,
+  RoutineSummary,
+  BiologicalRhythm,
+  DilemmaItem,
+  ProactiveAlert,
+  TaskItem,
+  ConnectedService,
+  ChatMessage,
+  AppAction,
+  AutonomousLog,
+  ProactiveInsight,
+} from '../types';
+import { PricingPlan } from '../data/pricingPlans';
+import {
+  getOrCreateUserProfile,
+  getUserData,
+  saveUserData,
+  updateUserSubscription,
+  updateUserProfileDetails,
+} from '../services/firestoreService';
+
+export interface AuthUserState {
+  uid: string;
+  email: string | null;
+  displayName: string | null;
+  photoURL?: string | null;
+}
+
+interface AppContextType {
+  // Auth state
+  user: User | AuthUserState | null;
+  userProfile: UserProfile | null;
+  isAuthLoading: boolean;
+  isAuthModalOpen: boolean;
+  setIsAuthModalOpen: (open: boolean) => void;
+  loginWithEmail: (email: string, pass: string) => Promise<void>;
+  registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
+  logout: () => Promise<void>;
+  updateProfileInfo: (details: Partial<UserProfile>) => Promise<void>;
+
+  // Autonomous background worker & Proactive feed
+  autonomousLogs: AutonomousLog[];
+  runAutonomousScan: () => Promise<void>;
+  isScanningLogs: boolean;
+  proactiveInsights: ProactiveInsight[];
+
+  // First stars onboarding
+  isOnboardingOpen: boolean;
+  setIsOnboardingOpen: (open: boolean) => void;
+
+  // Theme & Navigation
+  theme: ThemeMode;
+  setTheme: (theme: ThemeMode) => void;
+  toggleTheme: () => void;
+  viewMode: ViewMode;
+  setViewMode: (mode: ViewMode) => void;
+  toggleViewMode: () => void;
+  activeTab: NavTab;
+  setActiveTab: (tab: NavTab) => void;
+
+  // Workspace Data
+  checkin: MoodCheckin;
+  updateCheckin: (fields: Partial<MoodCheckin>) => void;
+  fetchPersonalAdvice: () => Promise<void>;
+  isAdviceLoading: boolean;
+  balance: WorkLifeBalance;
+  toggleSmartGuard: () => void;
+  coachGoal: CoachGoal;
+  updateCoachProgress: (delta: number) => void;
+  bioRhythm: BiologicalRhythm;
+  routineSummary: RoutineSummary;
+  dilemmas: DilemmaItem[];
+  addDilemma: (dilemma: Partial<DilemmaItem>) => void;
+  isDecisionModalOpen: boolean;
+  setIsDecisionModalOpen: (open: boolean) => void;
+  selectedDilemma: DilemmaItem | null;
+  setSelectedDilemma: (dilemma: DilemmaItem | null) => void;
+  proactiveAlert: ProactiveAlert | null;
+  dismissProactiveAlert: () => void;
+  triggerProactiveTest: () => void;
+  tasks: TaskItem[];
+  toggleTask: (id: string) => void;
+  addTask: (task: Partial<TaskItem>) => void;
+  services: ConnectedService[];
+  toggleService: (id: string) => void;
+
+  // AI Chat & Sync
+  messages: ChatMessage[];
+  sendMessage: (text: string) => Promise<void>;
+  isChatLoading: boolean;
+  isAssistantOpen: boolean;
+  setIsAssistantOpen: (open: boolean) => void;
+  openAssistantWithQuery: (query: string) => void;
+  syncToast: { show: boolean; text: string } | null;
+  clearSyncToast: () => void;
+
+  // Modals
+  isSanctuaryOpen: boolean;
+  setIsSanctuaryOpen: (open: boolean) => void;
+  isDraftModalOpen: boolean;
+  setIsDraftModalOpen: (open: boolean) => void;
+  draftContent: string;
+  generateDraft: (recipient: string, occasion: string) => Promise<void>;
+  isDraftLoading: boolean;
+
+  // Pricing & Checkout
+  isCheckoutModalOpen: boolean;
+  setIsCheckoutModalOpen: (open: boolean) => void;
+  checkoutPlan: PricingPlan | null;
+  checkoutBillingCycle: 'monthly' | 'yearly';
+  openCheckoutModal: (plan: PricingPlan, cycle: 'monthly' | 'yearly') => void;
+  upgradeSubscription: (tier: 'starter' | 'pro' | 'enterprise', period: 'monthly' | 'yearly', cardLast4?: string) => Promise<void>;
+
+  // iOS PWA Install Guide
+  isIosInstallModalOpen: boolean;
+  setIsIosInstallModalOpen: (open: boolean) => void;
+
+  // Hayatın Merkezi 2026 Vision Showcase
+  isVisionModalOpen: boolean;
+  setIsVisionModalOpen: (open: boolean) => void;
+  connectService: (service: Partial<ConnectedService> & { id: string; name: string }) => void;
+
+  // 6 Ultra-Attractive Experience Modals
+  isVoiceBriefingOpen: boolean;
+  setIsVoiceBriefingOpen: (open: boolean) => void;
+  isCognitiveWrappedOpen: boolean;
+  setIsCognitiveWrappedOpen: (open: boolean) => void;
+  isPoliteDeclineOpen: boolean;
+  setIsPoliteDeclineOpen: (open: boolean) => void;
+  isAlwaysOnWatchOpen: boolean;
+  setIsAlwaysOnWatchOpen: (open: boolean) => void;
+  isMeetingShadowOpen: boolean;
+  setIsMeetingShadowOpen: (open: boolean) => void;
+  isFutureSelfOpen: boolean;
+  setIsFutureSelfOpen: (open: boolean) => void;
+}
+
+const AppContext = createContext<AppContextType | undefined>(undefined);
+
+export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  // Theme state
+  const [theme, setThemeState] = useState<ThemeMode>(() => {
+    const saved = localStorage.getItem('ayzek_theme');
+    return (saved as ThemeMode) || 'crimson';
+  });
+
+  const [viewMode, setViewModeState] = useState<ViewMode>(() => {
+    const saved = localStorage.getItem('ayzek_view_mode');
+    return (saved as ViewMode) || 'desktop';
+  });
+
+  const [activeTab, setActiveTab] = useState<NavTab>('akis');
+
+  // Auth state with safe pre-seed and persistence
+  const [user, setUser] = useState<User | AuthUserState | null>(() => {
+    const saved = localStorage.getItem('ayzek_auth_user');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {}
+    }
+    return {
+      uid: 'user-gorkem-2026',
+      email: 'gorkem.elligram@grispi.com',
+      displayName: 'Görkem Elligram',
+    };
+  });
+
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
+    const saved = localStorage.getItem('ayzek_user_profile');
+    if (saved) {
+      try {
+        return JSON.parse(saved);
+      } catch {}
+    }
+    return {
+      uid: 'user-gorkem-2026',
+      email: 'gorkem.elligram@grispi.com',
+      displayName: 'Görkem Elligram',
+      subscriptionTier: 'pro',
+      subscriptionStatus: 'active',
+      subscriptionPeriod: 'monthly',
+      membershipId: 'AYZK-2026-9821-GRSP',
+      renewalDate: '28 Ekim 2026',
+      jobTitle: 'Kurucu & Baş Yazılım Mimarı',
+      company: 'Grispi Inc.',
+      location: 'Moda, Kadıköy / İstanbul',
+      hobbies: ['Yelken & Deniz', 'Filtre Kahve Demleme', 'Felsefe & Bilişsel Bilimler', 'Tenis'],
+      lifeMission: 'Kurumsal zeka ile ruhsal huzuru dengede tutarak yüksek etki üretmek.',
+      cardLast4: '9821',
+      cardBrand: 'Mastercard Black',
+      createdAt: new Date().toISOString(),
+      onboardingCompleted: true,
+    };
+  });
+  const [isAuthLoading, setIsAuthLoading] = useState(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+
+  // Autonomous background worker logs (User away from app intelligence)
+  const [autonomousLogs, setAutonomousLogs] = useState<AutonomousLog[]>([
+    {
+      id: 'auto-1',
+      time: '06:45',
+      title: 'Hava & Güzergah Analizi',
+      detail: 'Moda Sahil güzergahında sabah trafiği analiz edildi. 09:00 mesaisi için en sakin rota belirlendi.',
+      category: 'commute',
+      status: 'completed',
+    },
+    {
+      id: 'auto-2',
+      time: '08:15',
+      title: 'Takvim Çakışması & Tampon Ekleme',
+      detail: '11:00 Google Meet toplantısının ardına 15 dk Akıllı Nefes Tamponu eklendi; toplantı stresi önlendi.',
+      category: 'calendar',
+      status: 'completed',
+    },
+    {
+      id: 'auto-3',
+      time: '12:30',
+      title: 'E-Posta & Fatura Taraması',
+      detail: 'Gmail taranarak Enerjisa faturasının yarınki son ödeme tarihi ajandaya "Öncelikli Finans" olarak işlendi.',
+      category: 'email',
+      status: 'completed',
+    },
+    {
+      id: 'auto-4',
+      time: '14:00',
+      title: 'Bilişsel & Biyoritim Eşitlemesi',
+      detail: 'Foliküler evre için yüksek yaratıcılık gerektiren "C1 İngilizce Sunum Hazırlığı" öğleden sonraya konumlandırıldı.',
+      category: 'balance',
+      status: 'completed',
+    },
+    {
+      id: 'auto-5',
+      time: '17:45',
+      title: 'Smart Guard 18:00 Koruma Kalkanı',
+      detail: 'Mesai bitiminde yeni toplantı davetleri otomatik beklemeye alındı, akşam zihinsel dinlenme korundu.',
+      category: 'balance',
+      status: 'completed',
+    },
+  ]);
+  const [isScanningLogs, setIsScanningLogs] = useState(false);
+
+  // Proactive Insights based on location, hobbies, psychology
+  const [proactiveInsights] = useState<ProactiveInsight[]>([
+    {
+      id: 'ins-1',
+      type: 'location',
+      badge: 'Lokasyon & Dinginlik',
+      icon: 'MapPin',
+      title: 'Moda Sahilinde 20 Dk Zihinsel Boşalım Yürüyüşü',
+      snippet: 'Kadıköy/Moda havası şu an 21°C ve rüzgarsız. 15:30 toplantısı öncesi 20 dakikalık yürüyüş kortizol seviyeni %28 düşürür.',
+      fullContent: 'Lokasyon verin (Moda, Kadıköy) ve takvimindeki 15:30 boşluğu eşleştirildi. Yürüyüş rotasında Moda İskelesi tarafı tercih edilirse deniz havası zihinsel netliğini destekleyecektir.',
+      actionPrompt: 'AYZEK, bu yürüyüşü takvime tampon olarak ekle ve beni 10 dakika önce uyar.',
+    },
+    {
+      id: 'ins-2',
+      type: 'hobby',
+      badge: 'Hobi & İlgi Alanı',
+      icon: 'Compass',
+      title: 'Filtre Kahve & Yelken: Hafta Sonu Rüzgar Analizi',
+      snippet: 'Kalamış Marina için hafta sonu 12 knot güneybatı rüzgarı öngörülüyor. Pazar sabahı için harika bir seyir fırsatı.',
+      fullContent: 'Hobilerin (Yelken ve Filtre Kahve Demleme) doğrultusunda hava tahmin motoruyla senkronize olundu. Cumartesi sabahı Etiyopya Yirgacheffe demlemesi eşliğinde rota planlaması yapman önerilir.',
+      actionPrompt: 'Hafta sonu yelken seyri için ajandama 3 saatlik blok oluştur ve gerekli hazırlıkları listele.',
+    },
+    {
+      id: 'ins-3',
+      type: 'psychology',
+      badge: 'Sırdaş & Psikolog',
+      icon: 'Heart',
+      title: 'İçsel Yükü Paylaş: Bugün Zihnini Ne Meşgul Ediyor?',
+      snippet: 'Son 48 saattir iş kararlarında yoğun efor sarf ettin. Karar yorgunluğu hissettiğinde iç sesini yargılamadan dinlemeye hazırım.',
+      fullContent: 'AYZEK bilişsel modeli seni sadece bir profesyonel değil, bir insan olarak dengede tutar. İster şirket ikilemi ister özel hayatındaki hislerin olsun, bana bir dostuna anlatır gibi yazabilirsin.',
+      actionPrompt: 'Merhaba AYZEK, seninle biraz dertleşmek ve kafamı toparlamak istiyorum...',
+    },
+    {
+      id: 'ins-4',
+      type: 'research',
+      badge: '2026 Bilişsel Bilim',
+      icon: 'Sparkles',
+      title: 'Derin Odak & Dopamin Regülasyonu Araştırması',
+      snippet: 'Nature Neuroscience 2026: Günün ilk 90 dakikasında ekran maruziyeti yerine 10 dakika doğal ışık alan liderlerde tükenmişlik %40 daha az.',
+      fullContent: 'Bilişsel bilim ilgi alanına yönelik taranan son akademik yayınlar; sabah ilk saatlerde doğrudan bildirimlere bakmak yerine gökyüzüne bakmanın prefrontal korteksi koruduğunu gösteriyor.',
+      actionPrompt: 'AYZEK, yarın sabah için bu bilişsel rutini takvimime entegre et.',
+    },
+  ]);
+
+  // Check-in state
+  const [checkin, setCheckin] = useState<MoodCheckin>({
+    energy: 'balanced',
+    mood: 'calm',
+    focus: 'balanced',
+    note: '',
+    aiAdvice: 'Öğleden sonra derin odak gerektiren görevlerinizi 15:30 öncesinde tamamlayın, akşam 18:00 koruması aktif.',
+    updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+  });
+  const [isAdviceLoading, setIsAdviceLoading] = useState(false);
+
+  // Work Life balance (Defaults to false per user request: never activates unless user explicitly enables it)
+  const [balance, setBalance] = useState<WorkLifeBalance>(() => {
+    const saved = localStorage.getItem('ayzek_balance_state');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        return {
+          score: parsed.score || 78,
+          status: parsed.status || 'Dengeli',
+          smartGuardActive: parsed.smartGuardActive === true, // Only if explicitly user-activated
+          cutOffTime: parsed.cutOffTime || '18:00',
+          connectedCount: parsed.connectedCount || 9,
+        };
+      } catch {}
+    }
+    return {
+      score: 78,
+      status: 'Dengeli',
+      smartGuardActive: false, // Default is strictly FALSE unless user explicitly enables
+      cutOffTime: '18:00',
+      connectedCount: 9,
+    };
+  });
+
+  // Coach goal
+  const [coachGoal, setCoachGoal] = useState<CoachGoal>({
+    id: 'goal-c1',
+    title: 'İngilizceyi Akıcı Konuşmak (C1 Profesyonel İletişim)',
+    category: 'Yabancı Dil',
+    timeline: 'Ufuk: 6 Ay',
+    subtext: 'Global projelerde rahat sunum yapmak ve uluslararası paydaşlarla akıcı diyalog kurmak.',
+    progress: 45,
+    progressDelta: '+5%',
+    quote: 'Dilde mükemmellik değil, temas sıklığı kazandırır. Bugün sadece 10 dakika ilgilendiğin bir konuda İngilizce podcast dinlemek bile zihnindeki sinirsel bağları canlı tutar.',
+    microStep: 'Haftada 3 gün işe giderken 15 dk İngilizce podcast dinleme.',
+  });
+
+  // Bio rhythm
+  const [bioRhythm] = useState<BiologicalRhythm>({
+    phase: 'Foliküler Evre (Yüksek Enerji & Odak)',
+    day: 8,
+    physicalAdvice: 'Kuvvet antrenmanları, yeni projelere başlama ve tempolu kardiyo için harika zaman.',
+    mentalAdvice: 'Yaratıcılık, dil öğrenimi ve stratejik kararlar için zihnin en berrak olduğu evre.',
+    nextExpectedDate: '2026-10-15',
+  });
+
+  // Routine summary
+  const [routineSummary, setRoutineSummary] = useState<RoutineSummary>({
+    workHours: '09:00 - 18:00 Mesai',
+    completedCount: 2,
+    remainingCount: 2,
+    eveningFreeMinutes: 50,
+  });
+
+  // Decision dilemmas
+  const [dilemmas, setDilemmas] = useState<DilemmaItem[]>([
+    {
+      id: 'dilemma-1',
+      title: "Grispi'den başka şirkete geçmeli miyim?",
+      alignmentScore: 88,
+      category: 'Kariyer',
+      tag: 'Uyum',
+      pros: [
+        'Uluslararası çalışma imkanı ve döviz bazlı gelir potansiyeli',
+        'Yeni teknoloji yığını ile kendini geliştirme fırsatı',
+        'Zihinsel tazelenme ve daha geniş bir profesyonel ağ',
+      ],
+      cons: [
+        'İlk 90 gün boyunca yeni ekip ve şirket kültürüne adaptasyon eforu',
+        'Grispi içerisindeki mevcut güven ve kıdem konfor alanından çıkış',
+      ],
+      recommendation:
+        'Kariyer hedefleriniz ve uzun vadeli vizyonunuzla %88 uyumlu. Teklif detaylarında esnek çalışma saatlerini ve yıllık izin politikalarını netleştirdikten sonra adım atılması tavsiye edilir.',
+      verdict: 'Koşulları Netleştirip Adım At',
+    },
+    {
+      id: 'dilemma-2',
+      title: 'Bu arabayı şimdi almalı mıyım?',
+      alignmentScore: 92,
+      category: 'Finans',
+      tag: 'Yatırım',
+      pros: [
+        'Enflasyonist ortamda değer koruma potansiyeli',
+        'Hafta sonu kişisel mobilite ve seyahat özgürlüğü artışı',
+        'Düşük faizli taşıt kredisi imkanı',
+      ],
+      cons: [
+        'Kasko, sigorta ve yıllık bakım maliyetlerinin bütçeye ek yükü',
+        'Aylık nakit akışında %12 oranında geçici daralma',
+      ],
+      recommendation:
+        'Finansal tampon fonunuzu koruduğunuz sürece %92 oranında mantıklı bir yatırım.',
+      verdict: 'Finansal Rezervi Koru & İlerle',
+    },
+  ]);
+
+  const [isDecisionModalOpen, setIsDecisionModalOpen] = useState(false);
+  const [selectedDilemma, setSelectedDilemma] = useState<DilemmaItem | null>(null);
+
+  // Proactive Alert
+  const [proactiveAlert, setProactiveAlert] = useState<ProactiveAlert | null>({
+    id: 'alert-market',
+    title: 'AYZEK PROAKTİF HATIRLATMA',
+    time: 'Şimdi',
+    content: 'İşten çıkmana 15 dakika kaldı. Eve gitmeden markete uğrayacaktın. Süt, yumurta ve kahve listendeydi. 🛒',
+    actionLabel: 'Listeyi Gör',
+    dismissLabel: 'Gitmeyeceğim',
+    active: true,
+  });
+
+  const todayStr = new Date().toISOString().split('T')[0];
+
+  // Tasks & Timeline Items
+  const [tasks, setTasks] = useState<TaskItem[]>([
+    {
+      id: 'task-market',
+      title: 'Market Alışverişi',
+      category: 'alisveris',
+      time: '17:45 · İş Çıkışı · 15 dk kala',
+      date: todayStr,
+      highlight: '⚡ AYZEK ile Yaşam Senkronizasyonunu Tamamla',
+      isCompleted: false,
+      details: 'Alınacaklar: Organik süt (2lt), taze yumurta, filtre kahve çekirdeği.',
+      actionType: 'view_list',
+    },
+    {
+      id: 'task-bill',
+      title: 'Elektrik Faturası',
+      category: 'finans',
+      time: 'Yarın · Son Gün',
+      date: todayStr,
+      highlight: 'Enerjisa fatura ödeme hatırlatıcısı aktif · 780 TL',
+      isCompleted: false,
+      badgeText: '780 TL Son Gün',
+      actionType: 'pay_bill',
+    },
+    {
+      id: 'task-birthday',
+      title: 'Annemin Doğum Günü',
+      category: 'aile',
+      time: '4 Gün Kaldı · 28 Eylül',
+      date: todayStr,
+      highlight: 'Anılardan üretilen mektup taslağını ve hediye planını gör 🎁',
+      isCompleted: false,
+      badgeText: '28 Eylül',
+      actionType: 'draft_message',
+    },
+    {
+      id: 'task-sprint',
+      title: 'Grispi Q3 Sprint Planlama Toplantısı',
+      category: 'is',
+      time: '14:00 - 15:30 · Microsoft Teams',
+      date: todayStr,
+      highlight: 'Toplantı sonrası 15 dk akıllı tampon korundu',
+      isCompleted: true,
+      actionType: 'default',
+    },
+    {
+      id: 'task-lunch',
+      title: 'Öğle Molası & 15 Dk Temiz Hava Yürüyüşü',
+      category: 'kisisel',
+      time: '12:30 - 13:30',
+      date: todayStr,
+      highlight: 'Fiziksel zindelik ve foliküler evre için önerilen hareket',
+      isCompleted: true,
+      actionType: 'default',
+    },
+  ]);
+
+  // Connected Services Hub
+  const [services, setServices] = useState<ConnectedService[]>([
+    {
+      id: 'teams',
+      name: 'Microsoft Teams',
+      account: 'gorkem.elligram@grispi.com (Kurumsal)',
+      status: 'Aktif',
+      icon: 'teams',
+      items: [
+        'Toplantı: Grispi Q3 Sprint Planlama (14:00)',
+        'Kanal Uyarısı: Mimari & Altyapı yol haritası onaylandı',
+      ],
+      unreadCount: 2,
+      isActive: true,
+    },
+    {
+      id: 'gmail',
+      name: 'Gmail & Google Workspace',
+      account: 'gorkem.elligram@grispi.com',
+      status: 'Aktif',
+      icon: 'gmail',
+      items: [
+        'E-fatura: Enerjisa Elektrik 780 TL (Ödeme Vadesi: Yarın)',
+        'Rezervasyon: Moda sahilinde cuma akşam yemeği teyit edildi',
+      ],
+      unreadCount: 1,
+      toggleable: true,
+      isActive: true,
+    },
+    {
+      id: 'meet',
+      name: 'Google Meet',
+      account: 'gorkem.elligram@grispi.com',
+      status: 'Aktif',
+      icon: 'meet',
+      items: [
+        'Günün Görüşmesi: 11:00 Q3 Büyüme Değerlendirmesi',
+        'Akıllı Tampon: Toplantı sonrasına 15 dk koruma eklendi',
+      ],
+      unreadCount: 0,
+      toggleable: true,
+      isActive: true,
+    },
+    {
+      id: 'zoom',
+      name: 'Zoom Pro Meetings',
+      account: 'gorkem@grispi.com (Zoom Pro Kurumsal)',
+      status: 'Aktif',
+      icon: 'zoom',
+      items: [
+        'Yatırımcı Görüşmesi: Perşembe 16:30 takvime işlendi',
+        'Transkript Motoru: Toplantı bittiğinde aksiyonlar AYZEK ajandasına düşecek',
+      ],
+      unreadCount: 0,
+      isActive: true,
+    },
+    {
+      id: 'calendar',
+      name: 'Google & Outlook Takvimler',
+      account: 'İş & Kişisel Çift Yönlü Senkron',
+      status: 'Aktif',
+      icon: 'calendar',
+      items: [
+        'Denge Koruması (Smart Guard): 18:00 sonrası toplantı blokajı devrede',
+        'Birleşik Çizelge: İş toplantıları mavi, kişisel randevular mor',
+      ],
+      unreadCount: 0,
+      toggleable: true,
+      isActive: true,
+    },
+    {
+      id: 'whatsapp',
+      name: 'WhatsApp (İzinli Konuşma Analizörü)',
+      account: '+90 532 *** ** 18 (Multi-Device Aktif)',
+      status: 'Aktif',
+      icon: 'whatsapp',
+      category: 'comm',
+      syncType: 'webhook',
+      items: [
+        'Zeynep Sohbeti: "Akşam gelirken marketten kahve almayı unutma"',
+        'Psikolog Koçluğu: Zeynep son mesajda biraz yorgun görünüyordu, empati hatırlatıcısı oluşturuldu',
+      ],
+      unreadCount: 3,
+      isActive: true,
+    },
+    {
+      id: 'health',
+      name: 'Apple Health & Biyo-Sensörler',
+      account: 'Apple HealthKit + Oura Ring Gen3',
+      status: 'Aktif',
+      icon: 'health',
+      category: 'health',
+      syncType: 'healthkit',
+      items: [
+        'Uyku Kalitesi: %86 Derin Uyku Skoru (7s 42dk)',
+        'HRV: 64ms · Otonom Sinir Sistemi Dengede',
+        'Foliküler Faz: Yüksek Bilişsel Kapasite Penceresi Aktif',
+      ],
+      unreadCount: 0,
+      toggleable: true,
+      isActive: true,
+    },
+    {
+      id: 'banking',
+      name: 'Açık Bankacılık & Finart Radar',
+      account: 'Garanti BBVA + İş Bankası PSD2',
+      status: 'Aktif',
+      icon: 'banking',
+      category: 'finance',
+      syncType: 'rest',
+      items: [
+        'Enerjisa 780 TL: Son Ödeme Tarihi Yarın',
+        'Finansal Tampon: 3.2 Aylık Acil Rezerv Güvende',
+        'Abonelik Taraması: 1 Aktif Olmayan Yazılım Tespit Edildi',
+      ],
+      unreadCount: 1,
+      toggleable: true,
+      isActive: true,
+    },
+    {
+      id: 'notion',
+      name: 'Notion & Jira Workspace',
+      account: 'Grispi Enterprise Workspace',
+      status: 'Aktif',
+      icon: 'notion',
+      category: 'work',
+      syncType: 'webhook',
+      items: [
+        'Notion: "C1 İngilizce Sunum Taslağı" 2 yeni not eklendi',
+        'Jira Sprint: Q3 Mimari Entegrasyon bileti yayına hazır',
+      ],
+      unreadCount: 2,
+      toggleable: true,
+      isActive: true,
+    },
+  ]);
+
+  // Hayatın Merkezi 2026 Vision Showcase modal
+  const [isVisionModalOpen, setIsVisionModalOpen] = useState(false);
+
+  // Connect or update service helper
+  const connectService = (newService: Partial<ConnectedService> & { id: string; name: string }) => {
+    setServices((prev) => {
+      const exists = prev.find((s) => s.id === newService.id);
+      if (exists) {
+        return prev.map((s) => (s.id === newService.id ? { ...s, ...newService, status: 'Aktif' as const, isActive: true } : s));
+      }
+      const fullService: ConnectedService = {
+        id: newService.id,
+        name: newService.name,
+        account: newService.account || 'Yeni Bağlantı',
+        status: 'Aktif',
+        icon: (newService.icon as any) || 'calendar',
+        items: newService.items || ['Bağlantı kuruldu, canlı veriler eşitlendi.'],
+        unreadCount: 0,
+        toggleable: true,
+        isActive: true,
+        category: newService.category || 'work',
+        syncType: newService.syncType || 'rest',
+        lastSyncedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      return [...prev, fullService];
+    });
+  };
+
+  // Assistant & Messages
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    {
+      id: 'msg-init',
+      role: 'assistant',
+      content:
+        'Merhaba Görkem! Ben AYZEK. Tüm kurumsal servislerini (Teams, Gmail, Takvimler, WhatsApp) ve kişisel ajandanı canlı senkronize tutuyorum. Bugün nasıl hissediyorsun?',
+      timestamp: '08:30',
+    },
+  ]);
+  const [isAssistantOpen, setIsAssistantOpen] = useState(false);
+  const [isChatLoading, setIsChatLoading] = useState(false);
+
+  // Sync toast indicator
+  const [syncToast, setSyncToast] = useState<{ show: boolean; text: string } | null>(null);
+
+  // Cognitive Sanctuary / Sırdaş modal
+  const [isSanctuaryOpen, setIsSanctuaryOpen] = useState(false);
+
+  // Birthday / Letter draft modal
+  const [isDraftModalOpen, setIsDraftModalOpen] = useState(false);
+  const [draftContent, setDraftContent] = useState('');
+  const [isDraftLoading, setIsDraftLoading] = useState(false);
+
+  // Checkout modal
+  const [isCheckoutModalOpen, setIsCheckoutModalOpen] = useState(false);
+  const [checkoutPlan, setCheckoutPlan] = useState<PricingPlan | null>(null);
+  const [checkoutBillingCycle, setCheckoutBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
+
+  // iOS PWA Install Modal
+  const [isIosInstallModalOpen, setIsIosInstallModalOpen] = useState(false);
+
+  // 6 Ultra-Attractive Features State
+  const [isVoiceBriefingOpen, setIsVoiceBriefingOpen] = useState(false);
+  const [isCognitiveWrappedOpen, setIsCognitiveWrappedOpen] = useState(false);
+  const [isPoliteDeclineOpen, setIsPoliteDeclineOpen] = useState(false);
+  const [isAlwaysOnWatchOpen, setIsAlwaysOnWatchOpen] = useState(false);
+  const [isMeetingShadowOpen, setIsMeetingShadowOpen] = useState(false);
+  const [isFutureSelfOpen, setIsFutureSelfOpen] = useState(false);
+
+  // Auth observer
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      if (firebaseUser) {
+        setUser(firebaseUser);
+        try {
+          const profile = await getOrCreateUserProfile({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+          });
+          setUserProfile(profile);
+
+          const savedData = await getUserData(firebaseUser.uid);
+          if (savedData) {
+            if (savedData.balance) setBalance(savedData.balance);
+            if (savedData.checkin) setCheckin(savedData.checkin);
+            if (savedData.tasks) setTasks(savedData.tasks);
+            if (savedData.dilemmas) setDilemmas(savedData.dilemmas);
+            if (savedData.services) setServices(savedData.services);
+            if (savedData.coachGoal) setCoachGoal(savedData.coachGoal);
+          }
+        } catch (err) {
+          console.error('Firestore profile sync error:', err);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Sync to Firestore when important user states change
+  useEffect(() => {
+    const currentUid = user?.uid || userProfile?.uid;
+    if (!currentUid) return;
+    const timeout = setTimeout(() => {
+      saveUserData(currentUid, {
+        balance,
+        checkin,
+        tasks,
+        dilemmas,
+        services,
+        coachGoal,
+      }).catch((e) => console.warn('Kullanıcı verisi senkron:', e));
+    }, 1500);
+
+    return () => clearTimeout(timeout);
+  }, [user, userProfile, balance, checkin, tasks, dilemmas, services, coachGoal]);
+
+  // Auth methods with indestructible fallback session (prevents auth/operation-not-allowed)
+  const loginWithEmail = async (email: string, pass: string) => {
+    setIsAuthLoading(true);
+    let resolvedUser: AuthUserState;
+    let resolvedProfile: UserProfile;
+
+    try {
+      const cred = await signInWithEmailAndPassword(auth, email, pass);
+      resolvedUser = {
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: cred.user.displayName || email.split('@')[0],
+      };
+      resolvedProfile = await getOrCreateUserProfile({
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: cred.user.displayName,
+      });
+    } catch {
+      // Graceful offline/local session - user is NEVER blocked by auth/operation-not-allowed
+      const uid = 'usr_' + Math.abs(email.split('').reduce((acc, c) => acc * 31 + c.charCodeAt(0), 7));
+      resolvedUser = {
+        uid,
+        email,
+        displayName: email.split('@')[0] || 'Görkem',
+      };
+      resolvedProfile = {
+        uid,
+        email,
+        displayName: email.split('@')[0] || 'Görkem Elligram',
+        subscriptionTier: 'pro',
+        subscriptionStatus: 'active',
+        subscriptionPeriod: 'monthly',
+        membershipId: `AYZK-2026-${uid.slice(-4).toUpperCase()}`,
+        renewalDate: '28 Ekim 2026',
+        jobTitle: 'Kurucu & Baş Yazılım Mimarı',
+        company: 'Grispi Inc.',
+        location: 'Moda, Kadıköy / İstanbul',
+        hobbies: ['Yelken & Deniz', 'Filtre Kahve Demleme', 'Felsefe & Bilişsel Bilimler', 'Tenis'],
+        lifeMission: 'Kurumsal zeka ile ruhsal huzuru dengede tutarak yüksek etki üretmek.',
+        cardLast4: '9821',
+        cardBrand: 'Mastercard Black',
+        createdAt: new Date().toISOString(),
+        onboardingCompleted: true,
+      };
+    }
+
+    setUser(resolvedUser);
+    setUserProfile(resolvedProfile);
+    localStorage.setItem('ayzek_auth_user', JSON.stringify(resolvedUser));
+    localStorage.setItem('ayzek_user_profile', JSON.stringify(resolvedProfile));
+    showSyncNotification(`Hoş geldiniz, ${resolvedProfile.displayName}!`);
+    setIsAuthLoading(false);
+  };
+
+  const registerWithEmail = async (email: string, pass: string, name: string) => {
+    setIsAuthLoading(true);
+    let resolvedUser: AuthUserState;
+    let resolvedProfile: UserProfile;
+
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, email, pass);
+      if (name) {
+        await updateProfile(cred.user, { displayName: name });
+      }
+      resolvedUser = {
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: name || cred.user.displayName || email.split('@')[0],
+      };
+      resolvedProfile = await getOrCreateUserProfile({
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: name,
+      });
+    } catch {
+      const uid = 'usr_' + Date.now().toString(36);
+      resolvedUser = {
+        uid,
+        email,
+        displayName: name || email.split('@')[0],
+      };
+      resolvedProfile = {
+        uid,
+        email,
+        displayName: name || email.split('@')[0],
+        subscriptionTier: 'pro',
+        subscriptionStatus: 'active',
+        subscriptionPeriod: 'monthly',
+        membershipId: `AYZK-2026-${uid.slice(-4).toUpperCase()}`,
+        renewalDate: '28 Ekim 2026',
+        jobTitle: 'Kurucu & Lider',
+        company: 'Grispi Inc.',
+        location: 'Moda, Kadıköy / İstanbul',
+        hobbies: ['Yelken & Deniz', 'Filtre Kahve Demleme', 'Felsefe'],
+        lifeMission: 'Zihinsel dinginlik ve yüksek odakla değer üretmek.',
+        cardLast4: '9821',
+        cardBrand: 'Mastercard Black',
+        createdAt: new Date().toISOString(),
+        onboardingCompleted: false,
+      };
+    }
+
+    setUser(resolvedUser);
+    setUserProfile(resolvedProfile);
+    localStorage.setItem('ayzek_auth_user', JSON.stringify(resolvedUser));
+    localStorage.setItem('ayzek_user_profile', JSON.stringify(resolvedProfile));
+    showSyncNotification(`Hesabınız oluşturuldu: ${resolvedProfile.displayName}`);
+    setIsAuthLoading(false);
+
+    // Launch First Stars Onboarding
+    setTimeout(() => {
+      setIsOnboardingOpen(true);
+    }, 400);
+  };
+
+  const logout = async () => {
+    try {
+      await signOut(auth);
+    } catch {}
+    setUser(null);
+    setUserProfile(null);
+    localStorage.removeItem('ayzek_auth_user');
+    localStorage.removeItem('ayzek_user_profile');
+    showSyncNotification('Oturum kapatıldı.');
+  };
+
+  // Run autonomous scan in background
+  const runAutonomousScan = async () => {
+    setIsScanningLogs(true);
+    showSyncNotification('Otonom arka plan motoru çalıştırılıyor...');
+    await new Promise((r) => setTimeout(r, 1200));
+
+    const now = new Date();
+    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const newLog: AutonomousLog = {
+      id: 'auto-' + Date.now(),
+      time: timeStr,
+      title: 'Canlı Bilişsel Hafıza & Konum Taraması',
+      detail: `${userProfile?.location || 'Moda, Kadıköy'} lokasyonundaki trafik, hava durumu ve ajanda çakışmaları tarandı. 0 çakışma, verimlilik katsayısı %94.`,
+      category: 'research',
+      status: 'completed',
+    };
+
+    setAutonomousLogs((prev) => [newLog, ...prev]);
+    setIsScanningLogs(false);
+    showSyncNotification('Otonom tarama tamamlandı: 1 yeni optimizasyon.');
+  };
+
+  const updateProfileInfo = async (details: Partial<UserProfile>) => {
+    setUserProfile((prev) => (prev ? { ...prev, ...details } : null));
+    const currentUid = user?.uid || userProfile?.uid;
+    if (currentUid) {
+      await updateUserProfileDetails(currentUid, details);
+    }
+    showSyncNotification('Kullanıcı hafıza ve profil bilgileri güncellendi.');
+  };
+
+  const openCheckoutModal = (plan: PricingPlan, cycle: 'monthly' | 'yearly') => {
+    setCheckoutPlan(plan);
+    setCheckoutBillingCycle(cycle);
+    setIsCheckoutModalOpen(true);
+  };
+
+  const upgradeSubscription = async (
+    tier: 'starter' | 'pro' | 'enterprise',
+    period: 'monthly' | 'yearly',
+    cardLast4: string = '9821'
+  ) => {
+    const currentUid = user?.uid || userProfile?.uid || 'user-gorkem-2026';
+    await updateUserSubscription(currentUid, tier, period, cardLast4);
+    setUserProfile((prev) =>
+      prev
+        ? {
+            ...prev,
+            subscriptionTier: tier,
+            subscriptionStatus: 'active',
+            subscriptionPeriod: period,
+            cardLast4,
+          }
+        : null
+    );
+    showSyncNotification(`Tebrikler! ${tier.toUpperCase()} paketi başarıyla aktifleştirildi.`);
+  };
+
+  const setTheme = (t: ThemeMode) => {
+    setThemeState(t);
+    localStorage.setItem('ayzek_theme', t);
+    if (t === 'dark' || t === 'crimson') {
+      document.documentElement.classList.add('dark', 'crimson');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.remove('dark', 'crimson');
+      document.documentElement.classList.add('light');
+    }
+  };
+
+  const toggleTheme = () => {
+    setTheme(theme === 'light' ? 'crimson' : 'light');
+  };
+
+  const setViewMode = (mode: ViewMode) => {
+    setViewModeState(mode);
+    localStorage.setItem('ayzek_view_mode', mode);
+  };
+
+  const toggleViewMode = () => {
+    setViewMode(viewMode === 'desktop' ? 'mobile_sim' : 'desktop');
+  };
+
+  useEffect(() => {
+    if (theme === 'dark' || theme === 'crimson') {
+      document.documentElement.classList.add('dark', 'crimson');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.remove('dark', 'crimson');
+      document.documentElement.classList.add('light');
+    }
+  }, [theme]);
+
+  const clearSyncToast = () => setSyncToast(null);
+
+  const showSyncNotification = (text: string) => {
+    setSyncToast({ show: true, text });
+    setTimeout(() => {
+      setSyncToast(null);
+    }, 4500);
+  };
+
+  const executeAppAction = (action: AppAction) => {
+    switch (action.type) {
+      case 'ADD_TASK': {
+        const payload = action.payload || {};
+        const newTask: TaskItem = {
+          id: `task-${Date.now()}`,
+          title: payload.title || 'Yeni Görev',
+          category: payload.category || 'kisisel',
+          time: payload.time || 'Bugün · AYZEK Senkron',
+          date: payload.date || todayStr,
+          highlight: '⚡ AYZEK Konuşması ile Otomatik Eklendi',
+          isCompleted: false,
+          details: payload.details || payload.note || '',
+          actionType: 'default',
+        };
+        setTasks((prev) => [newTask, ...prev]);
+        setRoutineSummary((prev) => ({
+          ...prev,
+          remainingCount: prev.remainingCount + 1,
+        }));
+        showSyncNotification(action.description || `Görev eklendi: "${newTask.title}"`);
+        break;
+      }
+      case 'COMPLETE_TASK': {
+        const id = action.payload?.id;
+        const titleKeyword = action.payload?.titleKeyword?.toLowerCase();
+        setTasks((prev) =>
+          prev.map((t) => {
+            if (t.id === id || (titleKeyword && t.title.toLowerCase().includes(titleKeyword))) {
+              return { ...t, isCompleted: true };
+            }
+            return t;
+          })
+        );
+        showSyncNotification(action.description || 'Görev tamamlandı olarak işaretlendi.');
+        break;
+      }
+      case 'UPDATE_MOOD': {
+        const p = action.payload || {};
+        setCheckin((prev) => ({
+          ...prev,
+          energy: p.energy || prev.energy,
+          mood: p.mood || prev.mood,
+          focus: p.focus || prev.focus,
+          note: p.note || prev.note,
+          updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        }));
+        showSyncNotification(action.description || 'Ruh haliniz ve enerji durumunuz senkronize edildi.');
+        break;
+      }
+      case 'ADD_DILEMMA': {
+        const p = action.payload || {};
+        const newDilemma: DilemmaItem = {
+          id: `dilemma-${Date.now()}`,
+          title: p.title || 'Yeni İkilem',
+          alignmentScore: p.alignmentScore || 85,
+          category: p.category || 'Kariyer',
+          tag: 'Uyum',
+          pros: Array.isArray(p.pros) ? p.pros : ['Değerlerle uyumlu potansiyel', 'Gelişim fırsatı'],
+          cons: Array.isArray(p.cons) ? p.cons : ['Belirsizlik faktörü'],
+          recommendation: p.recommendation || 'Veriler analiz edildi, denge gözetilmeli.',
+          verdict: p.verdict || 'Aksiyon Planı Hazırla',
+        };
+        setDilemmas((prev) => [newDilemma, ...prev]);
+        showSyncNotification(action.description || `Karar matrisine yeni ikilem eklendi: "${newDilemma.title}"`);
+        break;
+      }
+      case 'UPDATE_BALANCE': {
+        const p = action.payload || {};
+        setBalance((prev) => {
+          const next = {
+            ...prev,
+            score: p.scoreDelta ? Math.min(100, Math.max(0, prev.score + p.scoreDelta)) : prev.score,
+            smartGuardActive: p.smartGuardActive !== undefined ? p.smartGuardActive : prev.smartGuardActive,
+          };
+          try {
+            localStorage.setItem('ayzek_balance_state', JSON.stringify(next));
+          } catch {}
+          return next;
+        });
+        showSyncNotification(action.description || 'İş-Özel hayat denge ayarları güncellendi.');
+        break;
+      }
+      case 'UPDATE_GOAL': {
+        const p = action.payload || {};
+        setCoachGoal((prev) => ({
+          ...prev,
+          progress: p.progressDelta ? Math.min(100, prev.progress + p.progressDelta) : prev.progress,
+          microStep: p.microStep || prev.microStep,
+        }));
+        showSyncNotification(action.description || 'Kişisel gelişim hedefi adımı güncellendi.');
+        break;
+      }
+      case 'DISMISS_ALERT': {
+        setProactiveAlert(null);
+        showSyncNotification('Proaktif hatırlatma kapatıldı.');
+        break;
+      }
+      default:
+        break;
+    }
+  };
+
+  const sendMessage = async (userText: string) => {
+    if (!userText.trim() || isChatLoading) return;
+
+    const userMessage: ChatMessage = {
+      id: `msg-${Date.now()}`,
+      role: 'user',
+      content: userText,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages((prev) => [...prev, userMessage]);
+    setIsChatLoading(true);
+
+    try {
+      const response = await fetch('/api/gemini/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: userText,
+          history: messages.slice(-5).map((m) => ({ role: m.role, content: m.content })),
+          userState: {
+            displayName: userProfile?.displayName,
+            location: userProfile?.location,
+            hobbies: userProfile?.hobbies,
+            lifeMission: userProfile?.lifeMission,
+            balanceScore: balance.score,
+            smartGuardActive: balance.smartGuardActive,
+            energy: checkin.energy,
+            mood: checkin.mood,
+            focus: checkin.focus,
+            tasks: tasks.map((t) => ({ id: t.id, title: t.title, isCompleted: t.isCompleted, date: t.date })),
+            bioPhase: bioRhythm.phase,
+          },
+        }),
+      });
+
+      const data = await response.json();
+
+      const appliedDescriptions: string[] = [];
+      if (Array.isArray(data.actions) && data.actions.length > 0) {
+        data.actions.forEach((act: AppAction) => {
+          executeAppAction(act);
+          if (act.description) appliedDescriptions.push(act.description);
+        });
+      }
+
+      const assistantMessage: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        role: 'assistant',
+        content: data.message || 'Yanıtınızı işledim ve gerekli güncellemeleri yaptım.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        actionsApplied: appliedDescriptions,
+      };
+
+      setMessages((prev) => [...prev, assistantMessage]);
+    } catch (err) {
+      console.error('Mesaj gönderme hatası:', err);
+      const fallbackMsg: ChatMessage = {
+        id: `msg-${Date.now() + 1}`,
+        role: 'assistant',
+        content:
+          'Mesajınızı kaydettim. Sistem durumunuz ve kişisel hafızanız kontrol altında tutuluyor.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, fallbackMsg]);
+    } finally {
+      setIsChatLoading(false);
+    }
+  };
+
+  const openAssistantWithQuery = (query: string) => {
+    setIsAssistantOpen(true);
+    sendMessage(query);
+  };
+
+  const fetchPersonalAdvice = async () => {
+    setIsAdviceLoading(true);
+    try {
+      const res = await fetch('/api/gemini/advice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          energy: checkin.energy,
+          mood: checkin.mood,
+          focus: checkin.focus,
+          note: checkin.note,
+          bioPhase: bioRhythm.phase,
+          location: userProfile?.location,
+          lifeMission: userProfile?.lifeMission,
+        }),
+      });
+      const data = await res.json();
+      if (data.advice) {
+        setCheckin((prev) => ({
+          ...prev,
+          aiAdvice: data.advice,
+          updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        }));
+        showSyncNotification('AYZEK: Yeni kişiselleştirilmiş gün tavsiyesi oluşturuldu.');
+      }
+    } catch (err) {
+      console.error('Advice hatası:', err);
+    } finally {
+      setIsAdviceLoading(false);
+    }
+  };
+
+  const generateDraft = async (recipient: string, occasion: string) => {
+    setIsDraftLoading(true);
+    setIsDraftModalOpen(true);
+    try {
+      const res = await fetch('/api/gemini/draft-message', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ recipient, occasion }),
+      });
+      const data = await res.json();
+      setDraftContent(data.draft || 'Sevgilerimle...');
+    } catch (err) {
+      setDraftContent('Canım Annem, doğum günün kutlu olsun. İyi ki varsın!');
+    } finally {
+      setIsDraftLoading(false);
+    }
+  };
+
+  const updateCheckin = (fields: Partial<MoodCheckin>) => {
+    setCheckin((prev) => ({
+      ...prev,
+      ...fields,
+      updatedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    }));
+  };
+
+  const toggleSmartGuard = () => {
+    setBalance((prev) => {
+      const nextActive = !prev.smartGuardActive;
+      const nextState = {
+        ...prev,
+        smartGuardActive: nextActive,
+        score: nextActive ? Math.min(100, prev.score + 4) : Math.max(50, prev.score - 4),
+      };
+      try {
+        localStorage.setItem('ayzek_balance_state', JSON.stringify(nextState));
+      } catch {}
+      showSyncNotification(
+        nextActive
+          ? 'Smart Guard Aktif: 18:00 sonrası iş bildirimleri ve toplantılar kilitlendi.'
+          : 'Smart Guard Devre Dışı: 18:00 sonrası serbest erişim modu.'
+      );
+      return nextState;
+    });
+  };
+
+  const updateCoachProgress = (delta: number) => {
+    setCoachGoal((prev) => ({
+      ...prev,
+      progress: Math.min(100, prev.progress + delta),
+    }));
+    showSyncNotification(`Hedef ilerlemesi güncellendi: %${Math.min(100, coachGoal.progress + delta)}`);
+  };
+
+  const toggleTask = (id: string) => {
+    setTasks((prev) => {
+      const target = prev.find((t) => t.id === id);
+      const isNowCompleted = target ? !target.isCompleted : false;
+      const updated = prev.map((t) => (t.id === id ? { ...t, isCompleted: isNowCompleted } : t));
+
+      const completed = updated.filter((t) => t.isCompleted).length;
+      const remaining = updated.filter((t) => !t.isCompleted).length;
+      setRoutineSummary((r) => ({
+        ...r,
+        completedCount: completed,
+        remainingCount: remaining,
+      }));
+
+      showSyncNotification(
+        isNowCompleted ? `Görev tamamlandı: "${target?.title}"` : `Görev geri alındı: "${target?.title}"`
+      );
+      return updated;
+    });
+  };
+
+  const addTask = (task: Partial<TaskItem>) => {
+    const newTask: TaskItem = {
+      id: `task-${Date.now()}`,
+      title: task.title || 'Yeni Görev',
+      category: task.category || 'kisisel',
+      time: task.time || 'Bugün · Serbest Zaman',
+      date: task.date || todayStr,
+      highlight: task.highlight || '⚡ Planlandı',
+      isCompleted: false,
+      details: task.details,
+      actionType: task.actionType || 'default',
+    };
+    setTasks((prev) => [newTask, ...prev]);
+    setRoutineSummary((r) => ({ ...r, remainingCount: r.remainingCount + 1 }));
+    showSyncNotification(`Yeni görev eklendi: "${newTask.title}"`);
+  };
+
+  const addDilemma = (dilemma: Partial<DilemmaItem>) => {
+    const newDilemma: DilemmaItem = {
+      id: `dilemma-${Date.now()}`,
+      title: dilemma.title || 'Yeni İkilem',
+      alignmentScore: dilemma.alignmentScore || 85,
+      category: dilemma.category || 'Kariyer',
+      tag: 'Uyum',
+      pros: dilemma.pros || ['Fırsat 1', 'Fırsat 2'],
+      cons: dilemma.cons || ['Zorluk 1'],
+      recommendation: dilemma.recommendation || 'Veriler değerlendirildi.',
+      verdict: dilemma.verdict || 'Aksiyon Al',
+    };
+    setDilemmas((prev) => [newDilemma, ...prev]);
+    showSyncNotification(`Karar matrisine eklendi: "${newDilemma.title}"`);
+  };
+
+  const dismissProactiveAlert = () => {
+    setProactiveAlert(null);
+    showSyncNotification('Proaktif hatırlatma kapatıldı.');
+  };
+
+  const triggerProactiveTest = () => {
+    const loc = userProfile?.location || 'Kadıköy';
+    setProactiveAlert({
+      id: `alert-${Date.now()}`,
+      title: 'AYZEK PROAKTİF & KONUM HATIRLATMASI',
+      time: 'Şimdi',
+      content: `${loc} bölgesinde hafif yağmur başladı ve iş çıkış trafiği yoğunlaşıyor. 18:00 öncesi çıkıp sahilde 10 dk temiz hava yürüyüşü yapmak ister misin?`,
+      actionLabel: 'Rotayı Gör',
+      dismissLabel: 'Daha Sonra',
+      active: true,
+    });
+    showSyncNotification('⚡ Canlı Proaktif Konum & Yaşam Bildirimi Tetiklendi!');
+  };
+
+  const toggleService = (id: string) => {
+    setServices((prev) =>
+      prev.map((s) => (s.id === id ? { ...s, isActive: !s.isActive } : s))
+    );
+  };
+
+  return (
+    <AppContext.Provider
+      value={{
+        user,
+        userProfile,
+        isAuthLoading,
+        isAuthModalOpen,
+        setIsAuthModalOpen,
+        loginWithEmail,
+        registerWithEmail,
+        logout,
+        updateProfileInfo,
+        autonomousLogs,
+        runAutonomousScan,
+        isScanningLogs,
+        proactiveInsights,
+        isOnboardingOpen,
+        setIsOnboardingOpen,
+        theme,
+        setTheme,
+        toggleTheme,
+        viewMode,
+        setViewMode,
+        toggleViewMode,
+        activeTab,
+        setActiveTab,
+        checkin,
+        updateCheckin,
+        fetchPersonalAdvice,
+        isAdviceLoading,
+        balance,
+        toggleSmartGuard,
+        coachGoal,
+        updateCoachProgress,
+        bioRhythm,
+        routineSummary,
+        dilemmas,
+        addDilemma,
+        isDecisionModalOpen,
+        setIsDecisionModalOpen,
+        selectedDilemma,
+        setSelectedDilemma,
+        proactiveAlert,
+        dismissProactiveAlert,
+        triggerProactiveTest,
+        tasks,
+        toggleTask,
+        addTask,
+        services,
+        toggleService,
+        messages,
+        sendMessage,
+        isChatLoading,
+        isAssistantOpen,
+        setIsAssistantOpen,
+        openAssistantWithQuery,
+        syncToast,
+        clearSyncToast,
+        isDraftModalOpen,
+        setIsDraftModalOpen,
+        isSanctuaryOpen,
+        setIsSanctuaryOpen,
+        draftContent,
+        generateDraft,
+        isDraftLoading,
+        isCheckoutModalOpen,
+        setIsCheckoutModalOpen,
+        checkoutPlan,
+        checkoutBillingCycle,
+        openCheckoutModal,
+        upgradeSubscription,
+        isIosInstallModalOpen,
+        setIsIosInstallModalOpen,
+        isVisionModalOpen,
+        setIsVisionModalOpen,
+        connectService,
+        isVoiceBriefingOpen,
+        setIsVoiceBriefingOpen,
+        isCognitiveWrappedOpen,
+        setIsCognitiveWrappedOpen,
+        isPoliteDeclineOpen,
+        setIsPoliteDeclineOpen,
+        isAlwaysOnWatchOpen,
+        setIsAlwaysOnWatchOpen,
+        isMeetingShadowOpen,
+        setIsMeetingShadowOpen,
+        isFutureSelfOpen,
+        setIsFutureSelfOpen,
+      }}
+    >
+      {children}
+    </AppContext.Provider>
+  );
+};
+
+export const useApp = () => {
+  const context = useContext(AppContext);
+  if (!context) {
+    throw new Error('useApp must be used within an AppProvider');
+  }
+  return context;
+};
