@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { authenticatedFetch } from '../lib/api';
+import { BrowserNotificationStatus, getBrowserNotificationStatus, requestBrowserNotificationPermission } from '../lib/browserNotifications';
 import { AyzekLogo } from './AyzekLogo';
 import { deleteMemory, exportUserData, listMemories, saveExplicitMemory } from '../services/firestoreService';
 import { MemoryItem, NotificationPreferences } from '../types';
@@ -55,6 +56,7 @@ export const ProfileView: React.FC = () => {
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(() => userProfile?.notificationPreferences || {
     reminders: true, tasks: true, recommendations: false, integrationProblems: true, security: true,
   });
+  const [browserNotificationStatus, setBrowserNotificationStatus] = useState<BrowserNotificationStatus>(() => getBrowserNotificationStatus());
 
   useEffect(() => {
     if (!user?.uid) {
@@ -97,6 +99,11 @@ export const ProfileView: React.FC = () => {
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Profil kaydedilemedi.');
     }
+  };
+
+  const handleBrowserNotificationPermission = async () => {
+    const result = await requestBrowserNotificationPermission();
+    setBrowserNotificationStatus(result);
   };
 
   const handleExport = async () => {
@@ -395,7 +402,7 @@ export const ProfileView: React.FC = () => {
       <section className="p-5 rounded-[28px] crimson-glass border border-rose-500/25 text-white shadow-xl space-y-3">
         <div>
           <h3 className="text-sm font-bold">Bildirim tercihleri</h3>
-          <p className="mt-1 text-xs text-rose-200/70">Bu ayarlar hangi bildirim kategorilerinin ileride gönderilebileceğini belirler. Tarayıcı izni henüz istenmez.</p>
+          <p className="mt-1 text-xs text-rose-200/70">Bu ayarlar hangi bildirim kategorilerinin gönderilebileceğini belirler. Tarayıcı izni yalnızca aşağıdaki düğmeye basıldığında istenir.</p>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
           {[
@@ -415,6 +422,19 @@ export const ProfileView: React.FC = () => {
               />
             </label>
           ))}
+        </div>
+        <div className="rounded-xl border border-rose-500/20 bg-[#14060a]/80 p-3 text-xs">
+          <p className="font-semibold text-rose-100">Tarayıcı bildirimi</p>
+          <p className="mt-1 text-rose-200/65">
+            {browserNotificationStatus === 'granted' && 'İzin verildi. Uzaktan push gönderimi henüz yapılandırılmadı.'}
+            {browserNotificationStatus === 'default' && 'İzin henüz verilmedi.'}
+            {browserNotificationStatus === 'denied' && 'İzin tarayıcı tarafından engellendi; tarayıcı ayarlarından açabilirsiniz.'}
+            {browserNotificationStatus === 'unsupported' && 'Bu tarayıcı bildirim ve servis çalışanını desteklemiyor.'}
+            {browserNotificationStatus === 'insecure' && 'Bildirim izni yalnızca HTTPS veya localhost üzerinde istenebilir.'}
+          </p>
+          {browserNotificationStatus === 'default' && (
+            <button type="button" onClick={() => handleBrowserNotificationPermission().catch(() => undefined)} className="mt-2 rounded-lg border border-rose-500/30 px-2.5 py-1.5 text-[11px] font-bold text-rose-100 hover:bg-rose-500/10">Tarayıcı izni ver</button>
+          )}
         </div>
         <p className="text-[11px] text-rose-200/55">Değişiklikleri kalıcılaştırmak için aşağıdaki profil kaydet düğmesini kullan.</p>
       </section>
