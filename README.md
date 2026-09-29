@@ -79,7 +79,13 @@ multi-instance deployment does not send the same job twice. Failed deliveries
 are retried up to three times. This is a dependable application-level baseline;
 high-volume or strict SLA delivery should move the scanner to a managed queue
 and scheduler. Deploy the included `firestore.indexes.json` before enabling
-large-scale scheduling so due-job scans use the required composite index.
+large-scale scheduling so due-job scans use the required composite index. The
+repository already maps this index file to AYZEK's named Firestore database;
+after Firebase CLI authentication, deploy it with:
+
+```
+firebase deploy --only firestore:indexes --project calcium-operator-9cbh2
+```
 
 For a stable public deployment, use a managed host with a custom domain or a
 provider URL. AI Studio's public share is appropriate for sharing the app, but

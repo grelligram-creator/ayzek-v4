@@ -1,0 +1,9 @@
+{
+  "$schema": "https://raw.githubusercontent.com/firebase/firebase-tools/master/schema/firebase-config.json",
+  "firestore": [
+    {
+      "database": "ai-studio-ayzekosakllyaama-0bc3b54d-6b7b-4857-8dd2-b97a3a5b1acb",
+      "indexes": "firestore.indexes.json"
+    }
+  ]
+}
