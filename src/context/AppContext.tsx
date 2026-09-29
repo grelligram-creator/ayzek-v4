@@ -8,6 +8,7 @@ import {
   updateProfile,
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
+import { authenticatedFetch } from '../lib/api';
 import {
   ThemeMode,
   ViewMode,
@@ -168,25 +169,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [activeTab, setActiveTab] = useState<NavTab>('akis');
 
   // Auth state: never invent an authenticated user when Firebase is unavailable.
-  const [user, setUser] = useState<User | AuthUserState | null>(() => {
-    const saved = localStorage.getItem('ayzek_auth_user');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {}
-    }
-    return null;
-  });
-
-  const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
-    const saved = localStorage.getItem('ayzek_user_profile');
-    if (saved) {
-      try {
-        return JSON.parse(saved);
-      } catch {}
-    }
-    return null;
-  });
+  const [user, setUser] = useState<User | AuthUserState | null>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -739,8 +723,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setUser(resolvedUser);
     setUserProfile(resolvedProfile);
-    localStorage.setItem('ayzek_auth_user', JSON.stringify(resolvedUser));
-    localStorage.setItem('ayzek_user_profile', JSON.stringify(resolvedProfile));
     showSyncNotification(`Hoş geldiniz, ${resolvedProfile.displayName}!`);
     setIsAuthLoading(false);
   };
@@ -772,8 +754,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setUser(resolvedUser);
     setUserProfile(resolvedProfile);
-    localStorage.setItem('ayzek_auth_user', JSON.stringify(resolvedUser));
-    localStorage.setItem('ayzek_user_profile', JSON.stringify(resolvedProfile));
     showSyncNotification(`Hesabınız oluşturuldu: ${resolvedProfile.displayName}`);
     setIsAuthLoading(false);
 
@@ -789,8 +769,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {}
     setUser(null);
     setUserProfile(null);
-    localStorage.removeItem('ayzek_auth_user');
-    localStorage.removeItem('ayzek_user_profile');
     showSyncNotification('Oturum kapatıldı.');
   };
 
@@ -992,7 +970,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsChatLoading(true);
 
     try {
-      const response = await fetch('/api/gemini/chat', {
+      const response = await authenticatedFetch('/api/gemini/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1056,7 +1034,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const fetchPersonalAdvice = async () => {
     setIsAdviceLoading(true);
     try {
-      const res = await fetch('/api/gemini/advice', {
+      const res = await authenticatedFetch('/api/gemini/advice', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -1089,7 +1067,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsDraftLoading(true);
     setIsDraftModalOpen(true);
     try {
-      const res = await fetch('/api/gemini/draft-message', {
+      const res = await authenticatedFetch('/api/gemini/draft-message', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ recipient, occasion }),

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { authenticatedFetch } from '../lib/api';
 import {
   X,
   Check,
@@ -73,10 +74,14 @@ export const IntegrationSetupModal: React.FC<IntegrationSetupModalProps> = ({
     setImportedStatus(false);
 
     try {
-      const res = await fetch(`/api/integrations/sync/${service.id}`, {
+      const res = await authenticatedFetch(`/api/integrations/sync/${service.id}`, {
         method: 'POST',
       });
       const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Eşitleme gerçekleştirilemedi.');
+      }
 
       const time = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
       setTestResult({
@@ -88,11 +93,11 @@ export const IntegrationSetupModal: React.FC<IntegrationSetupModalProps> = ({
       if (onSyncSuccess) {
         onSyncSuccess(service.id, data.syncedItems || service.items);
       }
-    } catch {
+    } catch (error) {
       const time = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
       setTestResult({
-        success: true,
-        items: service.items,
+        success: false,
+        items: [error instanceof Error ? error.message : 'Eşitleme gerçekleştirilemedi.'],
         time,
       });
     } finally {

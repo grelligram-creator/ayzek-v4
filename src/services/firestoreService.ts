@@ -1,4 +1,4 @@
-import { doc, getDoc, setDoc, updateDoc } from 'firebase/firestore';
+import { doc, getDoc, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { UserProfile, MoodCheckin, TaskItem, DilemmaItem, WorkLifeBalance, ConnectedService, CoachGoal } from '../types';
 
@@ -26,37 +26,22 @@ export async function getOrCreateUserProfile(user: { uid: string; email?: string
       uid: user.uid,
       email: user.email || '',
       displayName: user.displayName || user.email?.split('@')[0] || 'Yeni kullanıcı',
-      subscriptionTier: 'pro',
-      subscriptionStatus: 'active',
-      subscriptionPeriod: 'monthly',
-      jobTitle: 'Kurucu & Baş Yazılım Mimarı',
+      subscriptionTier: 'free',
+      subscriptionStatus: 'trial',
+      jobTitle: '',
       company: '',
       location: '',
       hobbies: [],
       lifeMission: '',
       createdAt: new Date().toISOString(),
-      onboardingCompleted: true,
+      onboardingCompleted: false,
     };
 
     await setDoc(userRef, newProfile);
     return newProfile;
   } catch (err) {
-    console.warn('Firestore profile fallback triggered:', err);
-    return {
-      uid: user.uid,
-      email: user.email || '',
-      displayName: user.displayName || 'Yeni kullanıcı',
-      subscriptionTier: 'pro',
-      subscriptionStatus: 'active',
-      subscriptionPeriod: 'monthly',
-      jobTitle: 'Kurucu & Baş Yazılım Mimarı',
-      company: '',
-      location: '',
-      hobbies: [],
-      lifeMission: '',
-      createdAt: new Date().toISOString(),
-      onboardingCompleted: true,
-    };
+    console.error('Firestore profil işlemi başarısız:', err);
+    throw new Error('Profil verisi güvenli biçimde kaydedilemedi. Lütfen tekrar deneyin.');
   }
 }
 
@@ -88,28 +73,6 @@ export async function saveUserData(uid: string, data: Partial<UserPersistedData>
     );
   } catch (err) {
     console.warn('Firestore saveUserData fallback:', err);
-  }
-}
-
-// Update profile tier on checkout
-export async function updateUserSubscription(
-  uid: string,
-  tier: 'starter' | 'pro' | 'enterprise',
-  period: 'monthly' | 'yearly',
-  cardLast4?: string
-): Promise<void> {
-  try {
-    const userRef = doc(db, 'users', uid);
-    await updateDoc(userRef, {
-      subscriptionTier: tier,
-      subscriptionStatus: 'active',
-      subscriptionPeriod: period,
-      cardLast4: cardLast4 || '4242',
-      cardBrand: 'Visa Signature',
-      updatedAt: new Date().toISOString(),
-    });
-  } catch (err) {
-    console.warn('Firestore subscription update fallback:', err);
   }
 }
 

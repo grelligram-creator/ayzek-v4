@@ -4,17 +4,81 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
+import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app';
+import { getAuth as getAdminAuth, DecodedIdToken } from 'firebase-admin/auth';
 
 dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
+type AuthenticatedRequest = express.Request & { authUser?: DecodedIdToken; requestId?: string };
+
+function initializeFirebaseAdmin() {
+  try {
+    if (!getApps().length) {
+      const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+      initializeApp(
+        serviceAccountJson
+          ? { credential: cert(JSON.parse(serviceAccountJson)) }
+          : { credential: applicationDefault() }
+      );
+    }
+    return getAdminAuth();
+  } catch (error) {
+    console.warn('Firebase Admin başlatılamadı. Doğrulanmış API uçları devre dışı:', error instanceof Error ? error.message : error);
+    return null;
+  }
+}
+
+const adminAuth = initializeFirebaseAdmin();
+
 async function startServer() {
   const app = express();
   const PORT = process.env.PORT ? parseInt(process.env.PORT) : 3000;
 
-  app.use(express.json());
+  app.disable('x-powered-by');
+  app.use(express.json({ limit: '64kb' }));
+  app.use((req: AuthenticatedRequest, res, next) => {
+    req.requestId = crypto.randomUUID();
+    res.setHeader('X-Request-Id', req.requestId);
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('Referrer-Policy', 'same-origin');
+    res.setHeader('X-Frame-Options', 'DENY');
+    next();
+  });
+
+  const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+  function rateLimit(maxRequests: number, windowMs: number) {
+    return (req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) => {
+      const key = req.authUser?.uid || req.ip || 'unknown';
+      const now = Date.now();
+      const entry = rateLimitStore.get(key);
+      const current = !entry || entry.resetAt <= now ? { count: 0, resetAt: now + windowMs } : entry;
+      current.count += 1;
+      rateLimitStore.set(key, current);
+      if (current.count > maxRequests) {
+        return res.status(429).json({ error: 'Çok fazla istek gönderildi. Lütfen kısa süre sonra tekrar deneyin.', requestId: req.requestId });
+      }
+      next();
+    };
+  }
+
+  async function requireVerifiedUser(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) {
+    if (!adminAuth) {
+      return res.status(503).json({ error: 'Sunucu kimlik doğrulaması yapılandırılmadı.', requestId: req.requestId });
+    }
+    const token = req.header('authorization')?.match(/^Bearer\s+(.+)$/i)?.[1];
+    if (!token) {
+      return res.status(401).json({ error: 'Kimlik doğrulaması gerekli.', requestId: req.requestId });
+    }
+    try {
+      req.authUser = await adminAuth.verifyIdToken(token, true);
+      next();
+    } catch {
+      return res.status(401).json({ error: 'Oturum geçersiz veya süresi dolmuş.', requestId: req.requestId });
+    }
+  }
 
   // Shared Gemini client with telemetry header
   const ai = new GoogleGenAI({
@@ -29,6 +93,14 @@ async function startServer() {
   // Health check
   app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', time: new Date().toISOString() });
+  });
+
+  app.get('/api/ready', (_req, res) => {
+    const ready = Boolean(process.env.GEMINI_API_KEY && adminAuth);
+    res.status(ready ? 200 : 503).json({
+      status: ready ? 'ready' : 'not_ready',
+      checks: { gemini: Boolean(process.env.GEMINI_API_KEY), firebaseAdmin: Boolean(adminAuth) },
+    });
   });
 
   // Multi-model Gemini caller with fallback to avoid quota exhaustion
@@ -64,10 +136,10 @@ async function startServer() {
   }
 
   // 1. AYZEK Chat & Synchronized App Action Engine
-  app.post('/api/gemini/chat', async (req, res) => {
+  app.post('/api/gemini/chat', requireVerifiedUser, rateLimit(30, 60_000), async (req: AuthenticatedRequest, res) => {
     const { message, history = [], userState = {} } = req.body;
 
-    if (!message || typeof message !== 'string') {
+    if (!message || typeof message !== 'string' || message.trim().length > 4_000) {
       return res.status(400).json({ error: 'Mesaj zorunludur' });
     }
 
@@ -280,7 +352,7 @@ Cevap formatın ŞU JSON şemasında olmalıdır:
   });
 
   // 2. Kişiselleştirilmiş Durum ve Tavsiye Motoru ("AYZEK'ten Tavsiye Al")
-  app.post('/api/gemini/advice', async (req, res) => {
+  app.post('/api/gemini/advice', requireVerifiedUser, rateLimit(20, 60_000), async (req: AuthenticatedRequest, res) => {
     try {
       const { energy, mood, focus, note, bioPhase } = req.body;
 
@@ -313,7 +385,7 @@ AYZEK olarak kullanıcıya tam 2-3 cümlelik, somut, motive edici ve günün ger
   });
 
   // 3. Karar Matrisi & İkilem Çözücü API
-  app.post('/api/gemini/decision', async (req, res) => {
+  app.post('/api/gemini/decision', requireVerifiedUser, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
     try {
       const { dilemmaTitle, currentContext } = req.body;
 
@@ -359,7 +431,7 @@ Lütfen bir psikolog ve kurumsal stratejist gözüyle analiz et.
   });
 
   // 4. Doğum Günü / Mektup Taslağı Oluşturucu
-  app.post('/api/gemini/draft-message', async (req, res) => {
+  app.post('/api/gemini/draft-message', requireVerifiedUser, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
     try {
       const { recipient, occasion, details } = req.body;
       const prompt = `${recipient || 'Annem'} için ${occasion || 'Doğum Günü'} kutlama mesajı taslağı yaz. Detaylar: ${details || 'İçten, sevgi dolu, hatıralara değinen duygusal ve samimi bir mektup'}.`;
@@ -383,7 +455,7 @@ Lütfen bir psikolog ve kurumsal stratejist gözüyle analiz et.
   });
 
   // 5. Bilişsel Sırdaş & Zihin Odası (Psychologist / Empathy Companion API)
-  app.post('/api/gemini/psychologist', async (req, res) => {
+  app.post('/api/gemini/psychologist', requireVerifiedUser, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
     try {
       const { feeling, context = '', history = [] } = req.body;
 
@@ -422,7 +494,7 @@ Cevap formatın ŞU JSON şemasında olmalıdır:
   });
 
   // 6. Monte Carlo Yaşam İkilemi Simülatörü API
-  app.post('/api/gemini/monte-carlo-dilemma', async (req, res) => {
+  app.post('/api/gemini/monte-carlo-dilemma', requireVerifiedUser, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
     try {
       const { dilemmaTitle, optionA, optionB, userPriorities } = req.body;
 
@@ -572,12 +644,12 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
   };
 
   // Status endpoint
-  app.get('/api/integrations/status', (req, res) => {
+  app.get('/api/integrations/status', requireVerifiedUser, rateLimit(60, 60_000), (_req: AuthenticatedRequest, res) => {
     return res.json({ success: true, integrations: liveIntegrationRegistry });
   });
 
   // Real Data Pull / Sync endpoint
-  app.post('/api/integrations/sync/:serviceId', async (req, res) => {
+  app.post('/api/integrations/sync/:serviceId', requireVerifiedUser, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
     const { serviceId } = req.params;
     const item = liveIntegrationRegistry[serviceId];
     if (!item) {
@@ -646,7 +718,7 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
   });
 
   // Credential storage and OAuth are intentionally not implemented yet.
-  app.post('/api/integrations/connect', (req, res) => {
+  app.post('/api/integrations/connect', requireVerifiedUser, rateLimit(5, 60_000), (req: AuthenticatedRequest, res) => {
     const { serviceId } = req.body;
     if (!serviceId) {
       return res.status(400).json({ error: 'serviceId zorunludur' });

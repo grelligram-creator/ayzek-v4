@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { authenticatedFetch } from '../lib/api';
 import { AyzekLogo } from './AyzekLogo';
 import {
   X,
@@ -42,7 +43,7 @@ export const CognitiveSanctuaryModal: React.FC<SanctuaryProps> = ({ isOpen, onCl
     setAnalysis(null);
 
     try {
-      const res = await fetch('/api/gemini/psychologist', {
+      const res = await authenticatedFetch('/api/gemini/psychologist', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

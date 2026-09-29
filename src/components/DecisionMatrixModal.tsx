@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { authenticatedFetch } from '../lib/api';
 import { DilemmaItem } from '../types';
 import {
   Scale,
@@ -39,7 +40,7 @@ export const DecisionMatrixModal: React.FC = () => {
     setIsAnalyzing(true);
 
     try {
-      const res = await fetch('/api/gemini/decision', {
+      const res = await authenticatedFetch('/api/gemini/decision', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ dilemmaTitle: newTitle }),
@@ -71,7 +72,7 @@ export const DecisionMatrixModal: React.FC = () => {
   const handleRunMonteCarlo = async () => {
     setIsSimulating(true);
     try {
-      const res = await fetch('/api/gemini/monte-carlo-dilemma', {
+      const res = await authenticatedFetch('/api/gemini/monte-carlo-dilemma', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

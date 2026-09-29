@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { authenticatedFetch } from '../lib/api';
 import {
   Zap,
   MessageSquare,
@@ -110,7 +111,7 @@ export const MerkezView: React.FC = () => {
   const handleManualSync = async (service: ConnectedService) => {
     setSyncingId(service.id);
     try {
-      const res = await fetch(`/api/integrations/sync/${service.id}`, { method: 'POST' });
+      const res = await authenticatedFetch(`/api/integrations/sync/${service.id}`, { method: 'POST' });
       await res.json();
       setSyncSuccessToast(`${service.name}: En güncel veriler çekildi ve senkronize edildi.`);
       setTimeout(() => setSyncSuccessToast(null), 3000);
