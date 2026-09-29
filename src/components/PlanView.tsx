@@ -18,7 +18,7 @@ import {
 import { TaskItem } from '../types';
 
 export const PlanView: React.FC = () => {
-  const { tasks, toggleTask, addTask, updateTask, deleteTask, balance, toggleSmartGuard, openAssistantWithQuery, userProfile } =
+  const { tasks, toggleTask, addTask, updateTask, deleteTask, balance, toggleSmartGuard, openAssistantWithQuery, userProfile, checkin } =
     useApp();
 
   const [activeFilter, setActiveFilter] = useState<'all' | 'is' | 'kisisel' | 'finans' | 'alisveris'>('all');
@@ -33,6 +33,7 @@ export const PlanView: React.FC = () => {
   const [withBuffer, setWithBuffer] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
   const [dailyRecommendation, setDailyRecommendation] = useState<string | null>(null);
+  const [weeklyRecommendation, setWeeklyRecommendation] = useState<string | null>(null);
 
   // Generate 14-day strip (Today + Next 13 days)
   const dateStrip = Array.from({ length: 14 }).map((_, i) => {
@@ -59,8 +60,45 @@ export const PlanView: React.FC = () => {
       return;
     }
     const rank = { finans: 0, is: 1, aile: 2, kisisel: 3, alisveris: 4 };
-    const priorities = [...openTasks].sort((a, b) => rank[a.category] - rank[b.category]).slice(0, 3);
-    setDailyRecommendation(`Bugünün odağı: ${priorities.map((task) => `“${task.title}”`).join(', ')}. Bu öneri yalnızca kaydettiğin açık görevlere dayanır; takvim veya bağlı uygulama verisi kullanılmadı.`);
+    const timeValue = (task: TaskItem) => /^([01]\d|2[0-3]):[0-5]\d/.exec(task.time)?.[0] || '99:99';
+    const focusLimit = checkin.energy === 'low' ? 1 : checkin.energy === 'high' ? 3 : 2;
+    const afterGuard = isToday && balance.smartGuardActive && new Date().getHours() >= Number(balance.cutOffTime.split(':')[0]);
+    const sorted = [...openTasks].sort((a, b) => timeValue(a).localeCompare(timeValue(b)) || rank[a.category] - rank[b.category]);
+    const protectedTasks = afterGuard ? sorted.filter((task) => task.category === 'is') : [];
+    const focusTasks = sorted.filter((task) => !protectedTasks.some((protectedTask) => protectedTask.id === task.id)).slice(0, focusLimit);
+    const laterTasks = sorted.filter((task) => !focusTasks.some((focusTask) => focusTask.id === task.id));
+    const energyLabel = checkin.energy === 'low' ? 'düşük enerji' : checkin.energy === 'high' ? 'yüksek enerji' : 'dengeli enerji';
+    const lines = [
+      `${energyLabel} için ${focusTasks.length} odak görevi seçildi: ${focusTasks.map((task) => `“${task.title}”`).join(', ')}.`,
+      protectedTasks.length ? `Smart Guard aktif olduğu için ${protectedTasks.length} iş görevi bugünün geç saatlerinden çıkarıldı; yarın için yeniden planlayabilirsin.` : null,
+      laterTasks.length ? `Sonraya bırakılabilecekler: ${laterTasks.map((task) => `“${task.title}”`).join(', ')}.` : null,
+      'Öneri yalnızca kaydettiğin görevler, enerji durumun ve Smart Guard tercihin üzerinden üretildi.',
+    ].filter(Boolean);
+    setDailyRecommendation(lines.join('\n'));
+  };
+
+  const buildWeeklyRecommendation = () => {
+    const weekDays = Array.from({ length: 7 }, (_, index) => {
+      const date = new Date(`${selectedDate}T00:00:00`);
+      date.setDate(date.getDate() + index);
+      return date.toISOString().slice(0, 10);
+    });
+    const openByDay = weekDays.map((date) => ({
+      date,
+      tasks: tasks.filter((task) => !task.isCompleted && (task.date || todayStr) === date),
+    }));
+    const total = openByDay.reduce((sum, day) => sum + day.tasks.length, 0);
+    if (!total) {
+      setWeeklyRecommendation('Önümüzdeki 7 gün için açık görev yok. Haftalık planı oluşturmak için günlere küçük görevler ekleyebilirsin.');
+      return;
+    }
+    const busiest = [...openByDay].sort((a, b) => b.tasks.length - a.tasks.length)[0];
+    const financeCount = openByDay.flatMap((day) => day.tasks).filter((task) => task.category === 'finans').length;
+    const dayLabel = new Date(`${busiest.date}T00:00:00`).toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'short' });
+    const capacityNote = busiest.tasks.length > 3
+      ? `${dayLabel} günü ${busiest.tasks.length} açık görevle yoğun. En az bir görevi sonraki güne taşıyarak tampon oluştur.`
+      : `${dayLabel} günü en yoğun gün (${busiest.tasks.length} açık görev); mevcut dağılım uygulanabilir görünüyor.`;
+    setWeeklyRecommendation(`Önümüzdeki 7 günde ${total} açık görev var. ${capacityNote}${financeCount ? ` ${financeCount} finans görevi için erken saat bloğu ayır.` : ''} Bu değerlendirme yalnızca kaydettiğin görevlerden üretildi.`);
   };
 
   const handleCreateTask = (e: React.FormEvent) => {
@@ -143,13 +181,26 @@ export const PlanView: React.FC = () => {
             <Sparkles className="w-3.5 h-3.5 text-white animate-pulse" />
             <span>Günlük odağı oluştur</span>
           </button>
+          <button
+            onClick={buildWeeklyRecommendation}
+            className="frosted-pill-button px-3.5 py-2 rounded-full text-xs font-semibold cursor-pointer"
+          >
+            Haftayı değerlendir
+          </button>
         </div>
       </section>
 
       {dailyRecommendation && (
         <section className="rounded-2xl border border-rose-500/25 bg-rose-500/10 p-4 text-xs text-rose-100">
           <span className="font-bold text-rose-300">Günlük plan önerisi</span>
-          <p className="mt-1 leading-relaxed">{dailyRecommendation}</p>
+          <p className="mt-1 leading-relaxed whitespace-pre-line">{dailyRecommendation}</p>
+        </section>
+      )}
+
+      {weeklyRecommendation && (
+        <section className="rounded-2xl border border-indigo-400/25 bg-indigo-500/10 p-4 text-xs text-indigo-100">
+          <span className="font-bold text-indigo-200">Haftalık kapasite önerisi</span>
+          <p className="mt-1 leading-relaxed">{weeklyRecommendation}</p>
         </section>
       )}
 
