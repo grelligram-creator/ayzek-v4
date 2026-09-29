@@ -1125,23 +1125,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const approvePendingAction = () => {
     if (!pendingAction) return;
-    addTask({
-      title: pendingAction.title,
-      category: pendingAction.category,
-      date: pendingAction.date,
-      time: pendingAction.time ? `${pendingAction.time} · AYZEK Sohbeti` : undefined,
-      details: pendingAction.details,
-      highlight: '⚡ Sohbette onaylandı',
-    });
+    if (pendingAction.type === 'create_task') {
+      addTask({
+        title: pendingAction.title,
+        category: pendingAction.category,
+        date: pendingAction.date,
+        time: pendingAction.time ? `${pendingAction.time} · AYZEK Sohbeti` : undefined,
+        details: pendingAction.details,
+        highlight: '⚡ Sohbette onaylandı',
+      });
+    } else {
+      executeAppAction({
+        type: 'UPDATE_MOOD',
+        payload: pendingAction,
+        description: 'Günlük durum kaydın güncellendi.',
+      });
+    }
     setPendingAction(null);
   };
 
   const dismissPendingAction = () => setPendingAction(null);
 
-  const formatSuggestedTask = (action: unknown): PendingAction | null => {
+  const formatSuggestedAction = (action: unknown): PendingAction | null => {
     if (!action || typeof action !== 'object') return null;
     const item = action as { type?: unknown; payload?: Record<string, unknown> };
-    if (item.type !== 'ADD_TASK' || !item.payload) return null;
+    if (!item.payload) return null;
+    if (item.type === 'UPDATE_MOOD') {
+      const energy = item.payload.energy;
+      const mood = item.payload.mood;
+      const focus = item.payload.focus;
+      const note = typeof item.payload.note === 'string' ? item.payload.note.replace(/\s+/g, ' ').trim().slice(0, 500) : undefined;
+      if (!['low', 'balanced', 'high'].includes(String(energy)) && !['calm', 'cheerful', 'inspired', 'tired', 'anxious'].includes(String(mood)) && !['scattered', 'balanced', 'deep'].includes(String(focus))) return null;
+      return {
+        type: 'update_mood',
+        ...(energy ? { energy: energy as MoodCheckin['energy'] } : {}),
+        ...(mood ? { mood: mood as MoodCheckin['mood'] } : {}),
+        ...(focus ? { focus: focus as MoodCheckin['focus'] } : {}),
+        ...(note ? { note } : {}),
+      };
+    }
+    if (item.type !== 'ADD_TASK') return null;
     const title = String(item.payload.title || '').trim();
     const category = item.payload.category;
     if (title.length < 3 || title.length > 160 || !['is', 'kisisel', 'finans', 'alisveris', 'aile'].includes(String(category))) return null;
@@ -1318,8 +1341,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (suggestedMemory) setMemoryCandidate(suggestedMemory);
       }
       if (!action && Array.isArray(data.actions)) {
-        const suggestedTask = formatSuggestedTask(data.actions[0]);
-        if (suggestedTask) setPendingAction(suggestedTask);
+        const suggestedAction = formatSuggestedAction(data.actions[0]);
+        if (suggestedAction) setPendingAction(suggestedAction);
       }
       if (user?.uid) {
         saveConversationMessage(user.uid, assistantMessage, activeConversationId).catch((error) => console.error('Yanıt kaydedilemedi:', error));

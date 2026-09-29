@@ -219,7 +219,7 @@ export interface MemoryCandidate {
   category: MemoryItem['category'];
 }
 
-export interface PendingAction {
+export interface PendingTaskAction {
   type: 'create_task';
   title: string;
   category: TaskItem['category'];
@@ -228,3 +228,13 @@ export interface PendingAction {
   details?: string;
   scheduleLabel?: string;
 }
+
+export interface PendingMoodAction {
+  type: 'update_mood';
+  energy?: EnergyLevel;
+  mood?: MoodType;
+  focus?: FocusLevel;
+  note?: string;
+}
+
+export type PendingAction = PendingTaskAction | PendingMoodAction;

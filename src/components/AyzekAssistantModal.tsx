@@ -246,9 +246,11 @@ export const AyzekAssistantModal: React.FC = () => {
 
         {pendingAction && (
           <div className="mx-4 mt-3 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-3 text-xs text-emerald-50">
-            <p className="font-bold">Görev oluşturma önerisi</p>
-            <p className="mt-1">“{pendingAction.title}” görevi kaydedilsin mi?</p>
-            {pendingAction.scheduleLabel && <p className="mt-1 text-emerald-100/75">Planlanan zaman: {pendingAction.scheduleLabel}</p>}
+            <p className="font-bold">{pendingAction.type === 'create_task' ? 'Görev oluşturma önerisi' : 'Günlük durum kaydı önerisi'}</p>
+            {pendingAction.type === 'create_task' ? <>
+              <p className="mt-1">“{pendingAction.title}” görevi kaydedilsin mi?</p>
+              {pendingAction.scheduleLabel && <p className="mt-1 text-emerald-100/75">Planlanan zaman: {pendingAction.scheduleLabel}</p>}
+            </> : <p className="mt-1">{[pendingAction.energy && `Enerji: ${pendingAction.energy}`, pendingAction.mood && `Ruh hali: ${pendingAction.mood}`, pendingAction.focus && `Odak: ${pendingAction.focus}`].filter(Boolean).join(' · ')} kaydedilsin mi?</p>}
             <div className="mt-2 flex gap-2">
               <button type="button" onClick={approvePendingAction} className="rounded-lg bg-emerald-400 px-2.5 py-1.5 text-[11px] font-bold text-black">Onayla ve kaydet</button>
               <button type="button" onClick={dismissPendingAction} className="rounded-lg border border-emerald-300/30 px-2.5 py-1.5 text-[11px] font-bold">Vazgeç</button>

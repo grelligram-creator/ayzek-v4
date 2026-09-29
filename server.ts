@@ -141,7 +141,7 @@ function isNearDuplicateMemory(candidate: string, selected: string[]): boolean {
   });
 }
 
-type SuggestedChatAction = {
+type SuggestedTaskAction = {
   type: 'ADD_TASK';
   description: string;
   payload: {
@@ -153,12 +153,25 @@ type SuggestedChatAction = {
   };
 };
 
+type SuggestedMoodAction = {
+  type: 'UPDATE_MOOD';
+  description: string;
+  payload: {
+    energy?: 'low' | 'balanced' | 'high';
+    mood?: 'calm' | 'cheerful' | 'inspired' | 'tired' | 'anxious';
+    focus?: 'scattered' | 'balanced' | 'deep';
+    note?: string;
+  };
+};
+
+type SuggestedChatAction = SuggestedTaskAction | SuggestedMoodAction;
+
 type SuggestedMemory = {
   content: string;
   category: 'preference' | 'goal' | 'work_context' | 'instruction';
 };
 
-const taskCategories = new Set<SuggestedChatAction['payload']['category']>(['is', 'kisisel', 'finans', 'alisveris', 'aile']);
+const taskCategories = new Set<SuggestedTaskAction['payload']['category']>(['is', 'kisisel', 'finans', 'alisveris', 'aile']);
 const memoryCategories = new Set<SuggestedMemory['category']>(['preference', 'goal', 'work_context', 'instruction']);
 
 function normalizeSuggestedMemory(value: unknown): SuggestedMemory | null {
@@ -174,16 +187,26 @@ function normalizeSuggestedMemory(value: unknown): SuggestedMemory | null {
   return { content, category: category as SuggestedMemory['category'] };
 }
 
-function normalizeSuggestedTask(value: unknown): SuggestedChatAction | null {
+function normalizeSuggestedAction(value: unknown): SuggestedChatAction | null {
   if (!value || typeof value !== 'object') return null;
   const item = value as Record<string, unknown>;
-  if (item.type !== 'ADD_TASK' || !item.payload || typeof item.payload !== 'object') return null;
+  if (!item.payload || typeof item.payload !== 'object') return null;
   const payload = item.payload as Record<string, unknown>;
+  if (item.type === 'UPDATE_MOOD') {
+    const energy = ['low', 'balanced', 'high'].includes(String(payload.energy)) ? payload.energy as SuggestedMoodAction['payload']['energy'] : undefined;
+    const mood = ['calm', 'cheerful', 'inspired', 'tired', 'anxious'].includes(String(payload.mood)) ? payload.mood as SuggestedMoodAction['payload']['mood'] : undefined;
+    const focus = ['scattered', 'balanced', 'deep'].includes(String(payload.focus)) ? payload.focus as SuggestedMoodAction['payload']['focus'] : undefined;
+    const note = typeof payload.note === 'string' ? payload.note.replace(/\s+/g, ' ').trim().slice(0, 500) : undefined;
+    if (!energy && !mood && !focus) return null;
+    const description = String(item.description || 'Günlük durum kaydı önerildi.').replace(/\s+/g, ' ').trim().slice(0, 220);
+    return { type: 'UPDATE_MOOD', description, payload: { ...(energy ? { energy } : {}), ...(mood ? { mood } : {}), ...(focus ? { focus } : {}), ...(note ? { note } : {}) } };
+  }
+  if (item.type !== 'ADD_TASK') return null;
   const title = String(payload.title || '').replace(/\s+/g, ' ').trim();
   if (title.length < 3 || title.length > 160) return null;
 
-  const category = taskCategories.has(payload.category as SuggestedChatAction['payload']['category'])
-    ? payload.category as SuggestedChatAction['payload']['category']
+  const category = taskCategories.has(payload.category as SuggestedTaskAction['payload']['category'])
+    ? payload.category as SuggestedTaskAction['payload']['category']
     : 'kisisel';
   const date = typeof payload.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(payload.date) ? payload.date : undefined;
   const time = typeof payload.time === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(payload.time) ? payload.time : undefined;
@@ -721,7 +744,7 @@ SADECE geçerli JSON döndür; markdown veya açıklama ekleme. Şema tam olarak
   "actions": [{"type":"ADD_TASK","description":"kısa onay açıklaması","payload":{"title":"görev başlığı","category":"is|kisisel|finans|alisveris|aile","date":"YYYY-MM-DD isteğe bağlı","time":"HH:MM isteğe bağlı","details":"isteğe bağlı"}}]
 }
 
-En fazla 2 hafıza adayı ve en fazla 1 görev öner. Hafıza adayını sadece kalıcı tercih, hedef, çalışma bağlamı veya açık iletişim tercihi gerçekten varsa üret; aksi halde [] kullan. Her görev yalnızca öneridir, uygulama kullanıcı onayı olmadan yapılmaz. Belirsiz tarih/saat uydurma; yoksa alanları çıkar. Başka eylem türü üretme.`;
+En fazla 2 hafıza adayı ve en fazla 1 eylem öner. Hafıza adayını sadece kalıcı tercih, hedef, çalışma bağlamı veya açık iletişim tercihi gerçekten varsa üret; aksi halde [] kullan. Kullanıcı günlük enerji/ruh hali/odak bilgisini açıkça "kaydet" veya "güncelle" diyerek isterse, tek eylem olarak UPDATE_MOOD kullanabilirsin; payload yalnızca energy(low|balanced|high), mood(calm|cheerful|inspired|tired|anxious), focus(scattered|balanced|deep), note alanlarını içerir. Aksi halde UPDATE_MOOD üretme. Her eylem yalnızca öneridir, uygulama kullanıcı onayı olmadan yapılmaz. Belirsiz tarih/saat uydurma; yoksa alanları çıkar. Başka eylem türü üretme.`;
 
     let memoryContext = '';
     if (adminDb && req.authUser) {
@@ -796,7 +819,7 @@ En fazla 2 hafıza adayı ve en fazla 1 görev öner. Hafıza adayını sadece k
         ? parsedData.memoryCandidates.map(normalizeSuggestedMemory).filter((item): item is SuggestedMemory => Boolean(item)).slice(0, 2)
         : [];
       const actions = Array.isArray(parsedData.actions)
-        ? parsedData.actions.map(normalizeSuggestedTask).filter((item): item is SuggestedChatAction => Boolean(item)).slice(0, 1)
+        ? parsedData.actions.map(normalizeSuggestedAction).filter((item): item is SuggestedChatAction => Boolean(item)).slice(0, 1)
         : [];
 
       return res.json({
