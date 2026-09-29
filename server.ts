@@ -201,6 +201,11 @@ Cevap formatın ŞU JSON şemasında olmalıdır:
       });
     } catch (err: any) {
       console.warn('Gemini modelleri yanıt veremedi, akıllı bilişsel motor devrede:', err?.message || err);
+      return res.status(503).json({
+        success: false,
+        error: 'Yapay zekâ yanıtı şu anda üretilemedi. Lütfen kısa süre sonra yeniden deneyin.',
+        requestId: req.requestId,
+      });
 
       // Deep Semantic Cognitive Engine (Never blocks user with Smart Guard!)
       const rawMsg = message.trim();
@@ -376,11 +381,8 @@ AYZEK olarak kullanıcıya tam 2-3 cümlelik, somut, motive edici ve günün ger
         advice: responseText || 'Gününüzü dengeli bloklara bölerek enerjinizi en yüksek etki yaratacak önceliklerinize yönlendirin.',
       });
     } catch (err) {
-      console.warn('Advice fallback:', err);
-      return res.json({
-        success: true,
-        advice: 'Bugünkü enerjinize göre derin odak gerektiren en kritik 1 görevinizi tamamlayın; ardından zihinsel berraklığınızı korumak için kendinize kaliteli bir mola ayırın.',
-      });
+      console.warn('Advice generation failed:', err);
+      return res.status(503).json({ success: false, error: 'Öneri şu anda üretilemedi. Lütfen tekrar deneyin.', requestId: req.requestId });
     }
   });
 
@@ -414,8 +416,13 @@ Lütfen bir psikolog ve kurumsal stratejist gözüyle analiz et.
       const parsed = JSON.parse(responseText || '{}');
       return res.json({ success: true, decision: parsed });
     } catch (err) {
-      console.warn('Decision fallback:', err);
-      return res.json({
+      console.warn('Decision generation failed:', err);
+      return res.status(503).json({
+        success: false,
+        error: 'Karar analizi şu anda üretilemedi. Lütfen tekrar deneyin.',
+        requestId: req.requestId,
+      });
+      /* return res.json({
         success: true,
         decision: {
           title: req.body?.dilemmaTitle || 'Kariyer Kararı',
@@ -426,7 +433,7 @@ Lütfen bir psikolog ve kurumsal stratejist gözüyle analiz et.
           psychologicalNote: 'Stres seviyeniz foliküler evredeyken stratejik kararlar almak için en uygun zihinsel berraklıktasınız.',
           verdict: 'Koşulları Netleştirip Adım At',
         },
-      });
+      }); */
     }
   });
 
@@ -447,10 +454,12 @@ Lütfen bir psikolog ve kurumsal stratejist gözüyle analiz et.
         draft: responseText || 'Canım Annem, varlığınla hayatıma kattığın tüm güzellikler için minnettarım. Yeni yaşın sana huzur ve neşe getirsin!',
       });
     } catch (err) {
-      return res.json({
+      console.warn('Draft generation failed:', err);
+      return res.status(503).json({ success: false, error: 'Taslak şu anda üretilemedi. Lütfen tekrar deneyin.', requestId: req.requestId });
+      /* return res.json({
         success: true,
         draft: 'Canım Annem, her anımda arkamda hissettiğim o koşulsuz sevgin için sonsuz teşekkürler. Doğum günün kutlu olsun, iyi ki varsın!',
-      });
+      }); */
     }
   });
 
@@ -481,7 +490,9 @@ Cevap formatın ŞU JSON şemasında olmalıdır:
       const parsed = JSON.parse(responseText || '{}');
       return res.json({ success: true, analysis: parsed });
     } catch (err) {
-      return res.json({
+      console.warn('Psychologist analysis failed:', err);
+      return res.status(503).json({ success: false, error: 'Analiz şu anda üretilemedi. Lütfen tekrar deneyin.', requestId: req.requestId });
+      /* return res.json({
         success: true,
         analysis: {
           empathyMessage: 'Hisssettiğin bu yorgunluğu ve zihnindeki ağırlığı tüm kalbimle anlıyorum. Yüksek sorumluluk alan her insan gibi bazen sadece durup nefes almaya ihtiyacın var.',
@@ -489,7 +500,7 @@ Cevap formatın ŞU JSON şemasında olmalıdır:
           microReliefAction: 'Gözlerini 30 saniye kapat, çeneni ve omuzlarını serbest bırak. Şimdi derin bir nefes al ve yavaşça ver.',
           suggestedAffirmation: 'Her şeyi aynı anda çözmek zorunda değilim; şu an güvendeyim ve dinlenmeyi hak ediyorum.',
         },
-      });
+      }); */
     }
   });
 
@@ -527,7 +538,9 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
 
       return res.json({ success: true, result: JSON.parse(responseText || '{}') });
     } catch (err) {
-      return res.json({
+      console.warn('Monte Carlo analysis failed:', err);
+      return res.status(503).json({ success: false, error: 'Simülasyon şu anda üretilemedi. Lütfen tekrar deneyin.', requestId: req.requestId });
+      /* return res.json({
         success: true,
         result: {
           title: req.body.dilemmaTitle || 'Kariyer ve Şirket Kararı',
@@ -545,7 +558,7 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
           ],
           optimalVerdict: 'Kısa vadeli adaptasyon zahmetine katlanıp uzun vadeli büyüme potansiyeline yatırım yapmanız önerilir.',
         },
-      });
+      }); */
     }
   });
 
