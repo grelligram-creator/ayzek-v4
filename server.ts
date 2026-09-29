@@ -236,6 +236,15 @@ async function startServer() {
     next();
   }
 
+  async function writeSecurityEvent(userId: string, type: 'sessions_revoked' | 'oauth_connected' | 'push_subscribed', detail: string) {
+    if (!adminDb) return;
+    await adminDb.collection('users').doc(userId).collection('securityEvents').add({
+      type,
+      detail,
+      createdAt: new Date().toISOString(),
+    });
+  }
+
   // Shared Gemini client with telemetry header
   const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -303,6 +312,12 @@ async function startServer() {
       console.error('OAuth status could not be read', { requestId: req.requestId, error: error instanceof Error ? error.message : 'unknown' });
       return res.status(503).json({ error: 'OAuth bağlantı durumu okunamadı.', requestId: req.requestId });
     }
+  });
+
+  app.get('/api/security/events', requireVerifiedUser, rateLimit(30, 60_000), async (req: AuthenticatedRequest, res) => {
+    if (!adminDb || !req.authUser) return res.status(503).json({ error: 'Güvenlik geçmişi yapılandırılmadı.', requestId: req.requestId });
+    const events = await adminDb.collection('users').doc(req.authUser.uid).collection('securityEvents').orderBy('createdAt', 'desc').limit(12).get();
+    return res.json({ events: events.docs.map((event) => ({ id: event.id, type: event.data().type, detail: event.data().detail, createdAt: event.data().createdAt })) });
   });
 
   app.get('/api/oauth/:provider/url', requireVerifiedUser, requireVerifiedEmail, rateLimit(5, 60_000), async (req: AuthenticatedRequest, res) => {
@@ -384,6 +399,7 @@ async function startServer() {
         expiresAt: Number.isFinite(expiresIn) && expiresIn > 0 ? new Date(Date.now() + expiresIn * 1000).toISOString() : null,
         updatedAt: new Date().toISOString(),
       });
+      await writeSecurityEvent(state.userId, 'oauth_connected', `${provider === 'google' ? 'Google' : 'Microsoft'} bağlantısı yetkilendirildi.`).catch((error) => console.error('OAuth security audit could not be written', error));
       return res.redirect(302, `${returnUrl}/?oauth=${provider}&status=connected`);
     } catch (error) {
       console.error('OAuth callback failed', { provider, error: error instanceof Error ? error.message : 'unknown' });
@@ -417,6 +433,7 @@ async function startServer() {
       updatedAt: new Date().toISOString(),
       createdAt: new Date().toISOString(),
     }, { merge: true });
+    await writeSecurityEvent(req.authUser.uid, 'push_subscribed', 'Bu cihaz uzaktan push bildirimleri için kaydedildi.').catch((error) => console.error('Push security audit could not be written', error));
     return res.status(204).send();
   });
 
@@ -538,6 +555,7 @@ async function startServer() {
 
     try {
       await adminAuth.revokeRefreshTokens(req.authUser.uid);
+      await writeSecurityEvent(req.authUser.uid, 'sessions_revoked', 'Tüm cihazlardaki yenileme oturumları sonlandırıldı.').catch((error) => console.error('Session security audit could not be written', error));
       return res.status(204).send();
     } catch (error) {
       console.error('Oturumlar sonlandırılamadı', { requestId: req.requestId, userId: req.authUser.uid, error: error instanceof Error ? error.message : 'unknown' });

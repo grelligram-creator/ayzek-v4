@@ -29,6 +29,8 @@ import {
   Plus,
 } from 'lucide-react';
 
+type SecurityEvent = { id: string; type: string; detail: string; createdAt: string };
+
 export const ProfileView: React.FC = () => {
   const {
     userProfile,
@@ -59,6 +61,7 @@ export const ProfileView: React.FC = () => {
     reminders: true, tasks: true, recommendations: false, integrationProblems: true, security: true,
   });
   const [browserNotificationStatus, setBrowserNotificationStatus] = useState<BrowserNotificationStatus>(() => getBrowserNotificationStatus());
+  const [securityEvents, setSecurityEvents] = useState<SecurityEvent[]>([]);
 
   useEffect(() => {
     if (!user?.uid) {
@@ -66,6 +69,17 @@ export const ProfileView: React.FC = () => {
       return;
     }
     listMemories(user.uid).then(setMemories).catch(() => setMemoryError('Hafıza kayıtları yüklenemedi.'));
+  }, [user?.uid]);
+
+  useEffect(() => {
+    if (!user?.uid) {
+      setSecurityEvents([]);
+      return;
+    }
+    authenticatedFetch('/api/security/events')
+      .then(async (response) => response.ok ? response.json() : { events: [] })
+      .then((data) => setSecurityEvents(Array.isArray(data.events) ? data.events : []))
+      .catch(() => setSecurityEvents([]));
   }, [user?.uid]);
 
   const handleSaveMemory = async () => {
@@ -509,6 +523,14 @@ export const ProfileView: React.FC = () => {
           {!emailVerified && <button type="button" onClick={() => handleResendEmailVerification().catch(() => undefined)} className="shrink-0 px-3 py-2 rounded-xl border border-sky-400/40 text-xs font-bold text-sky-200 hover:bg-sky-400/10">Doğrulama e-postası gönder</button>}
         </div>
         {securityNotice && <p className="text-xs text-sky-200">{securityNotice}</p>}
+        {securityEvents.length > 0 && (
+          <div className="border-t border-rose-500/15 pt-3">
+            <p className="text-xs font-semibold text-rose-200">Son güvenlik etkinlikleri</p>
+            <div className="mt-2 space-y-1.5">
+              {securityEvents.slice(0, 4).map((event) => <p key={event.id} className="text-[11px] text-rose-200/60"><span className="text-rose-100">{event.detail}</span> · {new Date(event.createdAt).toLocaleString('tr-TR')}</p>)}
+            </div>
+          </div>
+        )}
         <div className="pt-2 border-t border-rose-500/15 flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-rose-200">Tüm cihazlardan çıkış yap</p>
