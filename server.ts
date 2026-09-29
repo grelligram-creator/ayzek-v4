@@ -87,15 +87,31 @@ async function startServer() {
   });
 
   const rateLimitStore = new Map<string, { count: number; resetAt: number }>();
+  let lastRateLimitPruneAt = 0;
+  const pruneRateLimitStore = (now: number) => {
+    if (now - lastRateLimitPruneAt < 60_000) return;
+    lastRateLimitPruneAt = now;
+    for (const [key, entry] of rateLimitStore) {
+      if (entry.resetAt <= now) rateLimitStore.delete(key);
+    }
+  };
+
   function rateLimit(maxRequests: number, windowMs: number) {
     return (req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) => {
-      const key = req.authUser?.uid || req.ip || 'unknown';
+      // Include the route so a burst against one feature does not consume the
+      // budget for an unrelated sensitive action (for example, account deletion).
+      const key = `${req.path}:${req.authUser?.uid || req.ip || 'unknown'}`;
       const now = Date.now();
+      pruneRateLimitStore(now);
       const entry = rateLimitStore.get(key);
       const current = !entry || entry.resetAt <= now ? { count: 0, resetAt: now + windowMs } : entry;
       current.count += 1;
       rateLimitStore.set(key, current);
+      res.setHeader('RateLimit-Limit', String(maxRequests));
+      res.setHeader('RateLimit-Remaining', String(Math.max(0, maxRequests - current.count)));
+      res.setHeader('RateLimit-Reset', String(Math.ceil(current.resetAt / 1000)));
       if (current.count > maxRequests) {
+        res.setHeader('Retry-After', String(Math.max(1, Math.ceil((current.resetAt - now) / 1000))));
         return res.status(429).json({ error: 'Çok fazla istek gönderildi. Lütfen kısa süre sonra tekrar deneyin.', requestId: req.requestId });
       }
       next();

@@ -47,7 +47,10 @@ guaranteed always-on service.
 ## Security notes
 
 The app verifies Firebase ID tokens at sensitive server endpoints, applies
-endpoint rate limits, supports global session revocation, and lets users send a
-new email-verification link from Profile. Email verification must be completed
-before introducing MFA. Google/Microsoft OAuth remains intentionally
-unconfigured until real provider credentials and redirect URIs are supplied.
+per-endpoint rate limits, supports global session revocation, and lets users
+send a new email-verification link from Profile. The current limiter is
+per-process; a horizontally scaled production deployment must use a shared
+store such as Redis before treating it as a global limit. Email verification
+must be completed before introducing MFA. Google/Microsoft OAuth remains
+intentionally unconfigured until real provider credentials and redirect URIs
+are supplied.
