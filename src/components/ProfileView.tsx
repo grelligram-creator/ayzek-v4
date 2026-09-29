@@ -153,6 +153,21 @@ export const ProfileView: React.FC = () => {
     }
   };
 
+  const handleRevokeSessions = async () => {
+    if (!window.confirm('Bu işlem tüm cihazlardaki AYZEK oturumlarını kapatır. Bu cihazdan da tekrar giriş yapmanız gerekir. Devam etmek istiyor musunuz?')) return;
+    setDeleteError(null);
+    try {
+      const response = await authenticatedFetch('/api/security/revoke-sessions', { method: 'POST' });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || 'Oturumlar sonlandırılamadı.');
+      }
+      await logout();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Oturumlar sonlandırılamadı.');
+    }
+  };
+
   return (
     <div className="space-y-6 pb-28 animate-fadeIn max-w-2xl mx-auto">
       {/* 1. Header Profile Card (Crimson Glass) */}
@@ -451,6 +466,15 @@ export const ProfileView: React.FC = () => {
         </div>
         {exportError && <p className="text-xs text-amber-300">{exportError}</p>}
         <p className="text-[11px] text-rose-200/50">Şifre, erişim anahtarı ve token alanları dışa aktarımın dışında tutulur.</p>
+        <div className="pt-2 border-t border-rose-500/15 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold text-rose-200">Tüm cihazlardan çıkış yap</p>
+            <p className="text-[11px] text-rose-200/55">Kayıp cihaz veya şüpheli erişim durumunda tüm yenileme oturumları geçersiz kılınır.</p>
+          </div>
+          <button type="button" onClick={handleRevokeSessions} className="shrink-0 px-3 py-2 rounded-xl border border-amber-400/40 text-xs font-bold text-amber-200 hover:bg-amber-400/10">
+            Tüm oturumları kapat
+          </button>
+        </div>
         <div className="pt-2 border-t border-rose-500/15 flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-rose-200">Sohbet geçmişini temizle</p>

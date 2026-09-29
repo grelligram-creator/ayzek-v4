@@ -110,6 +110,23 @@ async function startServer() {
     });
   });
 
+  // Revokes refresh tokens for every device. The caller is also signed out by
+  // the client immediately after this endpoint succeeds. Firebase invalidates
+  // outstanding ID tokens on their next verification/refresh cycle.
+  app.post('/api/security/revoke-sessions', requireVerifiedUser, rateLimit(3, 60 * 60_000), async (req: AuthenticatedRequest, res) => {
+    if (!adminAuth || !req.authUser) {
+      return res.status(503).json({ error: 'Oturum güvenliği hizmeti yapılandırılmadı.', requestId: req.requestId });
+    }
+
+    try {
+      await adminAuth.revokeRefreshTokens(req.authUser.uid);
+      return res.status(204).send();
+    } catch (error) {
+      console.error('Oturumlar sonlandırılamadı', { requestId: req.requestId, userId: req.authUser.uid, error: error instanceof Error ? error.message : 'unknown' });
+      return res.status(500).json({ error: 'Oturumlar sonlandırılamadı. Lütfen tekrar deneyin.', requestId: req.requestId });
+    }
+  });
+
   app.delete('/api/account', requireVerifiedUser, rateLimit(3, 60 * 60_000), async (req: AuthenticatedRequest, res) => {
     if (req.body?.confirmation !== 'DELETE_MY_ACCOUNT') {
       return res.status(400).json({ error: 'Hesap silme onayı geçersiz.', requestId: req.requestId });
