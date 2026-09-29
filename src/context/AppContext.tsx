@@ -40,9 +40,11 @@ import {
   getUserData,
   listConversations,
   createConversation,
+  listArchivedConversations,
   archiveConversation,
   loadConversationMessages,
   renameConversation,
+  restoreConversation,
   saveUserData,
   saveConversationMessage,
   updateUserProfileDetails,
@@ -139,6 +141,8 @@ interface AppContextType {
   renameActiveConversation: (title: string) => Promise<void>;
   archiveActiveConversation: () => Promise<void>;
   deleteActiveConversation: () => Promise<void>;
+  archivedConversations: ConversationSummary[];
+  restoreArchivedConversation: (conversationId: string) => Promise<void>;
   clearConversationHistory: () => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
   isChatLoading: boolean;
@@ -658,6 +662,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [conversations, setConversations] = useState<ConversationSummary[]>([generalConversation]);
   const [activeConversationId, setActiveConversationId] = useState('default');
+  const [archivedConversations, setArchivedConversations] = useState<ConversationSummary[]>([]);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isChatLoading, setIsChatLoading] = useState(false);
 
@@ -757,6 +762,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
 
           const storedConversations = await listConversations(firebaseUser.uid);
+          setArchivedConversations(await listArchivedConversations(firebaseUser.uid));
           setConversations([
             generalConversation,
             ...storedConversations.filter((conversation) => conversation.id !== generalConversation.id),
@@ -773,6 +779,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setMessages([]);
         setNotifications([]);
         setConversations([generalConversation]);
+        setArchivedConversations([]);
         setActiveConversationId('default');
       }
     });
@@ -886,6 +893,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsWorkspaceHydrated(false);
     setMessages([]);
     setConversations([generalConversation]);
+    setArchivedConversations([]);
     setActiveConversationId('default');
     showSyncNotification('Oturum kapatıldı.');
   };
@@ -1225,10 +1233,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       throw new Error('Genel konuşma arşivlenemez.');
     }
     const archivedId = activeConversationId;
+    const archivedConversation = conversations.find((conversation) => conversation.id === archivedId);
     await archiveConversation(currentUid, archivedId);
     setConversations((previous) => previous.filter((conversation) => conversation.id !== archivedId));
+    if (archivedConversation) {
+      setArchivedConversations((previous) => [{
+        ...archivedConversation,
+        archivedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      }, ...previous]);
+    }
     setActiveConversationId(generalConversation.id);
     setMessages(await loadConversationMessages(currentUid, generalConversation.id));
+  };
+
+  const restoreArchivedConversation = async (conversationId: string) => {
+    const currentUid = user?.uid || userProfile?.uid;
+    if (!currentUid) throw new Error('Konuşmayı geri yüklemek için giriş yapmanız gerekiyor.');
+    await restoreConversation(currentUid, conversationId);
+    const restored = archivedConversations.find((conversation) => conversation.id === conversationId);
+    if (!restored) return;
+    setArchivedConversations((previous) => previous.filter((conversation) => conversation.id !== conversationId));
+    setConversations((previous) => [{ ...restored, archivedAt: undefined, updatedAt: new Date().toISOString() }, ...previous]);
   };
 
   const deleteActiveConversation = async () => {
@@ -1541,6 +1567,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         renameActiveConversation,
         archiveActiveConversation,
         deleteActiveConversation,
+        archivedConversations,
+        restoreArchivedConversation,
         clearConversationHistory,
         sendMessage,
         isChatLoading,

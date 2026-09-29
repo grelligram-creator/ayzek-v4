@@ -135,6 +135,14 @@ export async function listConversations(uid: string): Promise<ConversationSummar
     .filter((conversation) => !conversation.archivedAt);
 }
 
+export async function listArchivedConversations(uid: string): Promise<ConversationSummary[]> {
+  const conversationsRef = collection(db, 'users', uid, 'conversations');
+  const snapshot = await getDocs(query(conversationsRef, orderBy('updatedAt', 'desc'), limit(50)));
+  return snapshot.docs
+    .map((entry) => conversationFromSnapshot(entry.id, entry.data()))
+    .filter((conversation) => Boolean(conversation.archivedAt));
+}
+
 export async function createConversation(uid: string, title = 'Yeni konuşma'): Promise<ConversationSummary> {
   const now = new Date().toISOString();
   const ref = doc(collection(db, 'users', uid, 'conversations'));
@@ -160,6 +168,13 @@ export async function archiveConversation(uid: string, conversationId: string): 
   }
   await setDoc(doc(db, 'users', uid, 'conversations', conversationId), {
     archivedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
+}
+
+export async function restoreConversation(uid: string, conversationId: string): Promise<void> {
+  await setDoc(doc(db, 'users', uid, 'conversations', conversationId), {
+    archivedAt: null,
     updatedAt: new Date().toISOString(),
   }, { merge: true });
 }

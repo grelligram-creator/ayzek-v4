@@ -15,6 +15,7 @@ import {
   Pencil,
   Archive,
   Trash2,
+  ArchiveRestore,
 } from 'lucide-react';
 
 export const AyzekAssistantModal: React.FC = () => {
@@ -37,13 +38,22 @@ export const AyzekAssistantModal: React.FC = () => {
     pendingAction,
     approvePendingAction,
     dismissPendingAction,
+    archivedConversations,
+    restoreArchivedConversation,
     balance,
     checkin,
   } = useApp();
 
   const [input, setInput] = useState('');
   const [isListening, setIsListening] = useState(false);
+  const [showArchived, setShowArchived] = useState(false);
+  const [messageSearch, setMessageSearch] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const normalizedMessageSearch = messageSearch.trim().toLocaleLowerCase('tr-TR');
+  const visibleMessages = normalizedMessageSearch
+    ? messages.filter((message) => message.content.toLocaleLowerCase('tr-TR').includes(normalizedMessageSearch))
+    : messages;
 
   useEffect(() => {
     if (isAssistantOpen) {
@@ -205,6 +215,9 @@ export const AyzekAssistantModal: React.FC = () => {
                 >
                   <Trash2 className="w-3 h-3" />
                 </button>
+                <button type="button" onClick={() => setShowArchived((value) => !value)} className="rounded-lg border border-rose-500/30 p-1 text-rose-200 hover:text-white" aria-label="Arşivlenmiş konuşmalar">
+                  <ArchiveRestore className="w-3 h-3" />
+                </button>
               </div>
             </div>
           </div>
@@ -239,9 +252,31 @@ export const AyzekAssistantModal: React.FC = () => {
           </div>
         )}
 
+        {showArchived && (
+          <div className="mx-4 mt-3 rounded-2xl border border-rose-500/25 bg-[#14060a] p-3 text-xs text-rose-100">
+            <p className="font-bold">Arşivlenmiş konuşmalar</p>
+            {archivedConversations.length === 0 ? <p className="mt-1 text-rose-200/60">Arşivlenmiş konuşma yok.</p> : <div className="mt-2 space-y-1">{archivedConversations.map((conversation) => <div key={conversation.id} className="flex items-center justify-between gap-2"><span className="truncate">{conversation.title}</span><button type="button" onClick={() => restoreArchivedConversation(conversation.id).catch(() => undefined)} className="rounded-lg border border-rose-500/30 px-2 py-1 text-[11px] font-bold text-rose-200">Geri yükle</button></div>)}</div>}
+          </div>
+        )}
+
+        <div className="mx-4 mt-3">
+          <label className="sr-only" htmlFor="conversation-message-search">Bu konuşmada ara</label>
+          <input
+            id="conversation-message-search"
+            type="search"
+            value={messageSearch}
+            onChange={(event) => setMessageSearch(event.target.value)}
+            placeholder="Bu konuşmada ara"
+            className="w-full rounded-xl border border-rose-500/25 bg-black/20 px-3 py-2 text-xs text-white outline-none placeholder:text-rose-200/45 focus:border-rose-400/60"
+          />
+          {normalizedMessageSearch && (
+            <p className="mt-1 text-[11px] text-rose-200/65">{visibleMessages.length} mesaj bulundu</p>
+          )}
+        </div>
+
         {/* Message stream */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar">
-          {messages.map((msg) => {
+          {visibleMessages.map((msg) => {
             const isUser = msg.role === 'user';
             return (
               <div
@@ -292,6 +327,10 @@ export const AyzekAssistantModal: React.FC = () => {
               </div>
             );
           })}
+
+          {normalizedMessageSearch && visibleMessages.length === 0 && !isChatLoading && (
+            <p className="py-8 text-center text-xs text-rose-200/60">Bu konuşmada eşleşen mesaj yok.</p>
+          )}
 
           {isChatLoading && (
             <div className="flex gap-3 justify-start items-center text-xs text-rose-300">
