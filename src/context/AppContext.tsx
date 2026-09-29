@@ -5,6 +5,8 @@ import {
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
+  sendEmailVerification,
+  sendPasswordResetEmail,
   updateProfile,
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
@@ -59,6 +61,7 @@ interface AppContextType {
   setIsAuthModalOpen: (open: boolean) => void;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
   logout: () => Promise<void>;
   updateProfileInfo: (details: Partial<UserProfile>) => Promise<void>;
 
@@ -813,6 +816,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         email: cred.user.email,
         displayName: name,
       });
+      await sendEmailVerification(cred.user).catch((error) => {
+        console.warn('E-posta doğrulama bağlantısı gönderilemedi:', error);
+      });
     } catch {
       setIsAuthLoading(false);
       throw new Error('Hesap oluşturulamadı. Lütfen Firebase yapılandırmasını kontrol edin.');
@@ -820,13 +826,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setUser(resolvedUser);
     setUserProfile(resolvedProfile);
-    showSyncNotification(`Hesabınız oluşturuldu: ${resolvedProfile.displayName}`);
+    showSyncNotification(`Hesabınız oluşturuldu: ${resolvedProfile.displayName}. Doğrulama e-postasını kontrol edin.`);
     setIsAuthLoading(false);
 
     // Launch First Stars Onboarding
     setTimeout(() => {
       setIsOnboardingOpen(true);
     }, 400);
+  };
+
+  const requestPasswordReset = async (email: string) => {
+    const normalizedEmail = email.trim();
+    if (!normalizedEmail) throw new Error('Parola sıfırlama için e-posta adresinizi girin.');
+    try {
+      await sendPasswordResetEmail(auth, normalizedEmail);
+    } catch {
+      throw new Error('Sıfırlama bağlantısı gönderilemedi. Firebase e-posta sağlayıcısını ve adresinizi kontrol edin.');
+    }
   };
 
   const logout = async () => {
@@ -1298,6 +1314,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setIsAuthModalOpen,
         loginWithEmail,
         registerWithEmail,
+        requestPasswordReset,
         logout,
         updateProfileInfo,
         autonomousLogs,

@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, setIsAuthModalOpen, loginWithEmail, registerWithEmail, user } = useApp();
+  const { isAuthModalOpen, setIsAuthModalOpen, loginWithEmail, registerWithEmail, requestPasswordReset, user } = useApp();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -45,6 +45,19 @@ export const AuthModal: React.FC = () => {
       setIsAuthModalOpen(false);
     } catch (err: any) {
       setError(err instanceof Error ? err.message : 'Kimlik doğrulama sırasında bir hata oluştu.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordReset = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      await requestPasswordReset(email);
+      setError('Sıfırlama bağlantısı e-posta adresinize gönderildi.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Sıfırlama bağlantısı gönderilemedi.');
     } finally {
       setIsLoading(false);
     }
@@ -86,7 +99,7 @@ export const AuthModal: React.FC = () => {
             <span>•</span>
             <span className="flex items-center gap-1">
               <Zap className="w-3.5 h-3.5 text-rose-400" />
-              Canlı Senkronize
+              Güvenli oturum
             </span>
           </div>
         </div>
@@ -193,6 +206,17 @@ export const AuthModal: React.FC = () => {
             <span>{isLoading ? 'İşleniyor...' : isRegister ? 'Hesap Oluştur ve Başla' : 'Giriş Yap'}</span>
             <ArrowRight className="w-4 h-4" />
           </button>
+
+          {!isRegister && (
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={handlePasswordReset}
+              className="mx-auto block text-xs font-semibold text-rose-300 hover:text-white disabled:opacity-50"
+            >
+              Şifremi unuttum
+            </button>
+          )}
 
         </form>
       </div>
