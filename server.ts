@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import { GoogleGenAI, Type } from '@google/genai';
 import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth as getAdminAuth, DecodedIdToken } from 'firebase-admin/auth';
+import { getFirestore as getAdminFirestore } from 'firebase-admin/firestore';
 
 dotenv.config();
 
@@ -32,6 +33,12 @@ function initializeFirebaseAdmin() {
 }
 
 const adminAuth = initializeFirebaseAdmin();
+let adminDb: ReturnType<typeof getAdminFirestore> | null = null;
+try {
+  if (adminAuth) adminDb = getAdminFirestore();
+} catch (error) {
+  console.warn('Firebase Admin Firestore başlatılamadı:', error instanceof Error ? error.message : error);
+}
 
 async function startServer() {
   const app = express();
@@ -96,11 +103,31 @@ async function startServer() {
   });
 
   app.get('/api/ready', (_req, res) => {
-    const ready = Boolean(process.env.GEMINI_API_KEY && adminAuth);
+    const ready = Boolean(process.env.GEMINI_API_KEY && adminAuth && adminDb);
     res.status(ready ? 200 : 503).json({
       status: ready ? 'ready' : 'not_ready',
-      checks: { gemini: Boolean(process.env.GEMINI_API_KEY), firebaseAdmin: Boolean(adminAuth) },
+      checks: { gemini: Boolean(process.env.GEMINI_API_KEY), firebaseAdmin: Boolean(adminAuth), firebaseFirestore: Boolean(adminDb) },
     });
+  });
+
+  app.delete('/api/account', requireVerifiedUser, rateLimit(3, 60 * 60_000), async (req: AuthenticatedRequest, res) => {
+    if (req.body?.confirmation !== 'DELETE_MY_ACCOUNT') {
+      return res.status(400).json({ error: 'Hesap silme onayı geçersiz.', requestId: req.requestId });
+    }
+    if (!adminAuth || !adminDb || !req.authUser) {
+      return res.status(503).json({ error: 'Hesap silme hizmeti yapılandırılmadı.', requestId: req.requestId });
+    }
+
+    try {
+      const userId = req.authUser.uid;
+      await adminDb.recursiveDelete(adminDb.collection('users').doc(userId));
+      await adminDb.recursiveDelete(adminDb.collection('userData').doc(userId));
+      await adminAuth.deleteUser(userId);
+      return res.status(204).send();
+    } catch (error) {
+      console.error('Hesap silme başarısız', { requestId: req.requestId, userId: req.authUser.uid, error: error instanceof Error ? error.message : 'unknown' });
+      return res.status(500).json({ error: 'Hesap silinemedi. Lütfen destek ekibiyle iletişime geçin.', requestId: req.requestId });
+    }
   });
 
   // Multi-model Gemini caller with fallback to avoid quota exhaustion

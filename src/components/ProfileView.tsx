@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
+import { authenticatedFetch } from '../lib/api';
 import { AyzekLogo } from './AyzekLogo';
 import { deleteMemory, exportUserData, listMemories, saveExplicitMemory } from '../services/firestoreService';
 import { MemoryItem } from '../types';
@@ -48,6 +49,7 @@ export const ProfileView: React.FC = () => {
   const [memoryNote, setMemoryNote] = useState('');
   const [memoryError, setMemoryError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.uid) {
@@ -106,6 +108,25 @@ export const ProfileView: React.FC = () => {
       URL.revokeObjectURL(url);
     } catch {
       setExportError('Veriler dışa aktarılamadı. Lütfen tekrar deneyin.');
+    }
+  };
+
+  const handleAccountDeletion = async () => {
+    const confirmation = window.prompt('Bu işlem geri alınamaz. Devam etmek için DELETE_MY_ACCOUNT yazın.');
+    if (confirmation !== 'DELETE_MY_ACCOUNT') return;
+    setDeleteError(null);
+    try {
+      const response = await authenticatedFetch('/api/account', {
+        method: 'DELETE',
+        body: JSON.stringify({ confirmation }),
+      });
+      if (!response.ok) {
+        const body = await response.json().catch(() => ({}));
+        throw new Error(body.error || 'Hesap silinemedi.');
+      }
+      await logout();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Hesap silinemedi.');
     }
   };
 
@@ -359,6 +380,16 @@ export const ProfileView: React.FC = () => {
         </div>
         {exportError && <p className="text-xs text-amber-300">{exportError}</p>}
         <p className="text-[11px] text-rose-200/50">Şifre, erişim anahtarı ve token alanları dışa aktarımın dışında tutulur.</p>
+        <div className="pt-2 border-t border-rose-500/15 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold text-rose-200">Hesabı sil</p>
+            <p className="text-[11px] text-rose-200/55">Bu işlem profilinizi, çalışma alanınızı, konuşmalarınızı ve hafıza notlarınızı kalıcı olarak siler.</p>
+          </div>
+          <button type="button" onClick={handleAccountDeletion} className="shrink-0 px-3 py-2 rounded-xl border border-rose-500/50 text-xs font-bold text-rose-200 hover:bg-rose-500/15">
+            Hesabı sil
+          </button>
+        </div>
+        {deleteError && <p className="text-xs text-amber-300">{deleteError}</p>}
       </section>
 
       {/* 3. iOS App installation card */}
