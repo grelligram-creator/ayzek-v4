@@ -34,12 +34,10 @@ export const ProfileView: React.FC = () => {
     updateProfileInfo,
   } = useApp();
 
-  const [jobTitle, setJobTitle] = useState(userProfile?.jobTitle || 'Kurucu & Baş Yazılım Mimarı');
-  const [company, setCompany] = useState(userProfile?.company || 'Grispi Inc.');
-  const [location, setLocation] = useState(userProfile?.location || 'Moda, Kadıköy / İstanbul');
-  const [lifeMission, setLifeMission] = useState(
-    userProfile?.lifeMission || 'Kurumsal zeka ile ruhsal huzuru dengede tutarak yüksek etki üretmek.'
-  );
+  const [jobTitle, setJobTitle] = useState(userProfile?.jobTitle || '');
+  const [company, setCompany] = useState(userProfile?.company || '');
+  const [location, setLocation] = useState(userProfile?.location || '');
+  const [lifeMission, setLifeMission] = useState(userProfile?.lifeMission || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
   const handleSave = (e: React.FormEvent) => {
@@ -61,7 +59,7 @@ export const ProfileView: React.FC = () => {
         <div className="flex items-center gap-4">
           <div className="relative">
             <div className="w-16 h-16 rounded-full ring-2 ring-rose-400 p-0.5 crimson-orb-glow text-white flex items-center justify-center font-black text-2xl shadow-xl shadow-rose-950/70 shrink-0">
-              {userProfile?.displayName?.charAt(0) || 'G'}
+              {userProfile?.displayName?.charAt(0) || '?'}
             </div>
             <span className="absolute bottom-0 right-0 w-3.5 h-3.5 rounded-full bg-emerald-400 ring-2 ring-[#080204]" />
           </div>
@@ -69,10 +67,10 @@ export const ProfileView: React.FC = () => {
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight truncate">
-                {userProfile?.displayName || 'Görkem Elligram'}
+                {userProfile?.displayName || 'Profilini tamamla'}
               </h2>
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 uppercase">
-                {userProfile?.subscriptionTier || 'PRO'}
+                {(userProfile?.subscriptionTier || 'free').toUpperCase()}
               </span>
             </div>
             <p className="text-xs text-rose-200/70 mt-0.5 truncate">
@@ -80,7 +78,7 @@ export const ProfileView: React.FC = () => {
             </p>
             <div className="flex items-center gap-1.5 text-xs text-rose-200/60 mt-1">
               <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />
-              <span>{userProfile?.location || 'Moda, Kadıköy / İstanbul'}</span>
+              <span>{userProfile?.location || 'Konum eklenmedi'}</span>
             </div>
           </div>
         </div>
@@ -100,7 +98,7 @@ export const ProfileView: React.FC = () => {
                   AYZEK OS BİLİŞSEL KART
                 </span>
                 <span className="text-[10px] text-rose-200/60 font-mono tracking-wider">
-                  {userProfile?.membershipId || 'AYZK-2026-9821-GRSP'}
+                  {userProfile?.membershipId || 'Üyelik kimliği oluşturulmadı'}
                 </span>
               </div>
             </div>
@@ -118,7 +116,7 @@ export const ProfileView: React.FC = () => {
             </div>
 
             <div className="flex items-center gap-1.5 text-rose-200/60 text-xs">
-              <span className="font-mono text-[10px] uppercase tracking-widest">NFC / LIVE SYNC</span>
+              <span className="font-mono text-[10px] uppercase tracking-widest">GÜVENLİ HESAP</span>
               <Zap className="w-4 h-4 text-rose-400 animate-pulse" />
             </div>
           </div>
@@ -144,7 +142,7 @@ export const ProfileView: React.FC = () => {
               </span>
               <div className="flex items-center gap-1.5 justify-end mt-0.5 text-xs font-bold text-rose-100">
                 <CreditCard className="w-4 h-4 text-rose-400" />
-                <span>{userProfile?.cardBrand || 'Mastercard Black'} •••• {userProfile?.cardLast4 || '9821'}</span>
+                <span>{userProfile?.cardBrand && userProfile?.cardLast4 ? `${userProfile.cardBrand} •••• ${userProfile.cardLast4}` : 'Ödeme altyapısı bağlı değil'}</span>
               </div>
             </div>
           </div>
@@ -152,16 +150,16 @@ export const ProfileView: React.FC = () => {
           {/* Quota breakdown */}
           <div className="relative z-10 pt-3 border-t border-rose-500/20 space-y-2">
             <div className="flex items-center justify-between text-[11px]">
-              <span className="text-rose-200/70">Yapay Zeka Bilişsel Kota (Gemini 3.8 Flash):</span>
-              <span className="font-bold text-rose-300 font-mono">1.25M / 1.50M Token (%83)</span>
+              <span className="text-rose-200/70">Yapay zekâ kullanım durumu:</span>
+              <span className="font-bold text-rose-300 font-mono">Henüz ölçülmedi</span>
             </div>
             <div className="w-full h-1.5 bg-black/40 rounded-full overflow-hidden border border-rose-500/20">
-              <div className="h-full coral-gradient rounded-full w-[83%]" />
+              <div className="h-full coral-gradient rounded-full w-0" />
             </div>
 
             <div className="pt-2 flex items-center justify-between flex-wrap gap-2 text-[11px] text-rose-200/70">
               <span>
-                Yenilenme: {userProfile?.renewalDate || '28 Ekim 2026'} · Kurumsal Bilişsel Üyelik
+                {userProfile?.renewalDate ? `Yenilenme: ${userProfile.renewalDate}` : 'Abonelik işlemleri yakında sunulacak.'}
               </span>
               <button
                 onClick={() => setActiveTab('pricing')}
@@ -185,7 +183,7 @@ export const ProfileView: React.FC = () => {
                 Bağlı Cihazlar
               </span>
               <span className="text-xs font-bold text-white">
-                iPhone 16 Pro (PWA) & Mac
+                Henüz cihaz bilgisi yok
               </span>
             </div>
           </div>
@@ -199,7 +197,7 @@ export const ProfileView: React.FC = () => {
                 Arka Plan Otonom Motor
               </span>
               <span className="text-xs font-bold text-emerald-300">
-                24/7 Canlı Eşitleme Aktif
+                Bağlantı kurulmadı
               </span>
             </div>
           </div>
@@ -226,7 +224,7 @@ export const ProfileView: React.FC = () => {
         </div>
 
         <p className="text-xs text-rose-200/70 leading-relaxed">
-          AYZEK, kararlarında ve proaktif bildirimlerinde bu hafıza verilerini kullanarak sana sıradan bir asistan değil, gerçek bir bilişsel yoldaş ve sırdaş olur.
+          AYZEK yalnızca eklediğiniz profil bilgileri ve açıkça izin verdiğiniz bağlantılar üzerinden kişiselleştirilir.
         </p>
 
         {/* Hobbies badges */}
@@ -235,7 +233,8 @@ export const ProfileView: React.FC = () => {
             İlgi Alanları & Hobiler:
           </span>
           <div className="flex items-center gap-2 flex-wrap">
-            {(userProfile?.hobbies || ['Yelken & Deniz', 'Filtre Kahve', 'Bilişsel Bilim']).map((h, i) => (
+            {(userProfile?.hobbies || []).length === 0 && <span className="text-xs text-rose-200/60">Henüz ilgi alanı eklenmedi.</span>}
+            {(userProfile?.hobbies || []).map((h, i) => (
               <span
                 key={i}
                 className="px-3.5 py-1 rounded-full text-xs font-medium bg-[#14060a]/90 text-rose-200 border border-rose-500/25"
@@ -252,7 +251,7 @@ export const ProfileView: React.FC = () => {
             Hayat Misyonu & Değerler:
           </span>
           <p className="text-xs italic text-rose-100 leading-relaxed">
-            "{userProfile?.lifeMission || 'Kurumsal zeka ile ruhsal huzuru dengede tutarak yüksek etki üretmek.'}"
+            {userProfile?.lifeMission ? `“${userProfile.lifeMission}”` : 'Henüz hayat misyonu veya değer notu eklenmedi.'}
           </p>
         </div>
       </section>

@@ -32,7 +32,7 @@ export const PricingView: React.FC = () => {
           AYZEK OS Üyelik Paketleri
         </h1>
         <p className="text-xs sm:text-sm text-rose-200/70 max-w-xl mx-auto leading-relaxed">
-          Zihinsel berraklık, iş-özel hayat dengesi ve kurumsal canlı senkronizasyon için ihtiyacınıza uygun paketi seçin. 14 gün koşulsuz deneme imkanı.
+          Paketleri karşılaştırabilirsiniz. Ödeme ve abonelik aktivasyonu henüz bu sürümde açık değildir.
         </p>
 
         {/* Monthly / Yearly Switch in Smoked Glass */}
@@ -103,7 +103,7 @@ export const PricingView: React.FC = () => {
                 {/* Price Display */}
                 <div className="pt-3 pb-2 border-b border-rose-500/20">
                   <span className="text-[10px] uppercase font-bold tracking-wider text-rose-300/60 block font-mono">
-                    Nihai Lisans Bedeli
+                    Plan fiyatı (bilgilendirme)
                   </span>
                   <div className="flex items-baseline gap-1 mt-1">
                     <span className="text-3xl sm:text-4xl font-black text-white font-mono">
@@ -115,7 +115,7 @@ export const PricingView: React.FC = () => {
                   </div>
                   {billingCycle === 'yearly' && (
                     <span className="text-[11px] text-emerald-400 font-medium block mt-1">
-                      Nihai Yıllık Toplam: {plan.currency}{plan.priceYearly} (2 Ay Hediye)
+                      Yıllık gösterim: {plan.currency}{plan.priceYearly}
                     </span>
                   )}
                 </div>
@@ -157,7 +157,7 @@ export const PricingView: React.FC = () => {
                   ) : (
                     <>
                       <CreditCard className="w-4 h-4" />
-                      <span>{plan.name}'e Geç</span>
+                      <span>Planı İncele</span>
                     </>
                   )}
                 </button>
@@ -172,24 +172,24 @@ export const PricingView: React.FC = () => {
         <div className="p-4 rounded-2xl bg-[#14060a]/90 border border-rose-500/20 flex items-center gap-3">
           <Shield className="w-5 h-5 text-emerald-400 shrink-0" />
           <div>
-            <h5 className="text-xs font-bold text-white">14 Gün İade Garantisi</h5>
-            <p className="text-[11px] text-rose-200/60">Koşulsuz para iade güvencesi</p>
+            <h5 className="text-xs font-bold text-white">Ödeme kapalı</h5>
+            <p className="text-[11px] text-rose-200/60">Bu ekrandan ücret veya ödeme alınmaz</p>
           </div>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#14060a]/90 border border-rose-500/20 flex items-center gap-3">
           <Lock className="w-5 h-5 text-rose-400 shrink-0" />
           <div>
-            <h5 className="text-xs font-bold text-white">256-Bit Uçtan Uca Şifreleme</h5>
-            <p className="text-[11px] text-rose-200/60">Tüm verileriniz izole kasada</p>
+            <h5 className="text-xs font-bold text-white">Hesap güvenliği</h5>
+            <p className="text-[11px] text-rose-200/60">Erişim, doğrulanmış oturumla sınırlandırılır</p>
           </div>
         </div>
 
         <div className="p-4 rounded-2xl bg-[#14060a]/90 border border-rose-500/20 flex items-center gap-3">
           <Headphones className="w-5 h-5 text-amber-400 shrink-0" />
           <div>
-            <h5 className="text-xs font-bold text-white">Öncelikli Yönetici Desteği</h5>
-            <p className="text-[11px] text-rose-200/60">VIP birebir mimari danışmanlık</p>
+            <h5 className="text-xs font-bold text-white">Geliştirme aşamasında</h5>
+            <p className="text-[11px] text-rose-200/60">Plan ayrıntıları yayına alınmadan önce doğrulanacak</p>
           </div>
         </div>
       </div>
