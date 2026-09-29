@@ -127,6 +127,7 @@ interface AppContextType {
   switchConversation: (conversationId: string) => Promise<void>;
   renameActiveConversation: (title: string) => Promise<void>;
   archiveActiveConversation: () => Promise<void>;
+  deleteActiveConversation: () => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
   isChatLoading: boolean;
   isAssistantOpen: boolean;
@@ -1175,6 +1176,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMessages(await loadConversationMessages(currentUid, generalConversation.id));
   };
 
+  const deleteActiveConversation = async () => {
+    if (activeConversationId === generalConversation.id) {
+      throw new Error('Genel konuşma silinemez.');
+    }
+    const response = await authenticatedFetch(`/api/conversations/${encodeURIComponent(activeConversationId)}`, { method: 'DELETE' });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || 'Konuşma silinemedi.');
+    }
+    setConversations((previous) => previous.filter((conversation) => conversation.id !== activeConversationId));
+    setActiveConversationId(generalConversation.id);
+    const currentUid = user?.uid || userProfile?.uid;
+    setMessages(currentUid ? await loadConversationMessages(currentUid, generalConversation.id) : []);
+  };
+
   const openAssistantWithQuery = (query: string) => {
     setIsAssistantOpen(true);
     sendMessage(query);
@@ -1422,6 +1438,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         switchConversation,
         renameActiveConversation,
         archiveActiveConversation,
+        deleteActiveConversation,
         sendMessage,
         isChatLoading,
         isAssistantOpen,

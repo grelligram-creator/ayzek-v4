@@ -14,6 +14,7 @@ import {
   Plus,
   Pencil,
   Archive,
+  Trash2,
 } from 'lucide-react';
 
 export const AyzekAssistantModal: React.FC = () => {
@@ -27,6 +28,7 @@ export const AyzekAssistantModal: React.FC = () => {
     switchConversation,
     renameActiveConversation,
     archiveActiveConversation,
+    deleteActiveConversation,
     sendMessage,
     isChatLoading,
     balance,
@@ -75,6 +77,12 @@ export const AyzekAssistantModal: React.FC = () => {
     if (activeConversationId === 'default') return;
     if (!window.confirm('Bu konuşma arşivlenecek. Devam etmek istiyor musunuz?')) return;
     await archiveActiveConversation();
+  };
+
+  const handleDeleteConversation = async () => {
+    if (activeConversationId === 'default') return;
+    if (!window.confirm('Bu konuşma ve tüm mesajları kalıcı olarak silinecek. Devam etmek istiyor musunuz?')) return;
+    await deleteActiveConversation();
   };
 
   // Web Speech API for voice dictation
@@ -181,6 +189,15 @@ export const AyzekAssistantModal: React.FC = () => {
                   className="rounded-lg border border-rose-500/30 p-1 text-rose-200 hover:text-white hover:bg-rose-500/10 disabled:opacity-40"
                 >
                   <Archive className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Konuşmayı kalıcı olarak sil"
+                  onClick={() => handleDeleteConversation().catch(() => undefined)}
+                  disabled={isChatLoading || activeConversationId === 'default'}
+                  className="rounded-lg border border-rose-500/30 p-1 text-rose-200 hover:text-white hover:bg-rose-500/10 disabled:opacity-40"
+                >
+                  <Trash2 className="w-3 h-3" />
                 </button>
               </div>
             </div>
