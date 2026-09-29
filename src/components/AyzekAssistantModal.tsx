@@ -23,6 +23,9 @@ export const AyzekAssistantModal: React.FC = () => {
     isAssistantOpen,
     setIsAssistantOpen,
     messages,
+    hasOlderMessages,
+    isLoadingOlderMessages,
+    loadOlderMessages,
     conversations,
     activeConversationId,
     startConversation,
@@ -276,6 +279,11 @@ export const AyzekAssistantModal: React.FC = () => {
 
         {/* Message stream */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar">
+          {hasOlderMessages && !normalizedMessageSearch && (
+            <button type="button" onClick={() => loadOlderMessages().catch(() => undefined)} disabled={isLoadingOlderMessages} className="mx-auto block rounded-lg border border-rose-500/30 px-3 py-1.5 text-[11px] font-bold text-rose-200 hover:bg-rose-500/10 disabled:opacity-50">
+              {isLoadingOlderMessages ? 'Mesajlar yükleniyor…' : 'Daha eski mesajları yükle'}
+            </button>
+          )}
           {visibleMessages.map((msg) => {
             const isUser = msg.role === 'user';
             return (

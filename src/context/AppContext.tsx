@@ -42,7 +42,7 @@ import {
   createConversation,
   listArchivedConversations,
   archiveConversation,
-  loadConversationMessages,
+  loadConversationMessagesPage,
   renameConversation,
   restoreConversation,
   saveUserData,
@@ -134,6 +134,9 @@ interface AppContextType {
 
   // AI Chat & Sync
   messages: ChatMessage[];
+  hasOlderMessages: boolean;
+  isLoadingOlderMessages: boolean;
+  loadOlderMessages: () => Promise<void>;
   conversations: ConversationSummary[];
   activeConversationId: string;
   startConversation: () => Promise<void>;
@@ -660,6 +663,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Assistant & Messages
   const generalConversation: ConversationSummary = { id: 'default', title: 'Genel konuşma', createdAt: '', updatedAt: '' };
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [hasOlderMessages, setHasOlderMessages] = useState(false);
+  const [isLoadingOlderMessages, setIsLoadingOlderMessages] = useState(false);
   const [conversations, setConversations] = useState<ConversationSummary[]>([generalConversation]);
   const [activeConversationId, setActiveConversationId] = useState('default');
   const [archivedConversations, setArchivedConversations] = useState<ConversationSummary[]>([]);
@@ -767,8 +772,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             generalConversation,
             ...storedConversations.filter((conversation) => conversation.id !== generalConversation.id),
           ]);
-          const storedMessages = await loadConversationMessages(firebaseUser.uid, generalConversation.id);
-          setMessages(storedMessages);
+          const storedMessages = await loadConversationMessagesPage(firebaseUser.uid, generalConversation.id);
+          setMessages(storedMessages.messages);
+          setHasOlderMessages(storedMessages.hasMore);
         } catch (err) {
           console.error('Firestore profile sync error:', err);
         } finally {
@@ -777,6 +783,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else {
         setIsWorkspaceHydrated(false);
         setMessages([]);
+        setHasOlderMessages(false);
         setNotifications([]);
         setConversations([generalConversation]);
         setArchivedConversations([]);
@@ -892,6 +899,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUserProfile(null);
     setIsWorkspaceHydrated(false);
     setMessages([]);
+    setHasOlderMessages(false);
     setConversations([generalConversation]);
     setArchivedConversations([]);
     setActiveConversationId('default');
@@ -1203,6 +1211,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setConversations((previous) => [conversation, ...previous]);
     setActiveConversationId(conversation.id);
     setMessages([]);
+    setHasOlderMessages(false);
   };
 
   const switchConversation = async (conversationId: string) => {
@@ -1210,8 +1219,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!currentUid) throw new Error('Konuşmaya erişmek için giriş yapmanız gerekiyor.');
     setMessages([]);
     setActiveConversationId(conversationId);
-    const storedMessages = await loadConversationMessages(currentUid, conversationId);
-    setMessages(storedMessages);
+    const storedMessages = await loadConversationMessagesPage(currentUid, conversationId);
+    setMessages(storedMessages.messages);
+    setHasOlderMessages(storedMessages.hasMore);
+  };
+
+  const loadOlderMessages = async () => {
+    const currentUid = user?.uid || userProfile?.uid;
+    const beforeCreatedAt = messages[0]?.createdAt;
+    if (!currentUid || !beforeCreatedAt || !hasOlderMessages || isLoadingOlderMessages) return;
+    setIsLoadingOlderMessages(true);
+    try {
+      const page = await loadConversationMessagesPage(currentUid, activeConversationId, beforeCreatedAt);
+      setMessages((previous) => [...page.messages, ...previous]);
+      setHasOlderMessages(page.hasMore);
+    } finally {
+      setIsLoadingOlderMessages(false);
+    }
   };
 
   const renameActiveConversation = async (title: string) => {
@@ -1244,7 +1268,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }, ...previous]);
     }
     setActiveConversationId(generalConversation.id);
-    setMessages(await loadConversationMessages(currentUid, generalConversation.id));
+    const generalMessages = await loadConversationMessagesPage(currentUid, generalConversation.id);
+    setMessages(generalMessages.messages);
+    setHasOlderMessages(generalMessages.hasMore);
   };
 
   const restoreArchivedConversation = async (conversationId: string) => {
@@ -1269,7 +1295,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setConversations((previous) => previous.filter((conversation) => conversation.id !== activeConversationId));
     setActiveConversationId(generalConversation.id);
     const currentUid = user?.uid || userProfile?.uid;
-    setMessages(currentUid ? await loadConversationMessages(currentUid, generalConversation.id) : []);
+    if (currentUid) {
+      const generalMessages = await loadConversationMessagesPage(currentUid, generalConversation.id);
+      setMessages(generalMessages.messages);
+      setHasOlderMessages(generalMessages.hasMore);
+    } else {
+      setMessages([]);
+      setHasOlderMessages(false);
+    }
   };
 
   const clearConversationHistory = async () => {
@@ -1560,6 +1593,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         services,
         toggleService,
         messages,
+        hasOlderMessages,
+        isLoadingOlderMessages,
+        loadOlderMessages,
         conversations,
         activeConversationId,
         startConversation,

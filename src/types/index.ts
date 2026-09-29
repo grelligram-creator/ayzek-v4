@@ -194,6 +194,7 @@ export interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
+  createdAt?: string;
   actionsApplied?: string[];
 }
 

@@ -1,4 +1,4 @@
-import { collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, setDoc, startAfter } from 'firebase/firestore';
 import { db } from '../lib/firebase';
 import { UserProfile, MoodCheckin, TaskItem, DilemmaItem, WorkLifeBalance, ConnectedService, CoachGoal, ChatMessage, ConversationSummary, MemoryItem, NotificationItem } from '../types';
 
@@ -268,19 +268,40 @@ export async function exportUserData(uid: string): Promise<Record<string, unknow
   };
 }
 
-export async function loadConversationMessages(uid: string, conversationId = defaultConversationId): Promise<ChatMessage[]> {
+export interface ConversationMessagePage {
+  messages: ChatMessage[];
+  hasMore: boolean;
+}
+
+export async function loadConversationMessagesPage(
+  uid: string,
+  conversationId = defaultConversationId,
+  beforeCreatedAt?: string,
+): Promise<ConversationMessagePage> {
   const messagesRef = collection(db, 'users', uid, 'conversations', conversationId, 'messages');
-  const snapshot = await getDocs(query(messagesRef, orderBy('createdAt', 'asc'), limit(100)));
-  return snapshot.docs.map((entry) => {
-    const data = entry.data();
-    return {
-      id: entry.id,
-      role: data.role === 'user' ? 'user' : 'assistant',
-      content: String(data.content || ''),
-      timestamp: String(data.timestamp || ''),
-      actionsApplied: Array.isArray(data.actionsApplied) ? data.actionsApplied : undefined,
-    };
-  });
+  const pageQuery = beforeCreatedAt
+    ? query(messagesRef, orderBy('createdAt', 'desc'), startAfter(beforeCreatedAt), limit(51))
+    : query(messagesRef, orderBy('createdAt', 'desc'), limit(51));
+  const snapshot = await getDocs(pageQuery);
+  const page = snapshot.docs.slice(0, 50);
+  return {
+    hasMore: snapshot.docs.length > page.length,
+    messages: page.reverse().map((entry) => {
+      const data = entry.data();
+      return {
+        id: entry.id,
+        role: data.role === 'user' ? 'user' : 'assistant',
+        content: String(data.content || ''),
+        timestamp: String(data.timestamp || ''),
+        createdAt: String(data.createdAt || ''),
+        actionsApplied: Array.isArray(data.actionsApplied) ? data.actionsApplied : undefined,
+      };
+    }),
+  };
+}
+
+export async function loadConversationMessages(uid: string, conversationId = defaultConversationId): Promise<ChatMessage[]> {
+  return (await loadConversationMessagesPage(uid, conversationId)).messages;
 }
 
 export async function saveConversationMessage(uid: string, message: ChatMessage, conversationId = defaultConversationId): Promise<void> {
