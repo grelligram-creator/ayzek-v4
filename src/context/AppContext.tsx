@@ -223,7 +223,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isScanningLogs, setIsScanningLogs] = useState(false);
 
   // Proactive Insights based on location, hobbies, psychology
-  const [proactiveInsights] = useState<ProactiveInsight[]>([
+  const [proactiveInsights, setProactiveInsights] = useState<ProactiveInsight[]>([
     {
       id: 'ins-1',
       type: 'location',
@@ -315,7 +315,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   // Bio rhythm
-  const [bioRhythm] = useState<BiologicalRhythm>({
+  const [bioRhythm, setBioRhythm] = useState<BiologicalRhythm>({
     phase: 'Foliküler Evre (Yüksek Enerji & Odak)',
     day: 8,
     physicalAdvice: 'Kuvvet antrenmanları, yeni projelere başlama ve tempolu kardiyo için harika zaman.',
@@ -671,6 +671,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (savedData.dilemmas) setDilemmas(savedData.dilemmas);
             if (savedData.services) setServices(savedData.services);
             if (savedData.coachGoal) setCoachGoal(savedData.coachGoal);
+          } else {
+            // A new workspace starts empty. Personal-looking fixture data must
+            // never be presented as if it belonged to the signed-in user.
+            setBalance({ score: 0, status: 'Dengeli', smartGuardActive: false, cutOffTime: '18:00', connectedCount: 0 });
+            setCheckin({ energy: 'balanced', mood: 'calm', focus: 'balanced', note: '', aiAdvice: '', updatedAt: '' });
+            setTasks([]);
+            setDilemmas([]);
+            setAutonomousLogs([]);
+            setProactiveInsights([]);
+            setProactiveAlert(null);
+            setCoachGoal({
+              id: 'goal-new', title: 'İlk hedefini oluştur', category: 'Başlangıç', timeline: 'Hazır olduğunda',
+              subtext: 'AYZEK, seçtiğin hedefe göre kişisel bir plan hazırlayacak.', progress: 0, progressDelta: '',
+              quote: 'Küçük ve net bir başlangıç, sürdürülebilir bir değişimin ilk adımıdır.', microStep: 'Bir hedef belirle ve ilk adımı seç.',
+            });
+            setBioRhythm({ phase: 'Ayarlanmadı', day: 0, physicalAdvice: 'Bu alanı istersen kişisel tercihlerinle ayarlayabilirsin.', mentalAdvice: 'Henüz bir ritim değerlendirmesi yapılmadı.', nextExpectedDate: '—' });
+            setRoutineSummary({ workHours: 'Planlanmadı', completedCount: 0, remainingCount: 0, eveningFreeMinutes: 0 });
+            setServices((current) => current.map((service) => ({ ...service, account: 'Bağlantı kurulmadı', items: [], unreadCount: 0, isActive: false })));
           }
 
           const storedMessages = await loadConversationMessages(firebaseUser.uid);
@@ -779,23 +797,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Run autonomous scan in background
   const runAutonomousScan = async () => {
     setIsScanningLogs(true);
-    showSyncNotification('Otonom arka plan motoru çalıştırılıyor...');
-    await new Promise((r) => setTimeout(r, 1200));
-
-    const now = new Date();
-    const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    const newLog: AutonomousLog = {
-      id: 'auto-' + Date.now(),
-      time: timeStr,
-      title: 'Canlı Bilişsel Hafıza & Konum Taraması',
-      detail: `${userProfile?.location || 'Moda, Kadıköy'} lokasyonundaki trafik, hava durumu ve ajanda çakışmaları tarandı. 0 çakışma, verimlilik katsayısı %94.`,
-      category: 'research',
-      status: 'completed',
-    };
-
-    setAutonomousLogs((prev) => [newLog, ...prev]);
+    // No external source is queried until a provider-specific integration exists.
+    await new Promise((r) => setTimeout(r, 300));
     setIsScanningLogs(false);
-    showSyncNotification('Otonom tarama tamamlandı: 1 yeni optimizasyon.');
+    showSyncNotification('Tarama için henüz yetkilendirilmiş bir veri kaynağı yok. Önce bir servis bağlantısı kurun.');
   };
 
   const updateProfileInfo = async (details: Partial<UserProfile>) => {

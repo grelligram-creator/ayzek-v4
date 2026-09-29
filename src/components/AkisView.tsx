@@ -949,11 +949,16 @@ export const AkisView: React.FC = () => {
             </h3>
           </div>
           <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
-            Seni Tanıyan Yapay Zeka
+            Kişiselleştirme bekliyor
           </span>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+          {proactiveInsights.length === 0 && (
+            <div className="sm:col-span-2 p-5 rounded-[28px] bg-[#14060a]/90 border border-rose-500/20 text-xs text-rose-100/75 leading-relaxed">
+              Henüz kişisel öneri yok. Bir hedef, görev veya yetkilendirilmiş servis bağlantısı eklediğinizde AYZEK önerileri gerçek verilerinizden üretir.
+            </div>
+          )}
           {proactiveInsights.map((insight) => (
             <div
               key={insight.id}
@@ -1003,7 +1008,7 @@ export const AkisView: React.FC = () => {
                 OTONOM ARKA PLAN ASİSTANI (2026 MOTORU)
               </h3>
               <p className="text-[11px] text-rose-200/60">
-                Uygulama kapalıyken bile ajandanı, trafiği ve e-postalarını sessizce korur
+                Yalnızca izin verdiğiniz, desteklenen veri kaynaklarıyla çalışır
               </p>
             </div>
           </div>
@@ -1014,11 +1019,16 @@ export const AkisView: React.FC = () => {
             className="frosted-pill-button px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center gap-1.5 cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className={`w-3.5 h-3.5 ${isScanningLogs ? 'animate-spin' : ''}`} />
-            <span>{isScanningLogs ? 'Taranıyor...' : 'Şimdi Canlı Tara'}</span>
+            <span>{isScanningLogs ? 'Kontrol ediliyor...' : 'Bağlantıları Kontrol Et'}</span>
           </button>
         </div>
 
         <div className="space-y-2 pt-1">
+          {autonomousLogs.length === 0 && (
+            <p className="p-3 rounded-2xl bg-[#14060a]/90 border border-rose-500/20 text-xs text-rose-200/65">
+              Henüz işlem kaydı yok. Bağlantılar kurulmadan arka planda tarama yapılmaz.
+            </p>
+          )}
           {autonomousLogs.slice(0, 4).map((log) => (
             <div
               key={log.id}
