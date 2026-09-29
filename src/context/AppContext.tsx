@@ -832,10 +832,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const updateProfileInfo = async (details: Partial<UserProfile>) => {
-    setUserProfile((prev) => (prev ? { ...prev, ...details } : null));
+    const previousProfile = userProfile;
     const currentUid = user?.uid || userProfile?.uid;
-    if (currentUid) {
+    if (!currentUid) {
+      throw new Error('Profil kaydı için oturum açmanız gerekiyor.');
+    }
+    setUserProfile((prev) => (prev ? { ...prev, ...details } : null));
+    try {
       await updateUserProfileDetails(currentUid, details);
+    } catch (error) {
+      setUserProfile(previousProfile);
+      throw error;
     }
     showSyncNotification('Kullanıcı hafıza ve profil bilgileri güncellendi.');
   };

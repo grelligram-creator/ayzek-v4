@@ -39,17 +39,18 @@ export const ProfileView: React.FC = () => {
   const [location, setLocation] = useState(userProfile?.location || '');
   const [lifeMission, setLifeMission] = useState(userProfile?.lifeMission || '');
   const [savedSuccess, setSavedSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateProfileInfo({
-      jobTitle,
-      company,
-      location,
-      lifeMission,
-    });
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 2000);
+    setSaveError(null);
+    try {
+      await updateProfileInfo({ jobTitle, company, location, lifeMission });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 2000);
+    } catch (error) {
+      setSaveError(error instanceof Error ? error.message : 'Profil kaydedilemedi.');
+    }
   };
 
   return (
@@ -345,6 +346,7 @@ export const ProfileView: React.FC = () => {
               Profil ve hafıza güncellendi
             </span>
           )}
+          {saveError && <span className="text-xs font-semibold text-amber-300">{saveError}</span>}
           <button
             type="submit"
             className="ml-auto coral-gradient hover:opacity-95 text-white px-5 py-2.5 rounded-full text-xs font-bold shadow-lg shadow-rose-950/60 cursor-pointer"

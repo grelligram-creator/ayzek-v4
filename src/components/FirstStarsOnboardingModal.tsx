@@ -17,15 +17,14 @@ import confetti from 'canvas-confetti';
 export const FirstStarsOnboardingModal: React.FC = () => {
   const { isOnboardingOpen, setIsOnboardingOpen, userProfile, updateProfileInfo } = useApp();
   const [step, setStep] = useState(1);
-  const [location, setLocation] = useState(userProfile?.location || 'Moda, Kadıköy / İstanbul');
-  const [hobbyInput, setHobbyInput] = useState('Yelken, Filtre Kahve Demleme, Psikoloji');
-  const [lifeMission, setLifeMission] = useState(
-    userProfile?.lifeMission || 'Yoğun iş temposunda tükenmeden, zihinsel berraklıkla büyük projeler üretmek.'
-  );
+  const [location, setLocation] = useState(userProfile?.location || '');
+  const [hobbyInput, setHobbyInput] = useState('');
+  const [lifeMission, setLifeMission] = useState(userProfile?.lifeMission || '');
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   if (!isOnboardingOpen) return null;
 
-  const handleNext = () => {
+  const handleNext = async () => {
     if (step < 3) {
       setStep(step + 1);
     } else {
@@ -35,12 +34,12 @@ export const FirstStarsOnboardingModal: React.FC = () => {
         .map((h) => h.trim())
         .filter(Boolean);
 
-      updateProfileInfo({
-        location,
-        hobbies: hobbiesArray,
-        lifeMission,
-        onboardingCompleted: true,
-      });
+      try {
+        await updateProfileInfo({ location, hobbies: hobbiesArray, lifeMission, onboardingCompleted: true });
+      } catch {
+        setSaveError('Bilgiler kaydedilemedi. Lütfen bağlantınızı kontrol edip tekrar deneyin.');
+        return;
+      }
 
       try {
         confetti({
@@ -86,6 +85,7 @@ export const FirstStarsOnboardingModal: React.FC = () => {
 
         {/* Dynamic Body */}
         <div className="p-6 space-y-4">
+          {saveError && <p className="rounded-xl border border-amber-400/30 bg-amber-400/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-200">{saveError}</p>}
           {step === 1 && (
             <div className="space-y-3">
               <div className="p-4 rounded-2xl bg-sky-50 dark:bg-sky-950/40 border border-sky-100 dark:border-sky-900/50 flex items-start gap-3">
@@ -189,7 +189,7 @@ export const FirstStarsOnboardingModal: React.FC = () => {
               <div className="p-3 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/60 text-[11px] text-cyan-800 dark:text-cyan-200 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
                 <span>
-                  AYZEK bu bilgileri güvenli Firestore hafızasına işledi ve size özel bilişsel mentörlük motorunu kalibre etti.
+                  Bu bilgiler hesabınıza kaydedilir; öneriler yalnızca açıkça izin verdiğiniz verilerden üretilir.
                 </span>
               </div>
             </div>
