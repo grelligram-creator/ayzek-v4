@@ -184,6 +184,25 @@ export async function saveExplicitMemory(uid: string, content: string, category:
   if (!normalizedContent || normalizedContent.length > 500) {
     throw new Error('Hafıza notu 1–500 karakter arasında olmalıdır.');
   }
+  const comparisonKey = normalizedContent
+    .toLocaleLowerCase('tr-TR')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
+  const existingSnapshot = await getDocs(query(collection(db, 'users', uid, 'memories'), limit(100)));
+  const existing = existingSnapshot.docs.find((entry) => String(entry.data().content || '')
+    .toLocaleLowerCase('tr-TR')
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim() === comparisonKey);
+  if (existing) {
+    const data = existing.data();
+    return {
+      id: existing.id,
+      content: String(data.content || ''),
+      category: ['preference', 'goal', 'work_context', 'instruction'].includes(data.category) ? data.category : 'preference',
+      createdAt: String(data.createdAt || ''),
+      updatedAt: String(data.updatedAt || ''),
+    };
+  }
   const now = new Date().toISOString();
   const ref = doc(collection(db, 'users', uid, 'memories'));
   const memory: MemoryItem = { id: ref.id, content: normalizedContent, category, createdAt: now, updatedAt: now };
