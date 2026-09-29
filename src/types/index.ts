@@ -181,3 +181,11 @@ export interface ConversationSummary {
   updatedAt: string;
   archivedAt?: string;
 }
+
+export interface MemoryItem {
+  id: string;
+  content: string;
+  category: 'preference' | 'goal' | 'work_context' | 'instruction';
+  createdAt: string;
+  updatedAt: string;
+}

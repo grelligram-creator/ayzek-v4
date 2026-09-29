@@ -1,6 +1,6 @@
-import { collection, doc, getDoc, getDocs, limit, orderBy, query, setDoc } from 'firebase/firestore';
+import { collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { UserProfile, MoodCheckin, TaskItem, DilemmaItem, WorkLifeBalance, ConnectedService, CoachGoal, ChatMessage, ConversationSummary } from '../types';
+import { UserProfile, MoodCheckin, TaskItem, DilemmaItem, WorkLifeBalance, ConnectedService, CoachGoal, ChatMessage, ConversationSummary, MemoryItem } from '../types';
 
 export interface UserPersistedData {
   balance: WorkLifeBalance;
@@ -161,6 +161,37 @@ export async function archiveConversation(uid: string, conversationId: string): 
     archivedAt: new Date().toISOString(),
     updatedAt: new Date().toISOString(),
   }, { merge: true });
+}
+
+export async function listMemories(uid: string): Promise<MemoryItem[]> {
+  const memoriesRef = collection(db, 'users', uid, 'memories');
+  const snapshot = await getDocs(query(memoriesRef, orderBy('updatedAt', 'desc'), limit(100)));
+  return snapshot.docs.map((entry) => {
+    const data = entry.data();
+    return {
+      id: entry.id,
+      content: String(data.content || ''),
+      category: ['preference', 'goal', 'work_context', 'instruction'].includes(data.category) ? data.category : 'preference',
+      createdAt: String(data.createdAt || ''),
+      updatedAt: String(data.updatedAt || ''),
+    } as MemoryItem;
+  });
+}
+
+export async function saveExplicitMemory(uid: string, content: string, category: MemoryItem['category'] = 'preference'): Promise<MemoryItem> {
+  const normalizedContent = content.trim();
+  if (!normalizedContent || normalizedContent.length > 500) {
+    throw new Error('Hafıza notu 1–500 karakter arasında olmalıdır.');
+  }
+  const now = new Date().toISOString();
+  const ref = doc(collection(db, 'users', uid, 'memories'));
+  const memory: MemoryItem = { id: ref.id, content: normalizedContent, category, createdAt: now, updatedAt: now };
+  await setDoc(ref, memory);
+  return memory;
+}
+
+export async function deleteMemory(uid: string, memoryId: string): Promise<void> {
+  await deleteDoc(doc(db, 'users', uid, 'memories', memoryId));
 }
 
 export async function loadConversationMessages(uid: string, conversationId = defaultConversationId): Promise<ChatMessage[]> {
