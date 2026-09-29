@@ -46,6 +46,16 @@ export const CognitiveWrappedModal: React.FC = () => {
 
   if (!isCognitiveWrappedOpen) return null;
 
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/85 backdrop-blur-md">
+      <div className="w-full max-w-md rounded-3xl border border-indigo-500/30 bg-slate-900 p-6 text-white space-y-4">
+        <div className="flex items-center justify-between"><h2 className="text-lg font-bold">Bilişsel Özet</h2><button onClick={() => setIsCognitiveWrappedOpen(false)} aria-label="Kapat"><X className="w-5 h-5" /></button></div>
+        <p className="text-sm leading-relaxed text-slate-300">Bu özet, yalnızca doğrulanmış kullanıcı etkinliği ve izin verilen bağlantılardan üretilecek. Henüz yeterli veri olmadığı için metrik gösterilmiyor.</p>
+        <button onClick={() => setIsCognitiveWrappedOpen(false)} className="w-full rounded-full bg-indigo-600 py-3 text-sm font-bold">Anladım</button>
+      </div>
+    </div>
+  );
+
   const slides = [
     // Slide 1: Intro / General Metrics
     {
