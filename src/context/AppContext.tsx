@@ -59,6 +59,8 @@ export interface AuthUserState {
   photoURL?: string | null;
 }
 
+const sentReminderKeys = new Set<string>();
+
 interface AppContextType {
   // Auth state
   user: User | AuthUserState | null;
@@ -813,6 +815,46 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     return () => clearTimeout(timeout);
   }, [user, userProfile, isWorkspaceHydrated, balance, checkin, tasks, dilemmas, services, coachGoal, notifications]);
+
+  // Local reminder engine: it intentionally runs only while the web app is
+  // open. Remote delivery after the browser is closed requires a separately
+  // configured Web Push/VAPID service and is never implied here.
+  useEffect(() => {
+    if (!user?.uid || userProfile?.notificationPreferences?.reminders === false) return;
+
+    const checkDueTasks = () => {
+      if (document.visibilityState !== 'hidden') return;
+      const now = new Date();
+      for (const task of tasks) {
+        if (task.isCompleted) continue;
+        const timeMatch = /^(\d{2}):(\d{2})/.exec(task.time);
+        if (!timeMatch) continue;
+        const taskDate = task.date || now.toISOString().slice(0, 10);
+        const dueAt = new Date(`${taskDate}T${timeMatch[1]}:${timeMatch[2]}:00`);
+        const msUntilDue = dueAt.getTime() - now.getTime();
+        if (msUntilDue < 0 || msUntilDue > 5 * 60_000) continue;
+
+        const reminderKey = `ayzek-reminder:${task.id}:${dueAt.toISOString()}`;
+        if (sentReminderKeys.has(reminderKey)) continue;
+        try {
+          if (sessionStorage.getItem(reminderKey)) continue;
+          sessionStorage.setItem(reminderKey, 'sent');
+        } catch {
+          // A blocked storage API must not prevent the rest of the app from working.
+        }
+        sentReminderKeys.add(reminderKey);
+        void showBrowserNotification('AYZEK · Yaklaşan görev', {
+          body: `${task.time} — ${task.title}`,
+          tag: `ayzek-reminder-${task.id}`,
+          data: { url: '/' },
+        });
+      }
+    };
+
+    checkDueTasks();
+    const interval = window.setInterval(checkDueTasks, 60_000);
+    return () => window.clearInterval(interval);
+  }, [tasks, user?.uid, userProfile?.notificationPreferences?.reminders]);
 
   // Auth methods must fail closed; a failed login cannot create a paid local session.
   const loginWithEmail = async (email: string, pass: string) => {

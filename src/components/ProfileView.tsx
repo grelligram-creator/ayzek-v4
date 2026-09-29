@@ -441,7 +441,7 @@ export const ProfileView: React.FC = () => {
         <div className="rounded-xl border border-rose-500/20 bg-[#14060a]/80 p-3 text-xs">
           <p className="font-semibold text-rose-100">Tarayıcı bildirimi</p>
           <p className="mt-1 text-rose-200/65">
-            {browserNotificationStatus === 'granted' && 'İzin verildi. Uygulama arka plandayken izin verdiğiniz görev ve güvenlik gelişmeleri cihaz bildirimi olarak gösterilir. Uzaktan push henüz yapılandırılmadı.'}
+            {browserNotificationStatus === 'granted' && 'İzin verildi. Uygulama arka plandayken izin verdiğiniz görev ve güvenlik gelişmeleri ile yaklaşan görev hatırlatmaları cihaz bildirimi olarak gösterilir. Uzaktan push henüz yapılandırılmadı.'}
             {browserNotificationStatus === 'default' && 'İzin henüz verilmedi.'}
             {browserNotificationStatus === 'denied' && 'İzin tarayıcı tarafından engellendi; tarayıcı ayarlarından açabilirsiniz.'}
             {browserNotificationStatus === 'unsupported' && 'Bu tarayıcı bildirim ve servis çalışanını desteklemiyor.'}
