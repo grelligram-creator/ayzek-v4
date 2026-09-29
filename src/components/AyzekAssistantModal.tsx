@@ -31,6 +31,9 @@ export const AyzekAssistantModal: React.FC = () => {
     deleteActiveConversation,
     sendMessage,
     isChatLoading,
+    memoryCandidate,
+    acceptMemoryCandidate,
+    dismissMemoryCandidate,
     balance,
     checkin,
   } = useApp();
@@ -210,6 +213,17 @@ export const AyzekAssistantModal: React.FC = () => {
             <X className="w-5 h-5" />
           </button>
         </div>
+
+        {memoryCandidate && (
+          <div className="mx-4 mt-3 rounded-2xl border border-amber-400/30 bg-amber-400/10 p-3 text-xs text-amber-100">
+            <p className="font-bold">Bu bilgiyi hafızaya ekleyelim mi?</p>
+            <p className="mt-1 text-amber-100/80">{memoryCandidate.content}</p>
+            <div className="mt-2 flex gap-2">
+              <button type="button" onClick={() => acceptMemoryCandidate().catch(() => undefined)} className="rounded-lg bg-amber-400 px-2.5 py-1.5 text-[11px] font-bold text-black">Hafızaya kaydet</button>
+              <button type="button" onClick={dismissMemoryCandidate} className="rounded-lg border border-amber-300/30 px-2.5 py-1.5 text-[11px] font-bold">Şimdi değil</button>
+            </div>
+          </div>
+        )}
 
         {/* Message stream */}
         <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4 no-scrollbar">

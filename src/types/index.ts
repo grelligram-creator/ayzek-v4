@@ -212,3 +212,8 @@ export interface MemoryItem {
   createdAt: string;
   updatedAt: string;
 }
+
+export interface MemoryCandidate {
+  content: string;
+  category: MemoryItem['category'];
+}

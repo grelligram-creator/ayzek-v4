@@ -31,6 +31,7 @@ import {
   AutonomousLog,
   ProactiveInsight,
   NotificationItem,
+  MemoryCandidate,
 } from '../types';
 import { PricingPlan } from '../data/pricingPlans';
 import {
@@ -44,6 +45,7 @@ import {
   saveUserData,
   saveConversationMessage,
   updateUserProfileDetails,
+  saveExplicitMemory,
 } from '../services/firestoreService';
 
 export interface AuthUserState {
@@ -82,6 +84,9 @@ interface AppContextType {
   isNotificationsOpen: boolean;
   setIsNotificationsOpen: (open: boolean) => void;
   markNotificationsRead: () => void;
+  memoryCandidate: MemoryCandidate | null;
+  acceptMemoryCandidate: () => Promise<void>;
+  dismissMemoryCandidate: () => void;
 
   // Theme & Navigation
   theme: ThemeMode;
@@ -206,6 +211,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isQuickTourOpen, setIsQuickTourOpen] = useState(false);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [memoryCandidate, setMemoryCandidate] = useState<MemoryCandidate | null>(null);
 
   // Autonomous background worker logs (User away from app intelligence)
   const [autonomousLogs, setAutonomousLogs] = useState<AutonomousLog[]>([
@@ -974,6 +980,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setNotifications((previous) => previous.map((notification) => notification.readAt ? notification : { ...notification, readAt: now }));
   };
 
+  const extractMemoryCandidate = (text: string): MemoryCandidate | null => {
+    const content = text.trim();
+    if (content.length < 8 || content.length > 500) return null;
+    const lower = content.toLocaleLowerCase('tr-TR');
+    if (/\b(hedefim|amacım|planım)\b/.test(lower)) return { content, category: 'goal' };
+    if (/\b(çalışma saatlerim|çalışıyorum|projede|iş yerinde)\b/.test(lower)) return { content, category: 'work_context' };
+    if (/\b(tercihim|tercih ederim|istemiyorum|bana .*?(yaz|söyle|hatırlat))\b/.test(lower)) return { content, category: 'preference' };
+    return null;
+  };
+
+  const acceptMemoryCandidate = async () => {
+    const currentUid = user?.uid || userProfile?.uid;
+    if (!currentUid || !memoryCandidate) return;
+    await saveExplicitMemory(currentUid, memoryCandidate.content, memoryCandidate.category);
+    addNotification('system', 'Yeni tercih veya hedef hafızaya kaydedildi.');
+    setMemoryCandidate(null);
+  };
+
+  const dismissMemoryCandidate = () => setMemoryCandidate(null);
+
   const executeAppAction = (action: AppAction) => {
     switch (action.type) {
       case 'ADD_TASK': {
@@ -1092,6 +1118,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    const candidate = extractMemoryCandidate(userText);
+    if (candidate) setMemoryCandidate(candidate);
     if (user?.uid) {
       saveConversationMessage(user.uid, userMessage, activeConversationId).catch((error) => console.error('Mesaj kaydedilemedi:', error));
     }
@@ -1441,6 +1469,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isNotificationsOpen,
         setIsNotificationsOpen,
         markNotificationsRead,
+        memoryCandidate,
+        acceptMemoryCandidate,
+        dismissMemoryCandidate,
         theme,
         setTheme,
         toggleTheme,
