@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { authenticatedFetch } from '../lib/api';
 import {
@@ -29,14 +29,54 @@ import {
 import { ConnectedService } from '../types';
 import { IntegrationSetupModal } from './IntegrationSetupModal';
 
+type OAuthProviderStatus = {
+  configured: boolean;
+  connected: boolean;
+  connectedAt: string | null;
+  redirectUri: string | null;
+  missing: string[];
+};
+
 export const MerkezView: React.FC = () => {
-  const { services, openAssistantWithQuery } = useApp();
+  const { services, openAssistantWithQuery, user } = useApp();
   const [selectedService, setSelectedService] = useState<ConnectedService | null>(null);
   const [isSetupOpen, setIsSetupOpen] = useState(false);
   const [isAddChannelOpen, setIsAddChannelOpen] = useState(false);
   const [syncingId, setSyncingId] = useState<string | null>(null);
   const [syncSuccessToast, setSyncSuccessToast] = useState<string | null>(null);
   const [categoryFilter, setCategoryFilter] = useState<'all' | 'comm' | 'health' | 'finance' | 'work'>('all');
+  const [oauthStatus, setOauthStatus] = useState<Partial<Record<'google' | 'microsoft', OAuthProviderStatus>>>({});
+  const [oauthLoading, setOauthLoading] = useState(false);
+
+  const refreshOAuthStatus = async () => {
+    if (!user) return;
+    try {
+      const response = await authenticatedFetch('/api/oauth/status');
+      if (!response.ok) return;
+      const data = await response.json();
+      setOauthStatus({ google: data.google, microsoft: data.microsoft });
+    } catch {
+      // The page remains usable when a development server has no Admin SDK.
+    }
+  };
+
+  useEffect(() => {
+    void refreshOAuthStatus();
+  }, [user?.uid]);
+
+  const connectOAuth = async (provider: 'google' | 'microsoft') => {
+    setOauthLoading(true);
+    try {
+      const response = await authenticatedFetch(`/api/oauth/${provider}/url`);
+      const data = await response.json();
+      if (!response.ok || !data.url) throw new Error(data.error || 'Yetkilendirme bağlantısı oluşturulamadı.');
+      window.location.assign(data.url);
+    } catch (error) {
+      setSyncSuccessToast(error instanceof Error ? error.message : 'Bağlantı başlatılamadı.');
+      setTimeout(() => setSyncSuccessToast(null), 3500);
+      setOauthLoading(false);
+    }
+  };
 
   const getServiceIcon = (icon: ConnectedService['icon']) => {
     switch (icon) {
@@ -278,6 +318,38 @@ export const MerkezView: React.FC = () => {
             <span>Sağlayıcılar</span>
           </button>
         </div>
+      </section>
+
+      <section className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {([
+          { id: 'google' as const, name: 'Google Takvim', detail: 'Takvim etkinliklerini yalnızca okuma izniyle bağlar.' },
+          { id: 'microsoft' as const, name: 'Microsoft 365', detail: 'Profil ve takvimleri yalnızca okuma izniyle bağlar.' },
+        ]).map((provider) => {
+          const status = oauthStatus[provider.id];
+          const canConnect = Boolean(user && status?.configured && !status.connected);
+          return (
+            <div key={provider.id} className="rounded-[28px] border border-rose-500/25 bg-[#14060a]/90 p-5 shadow-xl">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-bold text-white">{provider.name}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-rose-200/70">{provider.detail}</p>
+                </div>
+                <span className={`shrink-0 rounded-full border px-2 py-1 text-[10px] font-bold ${status?.connected ? 'border-emerald-400/30 bg-emerald-500/15 text-emerald-300' : 'border-rose-400/25 bg-rose-500/10 text-rose-200'}`}>
+                  {status?.connected ? 'Bağlı' : status?.configured ? 'Bağlı değil' : 'Kurulum bekliyor'}
+                </span>
+              </div>
+              {!status?.configured && status?.missing?.length ? <p className="mt-3 text-[11px] text-amber-200/75">Eksik yapılandırma: {status.missing.join(', ')}</p> : null}
+              <div className="mt-4 flex gap-2">
+                <button type="button" onClick={() => connectOAuth(provider.id)} disabled={!canConnect || oauthLoading} className="coral-gradient rounded-full px-3.5 py-2 text-xs font-bold text-white disabled:cursor-not-allowed disabled:opacity-45">
+                  {oauthLoading ? 'Hazırlanıyor…' : status?.connected ? 'Bağlandı' : 'Güvenle bağla'}
+                </button>
+                <button type="button" onClick={() => void refreshOAuthStatus()} className="frosted-pill-button rounded-full px-3 py-2 text-xs font-bold text-rose-200 hover:text-white" aria-label="OAuth durumunu yenile">
+                  <RefreshCw className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </section>
 
       {/* 2. Sync Health Dashboard Banner (Smoked Crimson Glass) */}

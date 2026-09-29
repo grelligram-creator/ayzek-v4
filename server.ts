@@ -3,6 +3,7 @@ import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from 'crypto';
 import { GoogleGenAI, Type } from '@google/genai';
 import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth as getAdminAuth, DecodedIdToken } from 'firebase-admin/auth';
@@ -19,6 +20,93 @@ const clientDistDirectory = process.env.NODE_ENV === 'production'
   : path.resolve(__dirname, 'dist');
 
 type AuthenticatedRequest = express.Request & { authUser?: DecodedIdToken; requestId?: string };
+
+type OAuthProviderId = 'google' | 'microsoft';
+
+const oauthProviderConfig: Record<OAuthProviderId, {
+  clientIdEnv: string;
+  clientSecretEnv: string;
+  authorizationEndpoint: string;
+  tokenEndpoint: string;
+  scopes: string[];
+}> = {
+  google: {
+    clientIdEnv: 'GOOGLE_OAUTH_CLIENT_ID',
+    clientSecretEnv: 'GOOGLE_OAUTH_CLIENT_SECRET',
+    authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+    tokenEndpoint: 'https://oauth2.googleapis.com/token',
+    scopes: ['openid', 'email', 'profile', 'https://www.googleapis.com/auth/calendar.readonly'],
+  },
+  microsoft: {
+    clientIdEnv: 'MICROSOFT_OAUTH_CLIENT_ID',
+    clientSecretEnv: 'MICROSOFT_OAUTH_CLIENT_SECRET',
+    authorizationEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
+    tokenEndpoint: 'https://login.microsoftonline.com/common/oauth2/v2.0/token',
+    scopes: ['openid', 'email', 'profile', 'offline_access', 'User.Read', 'Calendars.Read'],
+  },
+};
+
+function getOAuthEncryptionKey(): Buffer | null {
+  const configuredKey = process.env.OAUTH_TOKEN_ENCRYPTION_KEY?.trim();
+  if (!configuredKey) return null;
+  try {
+    const key = /^[a-f0-9]{64}$/i.test(configuredKey)
+      ? Buffer.from(configuredKey, 'hex')
+      : Buffer.from(configuredKey, 'base64');
+    return key.length === 32 ? key : null;
+  } catch {
+    return null;
+  }
+}
+
+function getAppUrl(): string | null {
+  const configuredUrl = process.env.APP_URL?.trim();
+  if (!configuredUrl) return null;
+  try {
+    const parsed = new URL(configuredUrl);
+    return parsed.protocol === 'https:' || parsed.hostname === 'localhost' ? parsed.origin : null;
+  } catch {
+    return null;
+  }
+}
+
+function createOAuthState(userId: string, provider: OAuthProviderId, nonce: string, expiresAt: number, key: Buffer): string {
+  const payload = Buffer.from(JSON.stringify({ userId, provider, nonce, expiresAt })).toString('base64url');
+  const signature = createHmac('sha256', key).update(payload).digest('base64url');
+  return `${payload}.${signature}`;
+}
+
+function readOAuthState(state: unknown, key: Buffer): { userId: string; provider: OAuthProviderId; nonce: string; expiresAt: number } | null {
+  if (typeof state !== 'string') return null;
+  const [payload, signature] = state.split('.');
+  if (!payload || !signature) return null;
+  const expected = createHmac('sha256', key).update(payload).digest('base64url');
+  const receivedBytes = Buffer.from(signature);
+  const expectedBytes = Buffer.from(expected);
+  if (receivedBytes.length !== expectedBytes.length || !timingSafeEqual(receivedBytes, expectedBytes)) return null;
+  try {
+    const parsed = JSON.parse(Buffer.from(payload, 'base64url').toString('utf8'));
+    if ((parsed.provider !== 'google' && parsed.provider !== 'microsoft') || typeof parsed.userId !== 'string' || typeof parsed.nonce !== 'string' || typeof parsed.expiresAt !== 'number' || parsed.expiresAt < Date.now()) return null;
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function encryptOAuthToken(tokenResponse: Record<string, unknown>, key: Buffer): string {
+  const iv = randomBytes(12);
+  const cipher = createCipheriv('aes-256-gcm', key, iv);
+  const encrypted = Buffer.concat([cipher.update(JSON.stringify(tokenResponse), 'utf8'), cipher.final()]);
+  return [iv.toString('base64url'), cipher.getAuthTag().toString('base64url'), encrypted.toString('base64url')].join('.');
+}
+
+function decryptOAuthToken(value: string, key: Buffer): Record<string, unknown> {
+  const [ivValue, authTagValue, ciphertext] = value.split('.');
+  if (!ivValue || !authTagValue || !ciphertext) throw new Error('Geçersiz şifreli OAuth token biçimi');
+  const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(ivValue, 'base64url'));
+  decipher.setAuthTag(Buffer.from(authTagValue, 'base64url'));
+  return JSON.parse(Buffer.concat([decipher.update(Buffer.from(ciphertext, 'base64url')), decipher.final()]).toString('utf8'));
+}
 
 const memoryStopWords = new Set([
   'ama', 'ancak', 'bana', 'ben', 'bir', 'bu', 'çok', 'da', 'daha', 'de', 'gibi', 'için', 'ile', 'içinde', 'ise', 'mi', 'mı', 'mu', 'mü',
@@ -155,6 +243,138 @@ async function startServer() {
       status: ready ? 'ready' : 'not_ready',
       checks: { gemini: Boolean(process.env.GEMINI_API_KEY), firebaseAdmin: Boolean(adminAuth), firebaseFirestore: Boolean(adminDb) },
     });
+  });
+
+  const oauthConfiguration = (provider: OAuthProviderId) => {
+    const config = oauthProviderConfig[provider];
+    const clientId = process.env[config.clientIdEnv]?.trim();
+    const clientSecret = process.env[config.clientSecretEnv]?.trim();
+    const encryptionKey = getOAuthEncryptionKey();
+    const appUrl = getAppUrl();
+    return {
+      clientId,
+      clientSecret,
+      encryptionKey,
+      appUrl,
+      configured: Boolean(clientId && clientSecret && encryptionKey && appUrl && adminDb),
+      redirectUri: appUrl ? `${appUrl}/api/oauth/${provider}/callback` : null,
+    };
+  };
+
+  app.get('/api/oauth/status', requireVerifiedUser, rateLimit(30, 60_000), async (req: AuthenticatedRequest, res) => {
+    const describe = async (provider: OAuthProviderId) => {
+      const config = oauthConfiguration(provider);
+      const connection = adminDb && req.authUser
+        ? await adminDb.collection('users').doc(req.authUser.uid).collection('oauthConnections').doc(provider).get()
+        : null;
+      const connectionData = connection?.data();
+      return {
+        configured: config.configured,
+        connected: Boolean(connection?.exists),
+        connectedAt: typeof connectionData?.connectedAt === 'string' ? connectionData.connectedAt : null,
+        redirectUri: config.redirectUri,
+        missing: [
+          !config.clientId && oauthProviderConfig[provider].clientIdEnv,
+          !config.clientSecret && oauthProviderConfig[provider].clientSecretEnv,
+          !config.encryptionKey && 'OAUTH_TOKEN_ENCRYPTION_KEY',
+          !config.appUrl && 'APP_URL',
+          !adminDb && 'FIREBASE_SERVICE_ACCOUNT_JSON',
+        ].filter(Boolean),
+      };
+    };
+    try {
+      const [google, microsoft] = await Promise.all([describe('google'), describe('microsoft')]);
+      return res.json({ google, microsoft });
+    } catch (error) {
+      console.error('OAuth status could not be read', { requestId: req.requestId, error: error instanceof Error ? error.message : 'unknown' });
+      return res.status(503).json({ error: 'OAuth bağlantı durumu okunamadı.', requestId: req.requestId });
+    }
+  });
+
+  app.get('/api/oauth/:provider/url', requireVerifiedUser, rateLimit(5, 60_000), async (req: AuthenticatedRequest, res) => {
+    const provider = req.params.provider as OAuthProviderId;
+    if (provider !== 'google' && provider !== 'microsoft') return res.status(404).json({ error: 'Bilinmeyen OAuth sağlayıcısı', requestId: req.requestId });
+    const runtime = oauthConfiguration(provider);
+    if (!runtime.configured || !runtime.clientId || !runtime.encryptionKey || !runtime.redirectUri || !adminDb || !req.authUser) {
+      return res.status(503).json({ error: `${oauthProviderConfig[provider].clientIdEnv} veya OAuth güvenlik yapılandırması eksik.`, requestId: req.requestId });
+    }
+
+    const nonce = randomBytes(24).toString('base64url');
+    const expiresAt = Date.now() + 10 * 60_000;
+    const state = createOAuthState(req.authUser.uid, provider, nonce, expiresAt, runtime.encryptionKey);
+    await adminDb.collection('oauthStates').doc(nonce).set({ userId: req.authUser.uid, provider, expiresAt, createdAt: new Date().toISOString() });
+
+    const config = oauthProviderConfig[provider];
+    const parameters = new URLSearchParams({
+      client_id: runtime.clientId,
+      redirect_uri: runtime.redirectUri,
+      response_type: 'code',
+      scope: config.scopes.join(' '),
+      state,
+    });
+    if (provider === 'google') {
+      parameters.set('access_type', 'offline');
+      parameters.set('prompt', 'consent');
+    }
+    return res.json({ url: `${config.authorizationEndpoint}?${parameters.toString()}` });
+  });
+
+  app.get('/api/oauth/:provider/callback', rateLimit(20, 60_000), async (req: AuthenticatedRequest, res) => {
+    const provider = req.params.provider as OAuthProviderId;
+    if (provider !== 'google' && provider !== 'microsoft') return res.status(404).send('Bilinmeyen OAuth sağlayıcısı');
+    const runtime = oauthConfiguration(provider);
+    const returnUrl = runtime.appUrl || '/';
+    const fail = (reason: string) => res.redirect(302, `${returnUrl}/?oauth=${provider}&status=error&reason=${encodeURIComponent(reason)}`);
+    if (!runtime.configured || !runtime.clientId || !runtime.clientSecret || !runtime.encryptionKey || !runtime.redirectUri || !adminDb) return fail('configuration');
+    if (typeof req.query.error === 'string') return fail('cancelled');
+    const state = readOAuthState(req.query.state, runtime.encryptionKey);
+    if (!state || state.provider !== provider) return fail('invalid_state');
+    if (typeof req.query.code !== 'string') return fail('missing_code');
+
+    const stateDocument = adminDb.collection('oauthStates').doc(state.nonce);
+    const stateIsValid = await adminDb.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(stateDocument);
+      const saved = snapshot.data();
+      if (!snapshot.exists || saved?.userId !== state.userId || saved?.provider !== provider || Number(saved?.expiresAt) !== state.expiresAt || state.expiresAt < Date.now()) return false;
+      transaction.delete(stateDocument);
+      return true;
+    });
+    if (!stateIsValid) return fail('expired_state');
+
+    try {
+      const config = oauthProviderConfig[provider];
+      const parameters = new URLSearchParams({
+        client_id: runtime.clientId,
+        client_secret: runtime.clientSecret,
+        code: req.query.code,
+        redirect_uri: runtime.redirectUri,
+        grant_type: 'authorization_code',
+      });
+      if (provider === 'microsoft') parameters.set('scope', config.scopes.join(' '));
+      const tokenResponse = await fetch(config.tokenEndpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: parameters,
+      });
+      const tokenPayload = await tokenResponse.json() as Record<string, unknown>;
+      if (!tokenResponse.ok || typeof tokenPayload.access_token !== 'string') {
+        console.warn('OAuth token exchange failed', { provider, status: tokenResponse.status });
+        return fail('token_exchange');
+      }
+      const expiresIn = typeof tokenPayload.expires_in === 'number' ? tokenPayload.expires_in : Number(tokenPayload.expires_in || 0);
+      await adminDb.collection('users').doc(state.userId).collection('oauthConnections').doc(provider).set({
+        provider,
+        encryptedToken: encryptOAuthToken(tokenPayload, runtime.encryptionKey),
+        scopes: config.scopes,
+        connectedAt: new Date().toISOString(),
+        expiresAt: Number.isFinite(expiresIn) && expiresIn > 0 ? new Date(Date.now() + expiresIn * 1000).toISOString() : null,
+        updatedAt: new Date().toISOString(),
+      });
+      return res.redirect(302, `${returnUrl}/?oauth=${provider}&status=connected`);
+    } catch (error) {
+      console.error('OAuth callback failed', { provider, error: error instanceof Error ? error.message : 'unknown' });
+      return fail('server_error');
+    }
   });
 
   // Revokes refresh tokens for every device. The caller is also signed out by

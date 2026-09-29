@@ -39,6 +39,22 @@ Set secrets through the host's secret manager, never in source control:
 - OAuth client secrets when Google/Microsoft connection is enabled
 - `OAUTH_TOKEN_ENCRYPTION_KEY` when OAuth token storage is enabled
 
+## Google and Microsoft connection setup
+
+The Google Calendar and Microsoft 365 cards in the Integration Center only
+enable after all relevant Secrets are present. For a deployed `APP_URL`, add
+these exact redirect URIs at the provider consoles:
+
+- Google: `APP_URL/api/oauth/google/callback`
+- Microsoft: `APP_URL/api/oauth/microsoft/callback`
+
+Replace `APP_URL` with the public HTTPS origin, without a trailing slash. The
+server signs a short-lived, single-use OAuth state and stores the returned token
+response encrypted with AES-256-GCM in the user's Firestore subcollection. It
+never returns raw provider tokens to the browser. Current scopes are read-only
+calendar access for Google and Microsoft; no calendar entry is created or
+changed by connecting an account.
+
 For a stable public deployment, use a managed host with a custom domain or a
 provider URL. AI Studio's public share is appropriate for sharing the app, but
 it is not a replacement for production operations, backups, monitoring, or a
