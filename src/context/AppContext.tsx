@@ -613,14 +613,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Assistant & Messages
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'msg-init',
-      role: 'assistant',
-      content: 'Merhaba! Ben AYZEK. Bağlantı izni verdiğiniz servisler ve kişisel planlarınız için yardımcı olmaya hazırım.',
-      timestamp: '08:30',
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isChatLoading, setIsChatLoading] = useState(false);
 
@@ -678,6 +671,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       if (firebaseUser) {
         setUser(firebaseUser);
         setIsWorkspaceHydrated(false);
+        setMessages([]);
         try {
           const profile = await getOrCreateUserProfile({
             uid: firebaseUser.uid,
@@ -715,7 +709,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
 
           const storedMessages = await loadConversationMessages(firebaseUser.uid);
-          if (storedMessages.length) setMessages(storedMessages);
+          setMessages(storedMessages);
         } catch (err) {
           console.error('Firestore profile sync error:', err);
         } finally {
@@ -723,6 +717,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       } else {
         setIsWorkspaceHydrated(false);
+        setMessages([]);
       }
     });
 
@@ -819,6 +814,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUser(null);
     setUserProfile(null);
     setIsWorkspaceHydrated(false);
+    setMessages([]);
     showSyncNotification('Oturum kapatıldı.');
   };
 
