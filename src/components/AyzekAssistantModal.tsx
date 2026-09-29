@@ -34,6 +34,9 @@ export const AyzekAssistantModal: React.FC = () => {
     memoryCandidate,
     acceptMemoryCandidate,
     dismissMemoryCandidate,
+    pendingAction,
+    approvePendingAction,
+    dismissPendingAction,
     balance,
     checkin,
   } = useApp();
@@ -221,6 +224,17 @@ export const AyzekAssistantModal: React.FC = () => {
             <div className="mt-2 flex gap-2">
               <button type="button" onClick={() => acceptMemoryCandidate().catch(() => undefined)} className="rounded-lg bg-amber-400 px-2.5 py-1.5 text-[11px] font-bold text-black">Hafızaya kaydet</button>
               <button type="button" onClick={dismissMemoryCandidate} className="rounded-lg border border-amber-300/30 px-2.5 py-1.5 text-[11px] font-bold">Şimdi değil</button>
+            </div>
+          </div>
+        )}
+
+        {pendingAction && (
+          <div className="mx-4 mt-3 rounded-2xl border border-emerald-400/30 bg-emerald-400/10 p-3 text-xs text-emerald-50">
+            <p className="font-bold">Görev oluşturma önerisi</p>
+            <p className="mt-1">“{pendingAction.title}” görevi kaydedilsin mi?</p>
+            <div className="mt-2 flex gap-2">
+              <button type="button" onClick={approvePendingAction} className="rounded-lg bg-emerald-400 px-2.5 py-1.5 text-[11px] font-bold text-black">Onayla ve kaydet</button>
+              <button type="button" onClick={dismissPendingAction} className="rounded-lg border border-emerald-300/30 px-2.5 py-1.5 text-[11px] font-bold">Vazgeç</button>
             </div>
           </div>
         )}

@@ -32,6 +32,7 @@ import {
   ProactiveInsight,
   NotificationItem,
   MemoryCandidate,
+  PendingAction,
 } from '../types';
 import { PricingPlan } from '../data/pricingPlans';
 import {
@@ -87,6 +88,9 @@ interface AppContextType {
   memoryCandidate: MemoryCandidate | null;
   acceptMemoryCandidate: () => Promise<void>;
   dismissMemoryCandidate: () => void;
+  pendingAction: PendingAction | null;
+  approvePendingAction: () => void;
+  dismissPendingAction: () => void;
 
   // Theme & Navigation
   theme: ThemeMode;
@@ -212,6 +216,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [memoryCandidate, setMemoryCandidate] = useState<MemoryCandidate | null>(null);
+  const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
 
   // Autonomous background worker logs (User away from app intelligence)
   const [autonomousLogs, setAutonomousLogs] = useState<AutonomousLog[]>([
@@ -1000,6 +1005,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const dismissMemoryCandidate = () => setMemoryCandidate(null);
 
+  const extractPendingAction = (text: string): PendingAction | null => {
+    const lower = text.toLocaleLowerCase('tr-TR');
+    if (!/\b(ekle|planla|hatırlat)\b/.test(lower)) return null;
+    const title = text.replace(/\b(ekle|planla|hatırlat|lütfen|bugün|yarın)\b/gi, '').trim();
+    if (title.length < 3 || title.length > 160) return null;
+    const category: TaskItem['category'] = /\b(fatura|ödeme|banka|para)\b/i.test(text) ? 'finans' : /\b(market|alışveriş)\b/i.test(text) ? 'alisveris' : /\b(toplantı|proje|iş)\b/i.test(text) ? 'is' : 'kisisel';
+    return { type: 'create_task', title, category };
+  };
+
+  const approvePendingAction = () => {
+    if (!pendingAction) return;
+    addTask({ title: pendingAction.title, category: pendingAction.category, highlight: '⚡ Sohbette onaylandı' });
+    setPendingAction(null);
+  };
+
+  const dismissPendingAction = () => setPendingAction(null);
+
   const executeAppAction = (action: AppAction) => {
     switch (action.type) {
       case 'ADD_TASK': {
@@ -1120,6 +1142,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMessages((prev) => [...prev, userMessage]);
     const candidate = extractMemoryCandidate(userText);
     if (candidate) setMemoryCandidate(candidate);
+    const action = extractPendingAction(userText);
+    if (action) setPendingAction(action);
     if (user?.uid) {
       saveConversationMessage(user.uid, userMessage, activeConversationId).catch((error) => console.error('Mesaj kaydedilemedi:', error));
     }
@@ -1472,6 +1496,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         memoryCandidate,
         acceptMemoryCandidate,
         dismissMemoryCandidate,
+        pendingAction,
+        approvePendingAction,
+        dismissPendingAction,
         theme,
         setTheme,
         toggleTheme,

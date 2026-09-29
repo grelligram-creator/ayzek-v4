@@ -217,3 +217,9 @@ export interface MemoryCandidate {
   content: string;
   category: MemoryItem['category'];
 }
+
+export interface PendingAction {
+  type: 'create_task';
+  title: string;
+  category: TaskItem['category'];
+}
