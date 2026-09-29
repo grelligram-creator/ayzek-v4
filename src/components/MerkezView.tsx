@@ -30,7 +30,7 @@ import { ConnectedService } from '../types';
 import { IntegrationSetupModal } from './IntegrationSetupModal';
 
 export const MerkezView: React.FC = () => {
-  const { services, openAssistantWithQuery, tasks, connectService } = useApp();
+  const { services, openAssistantWithQuery } = useApp();
   const [selectedService, setSelectedService] = useState<ConnectedService | null>(null);
   const [isSetupOpen, setIsSetupOpen] = useState(false);
   const [isAddChannelOpen, setIsAddChannelOpen] = useState(false);
@@ -137,57 +137,41 @@ export const MerkezView: React.FC = () => {
   const availableChannelsToConnect = [
     {
       id: 'slack',
-      name: 'Slack & Linear Workspace',
+      name: 'Slack / Linear',
       category: 'work' as const,
       icon: 'teams' as const,
-      account: 'Engineering & Product Workspace',
-      desc: 'Sprint biletleri, acil mentionlar ve ürün geri bildirimleri',
+      account: 'OAuth kurulumu gerekli',
+      desc: 'Görev ve ekip bağlamı için planlanan OAuth sağlayıcısı',
     },
     {
       id: 'telegram',
-      name: 'Telegram Bilişsel Bot',
+      name: 'Telegram',
       category: 'comm' as const,
       icon: 'whatsapp' as const,
-      account: '+90 532 *** ** 18',
-      desc: 'Sesli notları anında yapılacaklar listesine ve ajandaya çevirme',
+      account: 'Destek değerlendirmede',
+      desc: 'Resmî API uygunluğu doğrulanmadan bağlantı sunulmaz',
     },
     {
       id: 'garmin',
-      name: 'Garmin / Oura Connect',
+      name: 'Garmin / Oura',
       category: 'health' as const,
       icon: 'health' as const,
-      account: 'Garmin Forerunner + Oura Cloud API',
-      desc: 'Kortizol eğrisi, antrenman toparlanması ve derin uyku analizi',
+      account: 'OAuth kurulumu gerekli',
+      desc: 'Sağlık verisi sağlayıcı izinleri ve veri politikası gerektirir',
     },
     {
       id: 'edevlet',
-      name: 'E-Devlet & Resmi Tebligat Radarı',
+      name: 'Resmî bildirim hizmetleri',
       category: 'finance' as const,
       icon: 'banking' as const,
-      account: 'UETS & Vergi Dairesi Entegrasyonu',
-      desc: 'Süreli resmi bildirimler ve ceza/tebligat erken uyarı sistemi',
+      account: 'Desteklenmiyor',
+      desc: 'Resmî ve yetkili bir API olmadan bu tür veri erişimi sağlanmaz',
     },
   ];
 
   const handleAddNewChannel = (channel: (typeof availableChannelsToConnect)[0]) => {
-    connectService({
-      id: channel.id,
-      name: channel.name,
-      account: channel.account,
-      status: 'Aktif',
-      icon: channel.icon as any,
-      items: [
-        `${channel.name} bağlantısı sağlandı.`,
-        'Canlı veri akışı AYZEK hafızasıyla eşleşti.',
-      ],
-      unreadCount: 0,
-      toggleable: true,
-      isActive: true,
-      category: channel.category,
-      syncType: 'webhook',
-    });
     setIsAddChannelOpen(false);
-    setSyncSuccessToast(`${channel.name} başarıyla sisteme bağlandı!`);
+    setSyncSuccessToast(`${channel.name} için canlı bağlantı henüz uygulanmadı. OAuth ve sağlayıcı yapılandırması gerekir.`);
     setTimeout(() => setSyncSuccessToast(null), 3500);
   };
 
@@ -213,7 +197,7 @@ export const MerkezView: React.FC = () => {
                   <Plus className="w-4 h-4" />
                 </div>
                 <h3 className="text-base font-bold text-white">
-                  Yeni Veri Kanalı Bağla
+                  Sağlayıcı durumu
                 </h3>
               </div>
               <button
@@ -225,7 +209,7 @@ export const MerkezView: React.FC = () => {
             </div>
 
             <p className="text-xs text-rose-200/70">
-              AYZEK OS'in hayatınızın tam merkezinde çalışabilmesi için dilediğiniz ek kanalı bağlayın:
+              Sağlayıcıların canlı bağlantı durumu burada görünür. OAuth yapılandırması olmayan hiçbir kanal bağlanmış gösterilmez.
             </p>
 
             <div className="space-y-2.5 max-h-[60vh] overflow-y-auto pr-1 no-scrollbar">
@@ -247,7 +231,7 @@ export const MerkezView: React.FC = () => {
                     className="coral-gradient hover:opacity-95 text-white px-3.5 py-1.5 rounded-full text-xs font-bold shrink-0 shadow-md cursor-pointer flex items-center gap-1"
                   >
                     <Plus className="w-3.5 h-3.5" />
-                    <span>Bağla</span>
+                    <span>Durumu göster</span>
                   </button>
                 </div>
               ))}
@@ -277,7 +261,7 @@ export const MerkezView: React.FC = () => {
               <Zap className="w-4 h-4 fill-white" />
             </div>
             <h1 className="text-2xl sm:text-3xl font-display font-normal tracking-tight text-white">
-              Canlı Entegrasyon & Veri Merkezi
+              Entegrasyon & Veri Merkezi
             </h1>
           </div>
           <p className="text-xs text-rose-200/70 mt-1">
@@ -291,7 +275,7 @@ export const MerkezView: React.FC = () => {
             className="coral-gradient hover:opacity-95 text-white flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold shadow-lg shadow-rose-950/60 transition-all cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5" />
-            <span>Yeni Kanal Bağla</span>
+            <span>Sağlayıcılar</span>
           </button>
         </div>
       </section>
@@ -304,7 +288,7 @@ export const MerkezView: React.FC = () => {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-bold text-white">Canlı Senkronizasyon Durumu:</span>
+              <span className="text-sm font-bold text-white">Bağlantı Durumu:</span>
               <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
                 {services.filter((s) => s.isActive).length} / {services.length} Kanal Aktif
               </span>
@@ -317,9 +301,10 @@ export const MerkezView: React.FC = () => {
 
         <button
           onClick={() => {
-            services.forEach((s) => handleManualSync(s));
+            services.filter((service) => service.isActive).forEach((service) => handleManualSync(service));
           }}
-          className="frosted-pill-button flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-rose-200 hover:text-white cursor-pointer"
+          disabled={!services.some((service) => service.isActive)}
+          className="frosted-pill-button flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-rose-200 hover:text-white cursor-pointer disabled:opacity-50"
         >
           <RefreshCw className="w-3.5 h-3.5 text-rose-400" />
           <span>Bağlı Kanalları Eşitle</span>
