@@ -31,6 +31,8 @@ export const Header: React.FC = () => {
     setIsVisionModalOpen,
     setIsVoiceBriefingOpen,
     setIsAlwaysOnWatchOpen,
+    notifications,
+    setIsNotificationsOpen,
   } = useApp();
 
   return (
@@ -64,12 +66,13 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Notification Bell with red pulse dot */}
           <button
-            onClick={() => setActiveTab('profile')}
-            title="Bildirim tercihleri"
-            aria-label="Bildirim tercihleri"
+            onClick={() => setIsNotificationsOpen(true)}
+            title="Bildirim merkezi"
+            aria-label="Bildirim merkezi"
             className="relative w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-rose-200 border border-rose-500/20 transition-colors cursor-pointer"
           >
             <Bell className="w-4 h-4" />
+            {notifications.some((notification) => !notification.readAt) && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500" />}
           </button>
 
           {/* Sesli Brifing Trigger */}

@@ -43,6 +43,14 @@ export interface NotificationPreferences {
   security: boolean;
 }
 
+export interface NotificationItem {
+  id: string;
+  category: 'task' | 'security' | 'system' | 'integration';
+  title: string;
+  createdAt: string;
+  readAt?: string;
+}
+
 export interface AutonomousLog {
   id: string;
   time: string;

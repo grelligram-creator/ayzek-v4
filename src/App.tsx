@@ -15,6 +15,7 @@ import { CheckoutModal } from './components/CheckoutModal';
 import { IosInstallModal } from './components/IosInstallModal';
 import { FirstStarsOnboardingModal } from './components/FirstStarsOnboardingModal';
 import { QuickTourModal } from './components/QuickTourModal';
+import { NotificationCenterModal } from './components/NotificationCenterModal';
 import { CognitiveSanctuaryModal } from './components/CognitiveSanctuaryModal';
 import { LifeCenterVisionModal } from './components/LifeCenterVisionModal';
 import { VoiceBriefingModal } from './components/VoiceBriefingModal';
@@ -47,6 +48,7 @@ const AppContent: React.FC = () => {
       <IosInstallModal />
       <FirstStarsOnboardingModal />
       <QuickTourModal />
+      <NotificationCenterModal />
       <LifeCenterVisionModal />
       <VoiceBriefingModal />
       <CognitiveWrappedModal />

@@ -30,6 +30,7 @@ import {
   AppAction,
   AutonomousLog,
   ProactiveInsight,
+  NotificationItem,
 } from '../types';
 import { PricingPlan } from '../data/pricingPlans';
 import {
@@ -77,6 +78,10 @@ interface AppContextType {
   isQuickTourOpen: boolean;
   setIsQuickTourOpen: (open: boolean) => void;
   completeQuickTour: () => Promise<void>;
+  notifications: NotificationItem[];
+  isNotificationsOpen: boolean;
+  setIsNotificationsOpen: (open: boolean) => void;
+  markNotificationsRead: () => void;
 
   // Theme & Navigation
   theme: ThemeMode;
@@ -195,6 +200,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
   const [isQuickTourOpen, setIsQuickTourOpen] = useState(false);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
   // Autonomous background worker logs (User away from app intelligence)
   const [autonomousLogs, setAutonomousLogs] = useState<AutonomousLog[]>([
@@ -674,6 +681,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setProactiveInsights([]);
     setProactiveAlert(null);
     setTasks([]);
+    setNotifications([]);
     setDilemmas([]);
     setBalance({ score: 0, status: 'Dengeli', smartGuardActive: false, cutOffTime: '18:00', connectedCount: 0 });
     setCheckin({ energy: 'balanced', mood: 'calm', focus: 'balanced', note: '', aiAdvice: '', updatedAt: '' });
@@ -711,12 +719,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (savedData.dilemmas) setDilemmas(savedData.dilemmas);
             if (savedData.services) setServices(savedData.services);
             if (savedData.coachGoal) setCoachGoal(savedData.coachGoal);
+            if (savedData.notifications) setNotifications(savedData.notifications);
           } else {
             // A new workspace starts empty. Personal-looking fixture data must
             // never be presented as if it belonged to the signed-in user.
             setBalance({ score: 0, status: 'Dengeli', smartGuardActive: false, cutOffTime: '18:00', connectedCount: 0 });
             setCheckin({ energy: 'balanced', mood: 'calm', focus: 'balanced', note: '', aiAdvice: '', updatedAt: '' });
             setTasks([]);
+            setNotifications([]);
             setDilemmas([]);
             setAutonomousLogs([]);
             setProactiveInsights([]);
@@ -746,6 +756,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else {
         setIsWorkspaceHydrated(false);
         setMessages([]);
+        setNotifications([]);
         setConversations([generalConversation]);
         setActiveConversationId('default');
       }
@@ -766,11 +777,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dilemmas,
         services,
         coachGoal,
+        notifications,
       }).catch((e) => console.error('Kullanıcı verisi senkronu başarısız:', e));
     }, 1500);
 
     return () => clearTimeout(timeout);
-  }, [user, userProfile, isWorkspaceHydrated, balance, checkin, tasks, dilemmas, services, coachGoal]);
+  }, [user, userProfile, isWorkspaceHydrated, balance, checkin, tasks, dilemmas, services, coachGoal, notifications]);
 
   // Auth methods must fail closed; a failed login cannot create a paid local session.
   const loginWithEmail = async (email: string, pass: string) => {
@@ -947,6 +959,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTimeout(() => {
       setSyncToast(null);
     }, 4500);
+  };
+
+  const addNotification = (category: NotificationItem['category'], title: string) => {
+    setNotifications((previous) => [{ id: crypto.randomUUID(), category, title, createdAt: new Date().toISOString() }, ...previous].slice(0, 100));
+  };
+
+  const markNotificationsRead = () => {
+    const now = new Date().toISOString();
+    setNotifications((previous) => previous.map((notification) => notification.readAt ? notification : { ...notification, readAt: now }));
   };
 
   const executeAppAction = (action: AppAction) => {
@@ -1268,6 +1289,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       showSyncNotification(
         isNowCompleted ? `Görev tamamlandı: "${target?.title}"` : `Görev geri alındı: "${target?.title}"`
       );
+      if (target) addNotification('task', isNowCompleted ? `Görev tamamlandı: ${target.title}` : `Görev yeniden açıldı: ${target.title}`);
       return updated;
     });
   };
@@ -1291,6 +1313,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTasks((prev) => [newTask, ...prev]);
     setRoutineSummary((r) => ({ ...r, remainingCount: r.remainingCount + 1 }));
     showSyncNotification(`Yeni görev eklendi: "${newTask.title}"`);
+    addNotification('task', `Yeni görev eklendi: ${newTask.title}`);
   };
 
   const addDilemma = (dilemma: Partial<DilemmaItem>) => {
@@ -1356,6 +1379,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isQuickTourOpen,
         setIsQuickTourOpen,
         completeQuickTour,
+        notifications,
+        isNotificationsOpen,
+        setIsNotificationsOpen,
+        markNotificationsRead,
         theme,
         setTheme,
         toggleTheme,

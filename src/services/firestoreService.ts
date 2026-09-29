@@ -1,6 +1,6 @@
 import { collection, deleteDoc, doc, getDoc, getDocs, limit, orderBy, query, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { UserProfile, MoodCheckin, TaskItem, DilemmaItem, WorkLifeBalance, ConnectedService, CoachGoal, ChatMessage, ConversationSummary, MemoryItem } from '../types';
+import { UserProfile, MoodCheckin, TaskItem, DilemmaItem, WorkLifeBalance, ConnectedService, CoachGoal, ChatMessage, ConversationSummary, MemoryItem, NotificationItem } from '../types';
 
 export interface UserPersistedData {
   balance: WorkLifeBalance;
@@ -9,6 +9,7 @@ export interface UserPersistedData {
   dilemmas: DilemmaItem[];
   services: ConnectedService[];
   coachGoal: CoachGoal;
+  notifications?: NotificationItem[];
   updatedAt: string;
 }
 
