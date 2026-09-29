@@ -48,11 +48,7 @@ export const AlwaysOnWatchModal: React.FC = () => {
     month: 'long',
   });
 
-  const nextTask = tasks.find((t) => !t.isCompleted) || {
-    title: 'Akşam Zihinsel Dinlenme & Rutin',
-    time: '18:00',
-    category: 'balance',
-  };
+  const nextTask = tasks.find((t) => !t.isCompleted);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/90 backdrop-blur-xl text-white">
@@ -140,10 +136,10 @@ export const AlwaysOnWatchModal: React.FC = () => {
                 <div className="p-2.5 rounded-2xl bg-slate-900/90 border border-slate-800 text-left">
                   <div className="flex items-center justify-between text-[10px] text-sky-400 font-bold mb-0.5">
                     <span>AYZEK NÖBETÇİ</span>
-                    <span>{nextTask.time || '14:00'}</span>
+                    <span>{nextTask?.time || '—'}</span>
                   </div>
                   <p className="text-xs font-semibold text-white truncate">
-                    {nextTask.title}
+                    {nextTask?.title || 'Henüz görev yok'}
                   </p>
                   <p className="text-[10px] text-slate-400 truncate">
                     15 dk Akıllı Tampon Hazır
@@ -195,7 +191,7 @@ export const AlwaysOnWatchModal: React.FC = () => {
                       </span>
                     </div>
                     <div className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-200">
-                      Sonraki: <strong>{nextTask.title}</strong> ({nextTask.time})
+                      Sonraki: <strong>{nextTask?.title || 'Görev eklenmedi'}</strong>{nextTask ? ` (${nextTask.time})` : ''}
                     </div>
                   </div>
                 )}
