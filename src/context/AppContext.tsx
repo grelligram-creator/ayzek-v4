@@ -32,7 +32,9 @@ import { PricingPlan } from '../data/pricingPlans';
 import {
   getOrCreateUserProfile,
   getUserData,
+  loadConversationMessages,
   saveUserData,
+  saveConversationMessage,
   updateUserProfileDetails,
 } from '../services/firestoreService';
 
@@ -614,8 +616,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     {
       id: 'msg-init',
       role: 'assistant',
-      content:
-        'Merhaba Görkem! Ben AYZEK. Tüm kurumsal servislerini (Teams, Gmail, Takvimler, WhatsApp) ve kişisel ajandanı canlı senkronize tutuyorum. Bugün nasıl hissediyorsun?',
+      content: 'Merhaba! Ben AYZEK. Bağlantı izni verdiğiniz servisler ve kişisel planlarınız için yardımcı olmaya hazırım.',
       timestamp: '08:30',
     },
   ]);
@@ -671,6 +672,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             if (savedData.services) setServices(savedData.services);
             if (savedData.coachGoal) setCoachGoal(savedData.coachGoal);
           }
+
+          const storedMessages = await loadConversationMessages(firebaseUser.uid);
+          if (storedMessages.length) setMessages(storedMessages);
         } catch (err) {
           console.error('Firestore profile sync error:', err);
         }
@@ -967,6 +971,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
 
     setMessages((prev) => [...prev, userMessage]);
+    if (user?.uid) {
+      saveConversationMessage(user.uid, userMessage).catch((error) => console.error('Mesaj kaydedilemedi:', error));
+    }
     setIsChatLoading(true);
 
     try {
@@ -1011,13 +1018,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      if (user?.uid) {
+        saveConversationMessage(user.uid, assistantMessage).catch((error) => console.error('Yanıt kaydedilemedi:', error));
+      }
     } catch (err) {
       console.error('Mesaj gönderme hatası:', err);
       const fallbackMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        content:
-          'Mesajınızı kaydettim. Sistem durumunuz ve kişisel hafızanız kontrol altında tutuluyor.',
+        content: 'Yanıt şu anda oluşturulamadı. Lütfen bağlantınızı ve oturumunuzu kontrol edip tekrar deneyin.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, fallbackMsg]);

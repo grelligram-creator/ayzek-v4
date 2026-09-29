@@ -1,6 +1,6 @@
-import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, getDoc, getDocs, limit, orderBy, query, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { UserProfile, MoodCheckin, TaskItem, DilemmaItem, WorkLifeBalance, ConnectedService, CoachGoal } from '../types';
+import { UserProfile, MoodCheckin, TaskItem, DilemmaItem, WorkLifeBalance, ConnectedService, CoachGoal, ChatMessage } from '../types';
 
 export interface UserPersistedData {
   balance: WorkLifeBalance;
@@ -87,4 +87,35 @@ export async function updateUserProfileDetails(
   } catch (err) {
     console.warn('Firestore updateUserProfileDetails fallback:', err);
   }
+}
+
+const defaultConversationId = 'default';
+
+export async function loadConversationMessages(uid: string): Promise<ChatMessage[]> {
+  const messagesRef = collection(db, 'users', uid, 'conversations', defaultConversationId, 'messages');
+  const snapshot = await getDocs(query(messagesRef, orderBy('createdAt', 'asc'), limit(100)));
+  return snapshot.docs.map((entry) => {
+    const data = entry.data();
+    return {
+      id: entry.id,
+      role: data.role === 'user' ? 'user' : 'assistant',
+      content: String(data.content || ''),
+      timestamp: String(data.timestamp || ''),
+      actionsApplied: Array.isArray(data.actionsApplied) ? data.actionsApplied : undefined,
+    };
+  });
+}
+
+export async function saveConversationMessage(uid: string, message: ChatMessage): Promise<void> {
+  const conversationRef = doc(db, 'users', uid, 'conversations', defaultConversationId);
+  const messageRef = doc(conversationRef, 'messages', message.id);
+  await setDoc(conversationRef, {
+    id: defaultConversationId,
+    updatedAt: new Date().toISOString(),
+    createdAt: new Date().toISOString(),
+  }, { merge: true });
+  await setDoc(messageRef, {
+    ...message,
+    createdAt: new Date().toISOString(),
+  });
 }
