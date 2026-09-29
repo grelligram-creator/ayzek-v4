@@ -12,6 +12,11 @@ dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+// In production the server is compiled into dist alongside the Vite assets;
+// during local development it still runs from the repository root.
+const clientDistDirectory = process.env.NODE_ENV === 'production'
+  ? __dirname
+  : path.resolve(__dirname, 'dist');
 
 type AuthenticatedRequest = express.Request & { authUser?: DecodedIdToken; requestId?: string };
 
@@ -681,9 +686,9 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
 
   // Vite middleware in dev or static files in production
   if (process.env.NODE_ENV === 'production') {
-    app.use(express.static(path.resolve(__dirname, 'dist')));
+    app.use(express.static(clientDistDirectory));
     app.get('*', (req, res) => {
-      res.sendFile(path.resolve(__dirname, 'dist', 'index.html'));
+      res.sendFile(path.resolve(clientDistDirectory, 'index.html'));
     });
   } else {
     const vite = await createViteServer({
