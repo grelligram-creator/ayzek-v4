@@ -18,9 +18,7 @@ import {
 export const PoliteDeclineModal: React.FC = () => {
   const { isPoliteDeclineOpen, setIsPoliteDeclineOpen, userProfile } = useApp();
 
-  const [requestText, setRequestText] = useState(
-    'Bu hafta sonu plansız bir iş yemeği ve gayriresmi danışmanlık toplantısı daveti aldım.'
-  );
+  const [requestText, setRequestText] = useState('');
   const [selectedTone, setSelectedTone] = useState<'diplomatic' | 'warm' | 'firm'>('diplomatic');
   const [copied, setCopied] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -38,7 +36,7 @@ export const PoliteDeclineModal: React.FC = () => {
     diplomatic: {
       title: 'Zarif & Üst Düzey Diplomatik',
       subtitle: 'Kurumsal prestiji korur, karşı tarafı onore ederek kapıyı kapatır',
-      tr: `Nazik davetiniz ve beni düşündüğünüz için çok teşekkür ederim. Şu dönemde Grispi bünyesindeki stratejik Q3 teslimatlarımız ve öncelikli mimari odak bloklarım nedeniyle maalesef yeni bir görüşmeye dahil olamıyorum. Çalışmalarınızda başarılar dilerim.`,
+      tr: `Nazik davetiniz ve beni düşündüğünüz için çok teşekkür ederim. Bu dönemde mevcut önceliklerim nedeniyle yeni bir görüşmeye dahil olamıyorum. Çalışmalarınızda başarılar dilerim.`,
       en: `Thank you very much for your kind invitation. Due to our high-priority strategic Q3 commitments and focused engineering sprint, I am currently unable to take on additional meetings. Wishing you all the best with your initiatives.`,
       savedEnergy: '2.5 Saat Bilişsel Odak & Karar Rahatlığı',
     },
