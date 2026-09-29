@@ -49,7 +49,7 @@ export const IntegrationSetupModal: React.FC<IntegrationSetupModalProps> = ({
   const [importedStatus, setImportedStatus] = useState(false);
 
   // Form states
-  const [apiKey, setApiKey] = useState('ayzek_live_sec_9941a87e2');
+  const [apiKey, setApiKey] = useState('');
   const [syncFreq, setSyncFreq] = useState('realtime');
   const [autoBuffer, setAutoBuffer] = useState(true);
   const [sentimentAnalysis, setSentimentAnalysis] = useState(true);
@@ -81,12 +81,12 @@ export const IntegrationSetupModal: React.FC<IntegrationSetupModalProps> = ({
       const time = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
       setTestResult({
         success: true,
-        items: data.items || service.items,
+        items: data.syncedItems || service.items,
         time,
       });
 
       if (onSyncSuccess) {
-        onSyncSuccess(service.id, data.items || service.items);
+        onSyncSuccess(service.id, data.syncedItems || service.items);
       }
     } catch {
       const time = new Date().toLocaleTimeString('tr-TR', { hour: '2-digit', minute: '2-digit' });
@@ -107,7 +107,7 @@ export const IntegrationSetupModal: React.FC<IntegrationSetupModalProps> = ({
         title: item.replace(/^[^:]+:\s*/, ''),
         category: service.id === 'banking' ? 'finans' : service.id === 'health' ? 'kisisel' : 'is',
         time: `${10 + index}:00`,
-        highlight: `⚡ ${service.name} canlı veri kaynağından aktarıldı`,
+        highlight: `⚡ ${service.name} demo verisinden aktarıldı`,
         details: `${service.name} senkronizasyon kaydı: ${item}`,
       });
     });

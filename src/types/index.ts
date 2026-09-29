@@ -1,4 +1,4 @@
-export type ThemeMode = 'light' | 'dark';
+export type ThemeMode = 'light' | 'dark' | 'crimson';
 export type ViewMode = 'desktop' | 'mobile_sim';
 export type NavTab = 'akis' | 'plan' | 'merkez' | 'pricing' | 'profile';
 

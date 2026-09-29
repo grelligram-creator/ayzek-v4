@@ -46,7 +46,7 @@ export const BottomNav: React.FC = () => {
             onClick={() => setIsAssistantOpen(true)}
             title="AYZEK AI Asistan ile Sohbet Et & Senkronize Et"
             aria-label="AYZEK AI Sohbet"
-            className="group relative -top-3.5 w-13 h-13 rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 active:scale-95 crimson-orb-glow border border-rose-400/50 cursor-pointer shadow-[0_0_30px_rgba(225,29,72,0.8)]"
+            className="group relative -top-3.5 w-[52px] h-[52px] rounded-full flex items-center justify-center text-white transition-all duration-300 hover:scale-110 active:scale-95 crimson-orb-glow border border-rose-400/50 cursor-pointer shadow-[0_0_30px_rgba(225,29,72,0.8)]"
           >
             {/* Ambient Pulsing Halo */}
             <div className="absolute -inset-1 rounded-full bg-rose-500/40 blur-md -z-10 group-hover:bg-rose-500/70 transition-all animate-pulseGlow" />
@@ -100,4 +100,3 @@ export const BottomNav: React.FC = () => {
     </div>
   );
 };
-

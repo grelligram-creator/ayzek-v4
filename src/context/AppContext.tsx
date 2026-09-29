@@ -32,7 +32,6 @@ import {
   getOrCreateUserProfile,
   getUserData,
   saveUserData,
-  updateUserSubscription,
   updateUserProfileDetails,
 } from '../services/firestoreService';
 
@@ -110,6 +109,7 @@ interface AppContextType {
   openAssistantWithQuery: (query: string) => void;
   syncToast: { show: boolean; text: string } | null;
   clearSyncToast: () => void;
+  showSyncNotification: (text: string) => void;
 
   // Modals
   isSanctuaryOpen: boolean;
@@ -126,7 +126,6 @@ interface AppContextType {
   checkoutPlan: PricingPlan | null;
   checkoutBillingCycle: 'monthly' | 'yearly';
   openCheckoutModal: (plan: PricingPlan, cycle: 'monthly' | 'yearly') => void;
-  upgradeSubscription: (tier: 'starter' | 'pro' | 'enterprise', period: 'monthly' | 'yearly', cardLast4?: string) => Promise<void>;
 
   // iOS PWA Install Guide
   isIosInstallModalOpen: boolean;
@@ -168,7 +167,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [activeTab, setActiveTab] = useState<NavTab>('akis');
 
-  // Auth state with safe pre-seed and persistence
+  // Auth state: never invent an authenticated user when Firebase is unavailable.
   const [user, setUser] = useState<User | AuthUserState | null>(() => {
     const saved = localStorage.getItem('ayzek_auth_user');
     if (saved) {
@@ -176,11 +175,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return JSON.parse(saved);
       } catch {}
     }
-    return {
-      uid: 'user-gorkem-2026',
-      email: 'gorkem.elligram@grispi.com',
-      displayName: 'Görkem Elligram',
-    };
+    return null;
   });
 
   const [userProfile, setUserProfile] = useState<UserProfile | null>(() => {
@@ -190,25 +185,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         return JSON.parse(saved);
       } catch {}
     }
-    return {
-      uid: 'user-gorkem-2026',
-      email: 'gorkem.elligram@grispi.com',
-      displayName: 'Görkem Elligram',
-      subscriptionTier: 'pro',
-      subscriptionStatus: 'active',
-      subscriptionPeriod: 'monthly',
-      membershipId: 'AYZK-2026-9821-GRSP',
-      renewalDate: '28 Ekim 2026',
-      jobTitle: 'Kurucu & Baş Yazılım Mimarı',
-      company: 'Grispi Inc.',
-      location: 'Moda, Kadıköy / İstanbul',
-      hobbies: ['Yelken & Deniz', 'Filtre Kahve Demleme', 'Felsefe & Bilişsel Bilimler', 'Tenis'],
-      lifeMission: 'Kurumsal zeka ile ruhsal huzuru dengede tutarak yüksek etki üretmek.',
-      cardLast4: '9821',
-      cardBrand: 'Mastercard Black',
-      createdAt: new Date().toISOString(),
-      onboardingCompleted: true,
-    };
+    return null;
   });
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -488,21 +465,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     {
       id: 'teams',
       name: 'Microsoft Teams',
-      account: 'gorkem.elligram@grispi.com (Kurumsal)',
-      status: 'Aktif',
+      account: 'Demo hesabı',
+      status: 'Bağlı Değil',
       icon: 'teams',
       items: [
         'Toplantı: Grispi Q3 Sprint Planlama (14:00)',
         'Kanal Uyarısı: Mimari & Altyapı yol haritası onaylandı',
       ],
       unreadCount: 2,
-      isActive: true,
+      isActive: false,
     },
     {
       id: 'gmail',
       name: 'Gmail & Google Workspace',
-      account: 'gorkem.elligram@grispi.com',
-      status: 'Aktif',
+      account: 'Demo hesabı',
+      status: 'Bağlı Değil',
       icon: 'gmail',
       items: [
         'E-fatura: Enerjisa Elektrik 780 TL (Ödeme Vadesi: Yarın)',
@@ -510,13 +487,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ],
       unreadCount: 1,
       toggleable: true,
-      isActive: true,
+      isActive: false,
     },
     {
       id: 'meet',
       name: 'Google Meet',
-      account: 'gorkem.elligram@grispi.com',
-      status: 'Aktif',
+      account: 'Demo hesabı',
+      status: 'Bağlı Değil',
       icon: 'meet',
       items: [
         'Günün Görüşmesi: 11:00 Q3 Büyüme Değerlendirmesi',
@@ -524,26 +501,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ],
       unreadCount: 0,
       toggleable: true,
-      isActive: true,
+      isActive: false,
     },
     {
       id: 'zoom',
       name: 'Zoom Pro Meetings',
-      account: 'gorkem@grispi.com (Zoom Pro Kurumsal)',
-      status: 'Aktif',
+      account: 'Demo hesabı',
+      status: 'Bağlı Değil',
       icon: 'zoom',
       items: [
         'Yatırımcı Görüşmesi: Perşembe 16:30 takvime işlendi',
         'Transkript Motoru: Toplantı bittiğinde aksiyonlar AYZEK ajandasına düşecek',
       ],
       unreadCount: 0,
-      isActive: true,
+      isActive: false,
     },
     {
       id: 'calendar',
       name: 'Google & Outlook Takvimler',
-      account: 'İş & Kişisel Çift Yönlü Senkron',
-      status: 'Aktif',
+      account: 'Demo takvim',
+      status: 'Bağlı Değil',
       icon: 'calendar',
       items: [
         'Denge Koruması (Smart Guard): 18:00 sonrası toplantı blokajı devrede',
@@ -551,13 +528,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ],
       unreadCount: 0,
       toggleable: true,
-      isActive: true,
+      isActive: false,
     },
     {
       id: 'whatsapp',
       name: 'WhatsApp (İzinli Konuşma Analizörü)',
-      account: '+90 532 *** ** 18 (Multi-Device Aktif)',
-      status: 'Aktif',
+      account: 'Demo kanal',
+      status: 'Bağlı Değil',
       icon: 'whatsapp',
       category: 'comm',
       syncType: 'webhook',
@@ -566,13 +543,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         'Psikolog Koçluğu: Zeynep son mesajda biraz yorgun görünüyordu, empati hatırlatıcısı oluşturuldu',
       ],
       unreadCount: 3,
-      isActive: true,
+      isActive: false,
     },
     {
       id: 'health',
       name: 'Apple Health & Biyo-Sensörler',
       account: 'Apple HealthKit + Oura Ring Gen3',
-      status: 'Aktif',
+      status: 'Bağlı Değil',
       icon: 'health',
       category: 'health',
       syncType: 'healthkit',
@@ -583,13 +560,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ],
       unreadCount: 0,
       toggleable: true,
-      isActive: true,
+      isActive: false,
     },
     {
       id: 'banking',
       name: 'Açık Bankacılık & Finart Radar',
-      account: 'Garanti BBVA + İş Bankası PSD2',
-      status: 'Aktif',
+      account: 'Demo finans sağlayıcısı',
+      status: 'Bağlı Değil',
       icon: 'banking',
       category: 'finance',
       syncType: 'rest',
@@ -600,13 +577,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ],
       unreadCount: 1,
       toggleable: true,
-      isActive: true,
+      isActive: false,
     },
     {
       id: 'notion',
       name: 'Notion & Jira Workspace',
-      account: 'Grispi Enterprise Workspace',
-      status: 'Aktif',
+      account: 'Demo çalışma alanı',
+      status: 'Bağlı Değil',
       icon: 'notion',
       category: 'work',
       syncType: 'webhook',
@@ -616,7 +593,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       ],
       unreadCount: 2,
       toggleable: true,
-      isActive: true,
+      isActive: false,
     },
   ]);
 
@@ -628,18 +605,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setServices((prev) => {
       const exists = prev.find((s) => s.id === newService.id);
       if (exists) {
-        return prev.map((s) => (s.id === newService.id ? { ...s, ...newService, status: 'Aktif' as const, isActive: true } : s));
+        return prev.map((s) => (s.id === newService.id ? { ...s, ...newService, status: 'Bağlı Değil' as const, isActive: false } : s));
       }
       const fullService: ConnectedService = {
         id: newService.id,
         name: newService.name,
-        account: newService.account || 'Yeni Bağlantı',
-        status: 'Aktif',
+        account: newService.account || 'Demo bağlantı',
+        status: 'Bağlı Değil',
         icon: (newService.icon as any) || 'calendar',
-        items: newService.items || ['Bağlantı kuruldu, canlı veriler eşitlendi.'],
+        items: newService.items || ['Demo bağlantı hazır. Gerçek OAuth entegrasyonu henüz uygulanmadı.'],
         unreadCount: 0,
         toggleable: true,
-        isActive: true,
+        isActive: false,
         category: newService.category || 'work',
         syncType: newService.syncType || 'rest',
         lastSyncedAt: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
@@ -737,7 +714,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => clearTimeout(timeout);
   }, [user, userProfile, balance, checkin, tasks, dilemmas, services, coachGoal]);
 
-  // Auth methods with indestructible fallback session (prevents auth/operation-not-allowed)
+  // Auth methods must fail closed; a failed login cannot create a paid local session.
   const loginWithEmail = async (email: string, pass: string) => {
     setIsAuthLoading(true);
     let resolvedUser: AuthUserState;
@@ -756,32 +733,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         displayName: cred.user.displayName,
       });
     } catch {
-      // Graceful offline/local session - user is NEVER blocked by auth/operation-not-allowed
-      const uid = 'usr_' + Math.abs(email.split('').reduce((acc, c) => acc * 31 + c.charCodeAt(0), 7));
-      resolvedUser = {
-        uid,
-        email,
-        displayName: email.split('@')[0] || 'Görkem',
-      };
-      resolvedProfile = {
-        uid,
-        email,
-        displayName: email.split('@')[0] || 'Görkem Elligram',
-        subscriptionTier: 'pro',
-        subscriptionStatus: 'active',
-        subscriptionPeriod: 'monthly',
-        membershipId: `AYZK-2026-${uid.slice(-4).toUpperCase()}`,
-        renewalDate: '28 Ekim 2026',
-        jobTitle: 'Kurucu & Baş Yazılım Mimarı',
-        company: 'Grispi Inc.',
-        location: 'Moda, Kadıköy / İstanbul',
-        hobbies: ['Yelken & Deniz', 'Filtre Kahve Demleme', 'Felsefe & Bilişsel Bilimler', 'Tenis'],
-        lifeMission: 'Kurumsal zeka ile ruhsal huzuru dengede tutarak yüksek etki üretmek.',
-        cardLast4: '9821',
-        cardBrand: 'Mastercard Black',
-        createdAt: new Date().toISOString(),
-        onboardingCompleted: true,
-      };
+      setIsAuthLoading(false);
+      throw new Error('Giriş yapılamadı. Lütfen bilgilerinizi ve Firebase yapılandırmasını kontrol edin.');
     }
 
     setUser(resolvedUser);
@@ -813,31 +766,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         displayName: name,
       });
     } catch {
-      const uid = 'usr_' + Date.now().toString(36);
-      resolvedUser = {
-        uid,
-        email,
-        displayName: name || email.split('@')[0],
-      };
-      resolvedProfile = {
-        uid,
-        email,
-        displayName: name || email.split('@')[0],
-        subscriptionTier: 'pro',
-        subscriptionStatus: 'active',
-        subscriptionPeriod: 'monthly',
-        membershipId: `AYZK-2026-${uid.slice(-4).toUpperCase()}`,
-        renewalDate: '28 Ekim 2026',
-        jobTitle: 'Kurucu & Lider',
-        company: 'Grispi Inc.',
-        location: 'Moda, Kadıköy / İstanbul',
-        hobbies: ['Yelken & Deniz', 'Filtre Kahve Demleme', 'Felsefe'],
-        lifeMission: 'Zihinsel dinginlik ve yüksek odakla değer üretmek.',
-        cardLast4: '9821',
-        cardBrand: 'Mastercard Black',
-        createdAt: new Date().toISOString(),
-        onboardingCompleted: false,
-      };
+      setIsAuthLoading(false);
+      throw new Error('Hesap oluşturulamadı. Lütfen Firebase yapılandırmasını kontrol edin.');
     }
 
     setUser(resolvedUser);
@@ -899,27 +829,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setCheckoutPlan(plan);
     setCheckoutBillingCycle(cycle);
     setIsCheckoutModalOpen(true);
-  };
-
-  const upgradeSubscription = async (
-    tier: 'starter' | 'pro' | 'enterprise',
-    period: 'monthly' | 'yearly',
-    cardLast4: string = '9821'
-  ) => {
-    const currentUid = user?.uid || userProfile?.uid || 'user-gorkem-2026';
-    await updateUserSubscription(currentUid, tier, period, cardLast4);
-    setUserProfile((prev) =>
-      prev
-        ? {
-            ...prev,
-            subscriptionTier: tier,
-            subscriptionStatus: 'active',
-            subscriptionPeriod: period,
-            cardLast4,
-          }
-        : null
-    );
-    showSyncNotification(`Tebrikler! ${tier.toUpperCase()} paketi başarıyla aktifleştirildi.`);
   };
 
   const setTheme = (t: ThemeMode) => {
@@ -991,7 +900,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
       case 'COMPLETE_TASK': {
         const id = action.payload?.id;
-        const titleKeyword = action.payload?.titleKeyword?.toLowerCase();
+        const titleKeyword = (action.payload?.titleKeyword || action.payload?.title)?.toLowerCase();
         setTasks((prev) =>
           prev.map((t) => {
             if (t.id === id || (titleKeyword && t.title.toLowerCase().includes(titleKeyword))) {
@@ -1367,6 +1276,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         openAssistantWithQuery,
         syncToast,
         clearSyncToast,
+        showSyncNotification,
         isDraftModalOpen,
         setIsDraftModalOpen,
         isSanctuaryOpen,
@@ -1379,7 +1289,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         checkoutPlan,
         checkoutBillingCycle,
         openCheckoutModal,
-        upgradeSubscription,
         isIosInstallModalOpen,
         setIsIosInstallModalOpen,
         isVisionModalOpen,

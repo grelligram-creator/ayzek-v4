@@ -268,7 +268,7 @@ Cevap formatın ŞU JSON şemasında olmalıdır:
 
       // 7. General Intelligent Inquiry
       else {
-        replyMessage = `Sorunuzu ve mesajınızı aldım. ${userState.displayName || 'Görkem'}, AYZEK olarak ajandanız, bağlı kanallarınız ve hedefleriniz doğrultusunda yanınızdayım. Bu konuda nasıl bir aksiyon almamı veya plan yapmamı istersiniz?`;
+        replyMessage = `Sorunuzu ve mesajınızı aldım. ${userState.displayName || 'Merhaba'}, AYZEK olarak ajandanız ve hedefleriniz doğrultusunda yanınızdayım. Bu konuda nasıl bir aksiyon almamı veya plan yapmamı istersiniz?`;
       }
 
       return res.json({
@@ -318,7 +318,7 @@ AYZEK olarak kullanıcıya tam 2-3 cümlelik, somut, motive edici ve günün ger
       const { dilemmaTitle, currentContext } = req.body;
 
       const prompt = `Kullanıcı şu ikilem hakkında karar matrisi istiyor:
-"${dilemmaTitle || 'Grispi şirketinden başka bir teklife geçmeli miyim?'}"
+"${dilemmaTitle || 'Yeni bir iş teklifini değerlendirmeli miyim?'}"
 Mevcut Bağlam: ${currentContext || 'Kariyer, finansal denge, iş-özel hayat huzuru'}
 
 Lütfen bir psikolog ve kurumsal stratejist gözüyle analiz et.
@@ -463,12 +463,12 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
             {
               horizon: '1 Yıl',
               optionA: { label: req.body.optionA || 'Yeni Şirket Teklifi', happinessScore: 84, financialScore: 88, stressScore: 60, summary: 'Yeni sorumluluklarla adaptasyon ve yüksek motivasyon.' },
-              optionB: { label: req.body.optionB || 'Grispi’de Kalmak', happinessScore: 72, financialScore: 74, stressScore: 40, summary: 'Tanıdık ekip, öngörülebilir rutin.' },
+              optionB: { label: req.body.optionB || 'Mevcut işte kalmak', happinessScore: 72, financialScore: 74, stressScore: 40, summary: 'Tanıdık ekip, öngörülebilir rutin.' },
             },
             {
               horizon: '5 Yıl',
               optionA: { label: req.body.optionA || 'Yeni Şirket Teklifi', happinessScore: 92, financialScore: 95, stressScore: 35, summary: 'Uluslararası liderlik ve döviz bazlı yüksek servet birikimi.' },
-              optionB: { label: req.body.optionB || 'Grispi’de Kalmak', happinessScore: 68, financialScore: 75, stressScore: 55, summary: 'Kariyer platosu ve keşke duygusu riski.' },
+              optionB: { label: req.body.optionB || 'Mevcut işte kalmak', happinessScore: 68, financialScore: 75, stressScore: 55, summary: 'Kariyer platosu ve keşke duygusu riski.' },
             },
           ],
           optimalVerdict: 'Kısa vadeli adaptasyon zahmetine katlanıp uzun vadeli büyüme potansiyeline yatırım yapmanız önerilir.',
@@ -477,97 +477,97 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
     }
   });
 
-  // 7. REAL INTEGRATION ENGINE: Canlı Servis Durumu, Senkronizasyon ve Webhook Altyapısı
+  // 7. Demo integration catalogue. No third-party account is connected by this server.
   const liveIntegrationRegistry: Record<string, any> = {
     gmail: {
       id: 'gmail',
       name: 'Google Workspace & Gmail',
-      status: 'connected',
-      account: 'gorkem.elligram@grispi.com',
+      status: 'not_connected',
+      account: 'Demo hesabı',
       lastSync: new Date().toISOString(),
       syncFrequency: '5 dakika',
       itemsCount: 14,
-      webhookActive: true,
+      webhookActive: false,
     },
     calendar: {
       id: 'calendar',
       name: 'Google & Outlook Takvimler',
-      status: 'connected',
-      account: 'İş & Kişisel Çift Yönlü Senkron',
+      status: 'not_connected',
+      account: 'Demo takvim',
       lastSync: new Date().toISOString(),
       syncFrequency: 'Anlık',
       itemsCount: 8,
-      webhookActive: true,
+      webhookActive: false,
     },
     teams: {
       id: 'teams',
       name: 'Microsoft Teams & 365',
-      status: 'connected',
-      account: 'gorkem@grispi.com (Kurumsal Tenant)',
+      status: 'not_connected',
+      account: 'Demo çalışma alanı',
       lastSync: new Date().toISOString(),
       syncFrequency: 'Anlık Webhook',
       itemsCount: 6,
-      webhookActive: true,
+      webhookActive: false,
     },
     meet: {
       id: 'meet',
       name: 'Google Meet',
-      status: 'connected',
-      account: 'gorkem.elligram@grispi.com',
+      status: 'not_connected',
+      account: 'Demo hesabı',
       lastSync: new Date().toISOString(),
       syncFrequency: 'Toplantı anında',
       itemsCount: 3,
-      webhookActive: true,
+      webhookActive: false,
     },
     whatsapp: {
       id: 'whatsapp',
       name: 'WhatsApp Business / Cloud API',
-      status: 'connected',
-      account: '+90 532 *** ** 18 (Multi-Device Aktif)',
+      status: 'not_connected',
+      account: 'Demo kanal',
       lastSync: new Date().toISOString(),
       syncFrequency: 'Canlı Webhook',
       itemsCount: 22,
-      webhookActive: true,
+      webhookActive: false,
     },
     health: {
       id: 'health',
       name: 'Apple Health & Biyo-Sensörler',
-      status: 'connected',
+      status: 'not_connected',
       account: 'Apple HealthKit + Oura Ring Gen3',
       lastSync: new Date().toISOString(),
       syncFrequency: '15 dakika',
       itemsCount: 19,
-      webhookActive: true,
+      webhookActive: false,
     },
     banking: {
       id: 'banking',
       name: 'Açık Bankacılık & Finart',
-      status: 'connected',
-      account: 'Garanti BBVA + İş Bankası PSD2 API',
+      status: 'not_connected',
+      account: 'Demo finans sağlayıcısı',
       lastSync: new Date().toISOString(),
       syncFrequency: 'Saatlik',
       itemsCount: 7,
-      webhookActive: true,
+      webhookActive: false,
     },
     notion: {
       id: 'notion',
       name: 'Notion & Jira Workspace',
-      status: 'connected',
-      account: 'Grispi Enterprise Workspace',
+      status: 'not_connected',
+      account: 'Demo çalışma alanı',
       lastSync: new Date().toISOString(),
       syncFrequency: 'Webhook Anlık',
       itemsCount: 11,
-      webhookActive: true,
+      webhookActive: false,
     },
     zoom: {
       id: 'zoom',
       name: 'Zoom Pro Meetings',
-      status: 'connected',
-      account: 'gorkem@grispi.com (Zoom Pro Kurumsal)',
+      status: 'not_connected',
+      account: 'Demo hesabı',
       lastSync: new Date().toISOString(),
       syncFrequency: 'Oturum bittiğinde',
       itemsCount: 2,
-      webhookActive: true,
+      webhookActive: false,
     },
   };
 
@@ -586,13 +586,13 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
 
     item.lastSync = new Date().toISOString();
 
-    // Pull simulated real data based on channel
+    // Return fixture data only. This endpoint does not contact external services.
     let freshItems: string[] = [];
     if (serviceId === 'gmail') {
       freshItems = [
         'E-fatura: Enerjisa Elektrik 780 TL (Ödeme Vadesi: Yarın)',
         'Bordro: Eylül ayı hakediş bildirimi onaylandı',
-        'Rezervasyon: Moda sahilinde cuma akşam yemeği teyit edildi',
+        'Rezervasyon: Akşam yemeği teyit edildi',
       ];
     } else if (serviceId === 'calendar') {
       freshItems = [
@@ -603,7 +603,7 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
     } else if (serviceId === 'whatsapp') {
       freshItems = [
         'Zeynep: "Akşam gelirken marketten filtre kahve ve süt almayı unutma ☕"',
-        'Grispi Yazılım Ekibi: "Sprint 42 tamamlandı, yayına alıyoruz."',
+        'Ürün ekibi: "Sprint tamamlandı, yayına hazırlanıyoruz."',
         'Duygu Analizi: Zeynep son mesajda mutlu ve motive görünüyor.',
       ];
     } else if (serviceId === 'teams') {
@@ -619,14 +619,14 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
       ];
     } else if (serviceId === 'banking') {
       freshItems = [
-        'Garanti BBVA: Enerjisa 780 TL fatura son ödeme tarihi: Yarın',
+        'Örnek fatura: Son ödeme tarihi yarın',
         'Nakit Tamponu: 3.2 aylık acil yaşam rezervi güvende',
         'Abonelik Taraması: Kullanılmayan 1 bulut lisansı iptal listesine alındı',
       ];
     } else if (serviceId === 'notion') {
       freshItems = [
         'Notion: "C1 İngilizce Sunum Taslağı" sayfasına 2 yeni kaynak eklendi',
-        'Jira Sprint: Grispi Frontend mimari bileti "Test" aşamasına geçti',
+        'Jira Sprint: Frontend mimari bileti "Test" aşamasına geçti',
       ];
     } else {
       freshItems = [
@@ -640,50 +640,30 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
       serviceId,
       lastSync: item.lastSync,
       syncedItems: freshItems,
-      message: `${item.name} üzerinden en güncel veriler çekildi ve AYZEK bilişsel ajandasına aktarıldı.`,
+      isDemo: true,
+      message: `${item.name} için örnek veriler gösteriliyor; harici bir hesaba erişilmedi.`,
     });
   });
 
-  // Save connection credentials
+  // Credential storage and OAuth are intentionally not implemented yet.
   app.post('/api/integrations/connect', (req, res) => {
-    const { serviceId, account, credentials = {} } = req.body;
+    const { serviceId } = req.body;
     if (!serviceId) {
       return res.status(400).json({ error: 'serviceId zorunludur' });
     }
 
-    if (liveIntegrationRegistry[serviceId]) {
-      liveIntegrationRegistry[serviceId].account = account || liveIntegrationRegistry[serviceId].account;
-      liveIntegrationRegistry[serviceId].status = 'connected';
-      liveIntegrationRegistry[serviceId].lastSync = new Date().toISOString();
-      liveIntegrationRegistry[serviceId].credentials = { saved: true, updatedAt: new Date().toISOString() };
-    }
-
-    return res.json({
-      success: true,
+    return res.status(501).json({
+      success: false,
       serviceId,
-      message: `${serviceId} entegrasyonu başarıyla bağlandı ve canlı senkronizasyon devreye alındı.`,
+      error: 'Entegrasyon bağlantısı henüz uygulanmadı. OAuth ve şifreli kimlik bilgisi saklama gereklidir.',
     });
   });
 
-  // Incoming webhook handler for WhatsApp, Teams, Slack, Zoom
+  // Do not accept unauthenticated webhooks before provider signature verification exists.
   app.all('/api/integrations/webhook/:serviceId', (req, res) => {
-    const { serviceId } = req.params;
-
-    // Handle WhatsApp Webhook verification challenge (GET hub.challenge)
-    if (req.method === 'GET' && req.query['hub.challenge']) {
-      return res.status(200).send(req.query['hub.challenge']);
-    }
-
-    console.log(`[AYZEK Webhook] ${serviceId} kanalından veri alındı:`, req.body);
-    if (liveIntegrationRegistry[serviceId]) {
-      liveIntegrationRegistry[serviceId].lastSync = new Date().toISOString();
-    }
-
-    return res.status(200).json({
-      success: true,
-      serviceId,
-      receivedAt: new Date().toISOString(),
-      status: 'processed',
+    return res.status(501).json({
+      success: false,
+      error: 'Webhook alımı devre dışı. Sağlayıcı imza doğrulaması uygulanmadan etkinleştirilemez.',
     });
   });
 

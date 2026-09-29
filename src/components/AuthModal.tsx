@@ -44,21 +44,7 @@ export const AuthModal: React.FC = () => {
       }
       setIsAuthModalOpen(false);
     } catch (err: any) {
-      console.warn('Auth fallback session activated:', err);
-      setIsAuthModalOpen(false);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleDemoLogin = async () => {
-    setIsLoading(true);
-    setError(null);
-    try {
-      await loginWithEmail('gorkem.elligram@grispi.com', 'Ayzek2026!');
-      setIsAuthModalOpen(false);
-    } catch {
-      setIsAuthModalOpen(false);
+      setError(err instanceof Error ? err.message : 'Kimlik doğrulama sırasında bir hata oluştu.');
     } finally {
       setIsLoading(false);
     }
@@ -80,7 +66,7 @@ export const AuthModal: React.FC = () => {
         <div className="relative p-6 bg-gradient-to-r from-[#1b050f] via-[#280716] to-[#120309] text-white text-center flex flex-col items-center border-b border-rose-500/20">
           <div className="absolute top-3 right-12">
             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 font-mono">
-              Canlı Altyapı
+              Geliştirme Önizlemesi
             </span>
           </div>
 
@@ -208,26 +194,6 @@ export const AuthModal: React.FC = () => {
             <ArrowRight className="w-4 h-4" />
           </button>
 
-          {/* Quick Demo Access */}
-          <div className="pt-2 text-center">
-            <div className="relative flex py-2 items-center">
-              <div className="flex-grow border-t border-rose-500/20" />
-              <span className="flex-shrink mx-2 text-[10px] text-rose-300/60 uppercase font-mono font-semibold">
-                veya Hızlı Canlı Test
-              </span>
-              <div className="flex-grow border-t border-rose-500/20" />
-            </div>
-
-            <button
-              type="button"
-              onClick={handleDemoLogin}
-              disabled={isLoading}
-              className="frosted-pill-button w-full py-2.5 px-4 rounded-full text-xs font-bold text-rose-200 hover:text-white transition-colors flex items-center justify-center gap-1.5 cursor-pointer shadow-md"
-            >
-              <span>⚡ Tek Tıkla Canlı Kullanıcı Olarak Gir</span>
-              <span className="text-[10px] text-rose-400 font-semibold">(Görkem Elligram)</span>
-            </button>
-          </div>
         </form>
       </div>
     </div>

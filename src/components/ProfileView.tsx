@@ -76,7 +76,7 @@ export const ProfileView: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-rose-200/70 mt-0.5 truncate">
-              {userProfile?.email || user?.email || 'gorkem.elligram@grispi.com'}
+              {userProfile?.email || user?.email || 'E-posta eklenmedi'}
             </p>
             <div className="flex items-center gap-1.5 text-xs text-rose-200/60 mt-1">
               <MapPin className="w-3.5 h-3.5 text-rose-400 shrink-0" />

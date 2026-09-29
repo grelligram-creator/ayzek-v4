@@ -147,12 +147,12 @@ export const AyzekAssistantModal: React.FC = () => {
                   <p className="whitespace-pre-wrap">{msg.content}</p>
 
                   {/* Actions / confirmations if performed */}
-                  {msg.actionsTaken && msg.actionsTaken.length > 0 && (
+                  {msg.actionsApplied && msg.actionsApplied.length > 0 && (
                     <div className="pt-2 border-t border-rose-500/20 space-y-1.5 text-xs">
                       <span className="font-bold text-rose-300 block text-[11px] uppercase tracking-wider font-mono">
                         ⚡ Gerçekleşen Canlı Eylemler:
                       </span>
-                      {msg.actionsTaken.map((act, i) => (
+                      {msg.actionsApplied.map((act, i) => (
                         <div
                           key={i}
                           className="flex items-center gap-1.5 text-emerald-300 text-[11px] font-medium"
