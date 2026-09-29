@@ -1,11 +1,7 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { AppProvider, useApp } from './context/AppContext';
 import { Header } from './components/Header';
 import { AkisView } from './components/AkisView';
-import { PlanView } from './components/PlanView';
-import { MerkezView } from './components/MerkezView';
-import { PricingView } from './components/PricingView';
-import { ProfileView } from './components/ProfileView';
 import { BottomNav } from './components/BottomNav';
 import { AyzekAssistantModal } from './components/AyzekAssistantModal';
 import { DecisionMatrixModal } from './components/DecisionMatrixModal';
@@ -26,6 +22,13 @@ import { MeetingShadowModal } from './components/MeetingShadowModal';
 import { FutureSelfModal } from './components/FutureSelfModal';
 import { SyncNotification } from './components/SyncNotification';
 import { Wifi, Battery, Signal, ArrowLeft } from 'lucide-react';
+
+const PlanView = lazy(() => import('./components/PlanView').then((module) => ({ default: module.PlanView })));
+const MerkezView = lazy(() => import('./components/MerkezView').then((module) => ({ default: module.MerkezView })));
+const PricingView = lazy(() => import('./components/PricingView').then((module) => ({ default: module.PricingView })));
+const ProfileView = lazy(() => import('./components/ProfileView').then((module) => ({ default: module.ProfileView })));
+
+const ViewFallback = () => <div className="py-16 text-center text-xs text-rose-200/60">Bölüm yükleniyor…</div>;
 
 const AppContent: React.FC = () => {
   const { viewMode, activeTab, toggleViewMode, isSanctuaryOpen, setIsSanctuaryOpen } = useApp();
@@ -93,11 +96,13 @@ const AppContent: React.FC = () => {
 
             {/* Scrollable Mobile Body */}
             <main className="flex-1 overflow-y-auto px-3.5 sm:px-4 py-3 no-scrollbar touch-pan-y overscroll-contain pb-24 crimson-ambient">
-              {activeTab === 'akis' && <AkisView />}
-              {activeTab === 'plan' && <PlanView />}
-              {activeTab === 'merkez' && <MerkezView />}
-              {activeTab === 'pricing' && <PricingView />}
-              {activeTab === 'profile' && <ProfileView />}
+              <Suspense fallback={<ViewFallback />}>
+                {activeTab === 'akis' && <AkisView />}
+                {activeTab === 'plan' && <PlanView />}
+                {activeTab === 'merkez' && <MerkezView />}
+                {activeTab === 'pricing' && <PricingView />}
+                {activeTab === 'profile' && <ProfileView />}
+              </Suspense>
             </main>
 
             {/* Mobile Bottom Dock */}
@@ -115,11 +120,13 @@ const AppContent: React.FC = () => {
           <Header />
 
           <main className="flex-1 max-w-4xl w-full mx-auto px-3.5 sm:px-6 py-4 sm:py-8 touch-pan-y pb-24 crimson-ambient">
-            {activeTab === 'akis' && <AkisView />}
-            {activeTab === 'plan' && <PlanView />}
-            {activeTab === 'merkez' && <MerkezView />}
-            {activeTab === 'pricing' && <PricingView />}
-            {activeTab === 'profile' && <ProfileView />}
+            <Suspense fallback={<ViewFallback />}>
+              {activeTab === 'akis' && <AkisView />}
+              {activeTab === 'plan' && <PlanView />}
+              {activeTab === 'merkez' && <MerkezView />}
+              {activeTab === 'pricing' && <PricingView />}
+              {activeTab === 'profile' && <ProfileView />}
+            </Suspense>
           </main>
 
           <BottomNav />
