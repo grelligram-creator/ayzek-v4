@@ -596,10 +596,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const fullService: ConnectedService = {
         id: newService.id,
         name: newService.name,
-        account: newService.account || 'Demo bağlantı',
+        account: newService.account || 'Bağlantı kurulmadı',
         status: 'Bağlı Değil',
         icon: (newService.icon as any) || 'calendar',
-        items: newService.items || ['Demo bağlantı hazır. Gerçek OAuth entegrasyonu henüz uygulanmadı.'],
+        items: newService.items || [],
         unreadCount: 0,
         toggleable: true,
         isActive: false,

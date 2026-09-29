@@ -112,7 +112,7 @@ export const IntegrationSetupModal: React.FC<IntegrationSetupModalProps> = ({
         title: item.replace(/^[^:]+:\s*/, ''),
         category: service.id === 'banking' ? 'finans' : service.id === 'health' ? 'kisisel' : 'is',
         time: `${10 + index}:00`,
-        highlight: `⚡ ${service.name} demo verisinden aktarıldı`,
+        highlight: `${service.name} bağlantısından aktarıldı`,
         details: `${service.name} senkronizasyon kaydı: ${item}`,
       });
     });
@@ -157,7 +157,7 @@ export const IntegrationSetupModal: React.FC<IntegrationSetupModalProps> = ({
               <div className="flex items-center gap-2">
                 <h3 className="text-base sm:text-lg font-bold tracking-tight text-white">{service.name}</h3>
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 font-mono">
-                  Gerçek Veri Entegrasyonu
+                  Bağlantı kurulmadı
                 </span>
               </div>
               <p className="text-xs text-rose-200/70 mt-0.5">{service.account}</p>

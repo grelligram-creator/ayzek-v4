@@ -549,7 +549,7 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
     }
   });
 
-  // 7. Demo integration catalogue. No third-party account is connected by this server.
+  // Capability catalogue only. This server does not have access to third-party accounts.
   const liveIntegrationRegistry: Record<string, any> = {
     gmail: {
       id: 'gmail',
@@ -645,10 +645,17 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
 
   // Status endpoint
   app.get('/api/integrations/status', requireVerifiedUser, rateLimit(60, 60_000), (_req: AuthenticatedRequest, res) => {
-    return res.json({ success: true, integrations: liveIntegrationRegistry });
+    const integrations = Object.fromEntries(
+      Object.entries(liveIntegrationRegistry).map(([id, service]) => [id, {
+        id,
+        name: service.name,
+        status: 'not_connected',
+      }]),
+    );
+    return res.json({ success: true, integrations });
   });
 
-  // Real Data Pull / Sync endpoint
+  // Sync remains unavailable until OAuth and encrypted token storage are implemented.
   app.post('/api/integrations/sync/:serviceId', requireVerifiedUser, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
     const { serviceId } = req.params;
     const item = liveIntegrationRegistry[serviceId];
@@ -656,65 +663,12 @@ Kullanıcının hayati kararlarını (Kariyer geçişi, yatırım, taşınma, il
       return res.status(404).json({ error: 'Bilinmeyen servis' });
     }
 
-    item.lastSync = new Date().toISOString();
-
-    // Return fixture data only. This endpoint does not contact external services.
-    let freshItems: string[] = [];
-    if (serviceId === 'gmail') {
-      freshItems = [
-        'E-fatura: Enerjisa Elektrik 780 TL (Ödeme Vadesi: Yarın)',
-        'Bordro: Eylül ayı hakediş bildirimi onaylandı',
-        'Rezervasyon: Akşam yemeği teyit edildi',
-      ];
-    } else if (serviceId === 'calendar') {
-      freshItems = [
-        '09:00 - 10:30 Strateji & Mimari Değerlendirme (15 dk Akıllı Tampon Devrede)',
-        '14:00 - 15:00 Yatırımcı Paydaş Sunumu',
-        '18:00 - Smart Guard Akşam Koruması Başlıyor',
-      ];
-    } else if (serviceId === 'whatsapp') {
-      freshItems = [
-        'Zeynep: "Akşam gelirken marketten filtre kahve ve süt almayı unutma ☕"',
-        'Ürün ekibi: "Sprint tamamlandı, yayına hazırlanıyoruz."',
-        'Duygu Analizi: Zeynep son mesajda mutlu ve motive görünüyor.',
-      ];
-    } else if (serviceId === 'teams') {
-      freshItems = [
-        'Kurumsal Kanal: Q4 bütçe projeksiyonu paylaşıldı (Aksiyon: İncele)',
-        'Toplantı Bildirimi: Yarın 11:30 Ürün Yol Haritası görüşmesi',
-      ];
-    } else if (serviceId === 'health') {
-      freshItems = [
-        'Uyku Verisi: 7s 42dk (%86 derin ve REM uyku skoru, toparlanma yüksek)',
-        'HRV (Kalp Hızı Değişkenliği): 64ms (Dengeli otonom sinir sistemi)',
-        'Biyo-Ritim: Foliküler evre için yüksek kortizol toleransı algılandı.',
-      ];
-    } else if (serviceId === 'banking') {
-      freshItems = [
-        'Örnek fatura: Son ödeme tarihi yarın',
-        'Nakit Tamponu: 3.2 aylık acil yaşam rezervi güvende',
-        'Abonelik Taraması: Kullanılmayan 1 bulut lisansı iptal listesine alındı',
-      ];
-    } else if (serviceId === 'notion') {
-      freshItems = [
-        'Notion: "C1 İngilizce Sunum Taslağı" sayfasına 2 yeni kaynak eklendi',
-        'Jira Sprint: Frontend mimari bileti "Test" aşamasına geçti',
-      ];
-    } else {
-      freshItems = [
-        'Servis veri akışı başarılı, 0 hata ile eşitlendi.',
-        'Yeni aksiyonlar AYZEK hafızasına aktarıldı.',
-      ];
-    }
-
-    return res.json({
-      success: true,
+    return res.status(409).json({
+      success: false,
       serviceId,
-      lastSync: item.lastSync,
-      syncedItems: freshItems,
-      isDemo: true,
-      message: `${item.name} için örnek veriler gösteriliyor; harici bir hesaba erişilmedi.`,
+      error: `${item.name} bağlantısı henüz kurulmadı. Canlı eşitleme için OAuth kurulumu gerekir.`,
     });
+
   });
 
   // Credential storage and OAuth are intentionally not implemented yet.

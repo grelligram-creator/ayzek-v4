@@ -30,7 +30,7 @@ import { ConnectedService } from '../types';
 import { IntegrationSetupModal } from './IntegrationSetupModal';
 
 export const MerkezView: React.FC = () => {
-  const { services, toggleService, openAssistantWithQuery, tasks, connectService } = useApp();
+  const { services, openAssistantWithQuery, tasks, connectService } = useApp();
   const [selectedService, setSelectedService] = useState<ConnectedService | null>(null);
   const [isSetupOpen, setIsSetupOpen] = useState(false);
   const [isAddChannelOpen, setIsAddChannelOpen] = useState(false);
@@ -112,11 +112,12 @@ export const MerkezView: React.FC = () => {
     setSyncingId(service.id);
     try {
       const res = await authenticatedFetch(`/api/integrations/sync/${service.id}`, { method: 'POST' });
-      await res.json();
-      setSyncSuccessToast(`${service.name}: En güncel veriler çekildi ve senkronize edildi.`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Eşitleme gerçekleştirilemedi.');
+      setSyncSuccessToast(`${service.name}: Eşitleme tamamlandı.`);
       setTimeout(() => setSyncSuccessToast(null), 3000);
-    } catch {
-      setSyncSuccessToast(`${service.name}: Canlı bağlantı doğrulandı.`);
+    } catch (error) {
+      setSyncSuccessToast(error instanceof Error ? error.message : `${service.name}: Eşitleme gerçekleştirilemedi.`);
       setTimeout(() => setSyncSuccessToast(null), 3000);
     } finally {
       setSyncingId(null);
@@ -280,7 +281,7 @@ export const MerkezView: React.FC = () => {
             </h1>
           </div>
           <p className="text-xs text-rose-200/70 mt-1">
-            Yetkiler kapsamında gerçek zamanlı çift yönlü veri eşitleme ve yaşam senkronizasyonu
+            Bağladığınız servislerin durumunu ve izinlerini buradan yönetirsiniz.
           </p>
         </div>
 
@@ -309,7 +310,7 @@ export const MerkezView: React.FC = () => {
               </span>
             </div>
             <p className="text-xs text-rose-200/70 mt-0.5">
-              WhatsApp Webhook, Apple HealthKit, Açık Bankacılık PSD2 ve Google Workspace kanalları canlı dinlemede.
+              Canlı eşitleme, yalnızca yetkilendirilmiş bir servis bağlantısı tamamlandıktan sonra başlar.
             </p>
           </div>
         </div>
@@ -321,7 +322,7 @@ export const MerkezView: React.FC = () => {
           className="frosted-pill-button flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-bold text-rose-200 hover:text-white cursor-pointer"
         >
           <RefreshCw className="w-3.5 h-3.5 text-rose-400" />
-          <span>Tüm Kanalları Canlı Eşitle</span>
+          <span>Bağlı Kanalları Eşitle</span>
         </button>
       </section>
 
@@ -370,14 +371,14 @@ export const MerkezView: React.FC = () => {
                       </span>
                     </div>
                     <p className="text-xs text-rose-200/60 truncate max-w-[190px] sm:max-w-xs mt-0.5">
-                      {service.account}
+                      {service.isActive ? service.account : 'Bağlantı kurulmadı'}
                     </p>
                   </div>
                 </div>
 
                 {service.toggleable && (
                   <button
-                    onClick={() => toggleService(service.id)}
+                    onClick={() => handleOpenSetup(service)}
                     className={`w-11 h-6 rounded-full transition-colors relative p-0.5 cursor-pointer ${
                       service.isActive ? 'coral-gradient' : 'bg-white/10'
                     }`}
@@ -393,12 +394,17 @@ export const MerkezView: React.FC = () => {
 
               {/* Bullet points */}
               <ul className="space-y-1.5 pt-1 text-xs text-rose-100/80">
-                {service.items.map((item, idx) => (
+                {service.isActive ? service.items.map((item, idx) => (
                   <li key={idx} className="flex items-start gap-2">
                     <span className="text-rose-400 font-bold">•</span>
                     <span className="leading-relaxed">{item}</span>
                   </li>
-                ))}
+                )) : (
+                  <li className="flex items-start gap-2 text-rose-200/60">
+                    <span className="text-rose-400 font-bold">•</span>
+                    <span className="leading-relaxed">Veri görmek için önce güvenli bağlantı kurulmalıdır.</span>
+                  </li>
+                )}
               </ul>
             </div>
 
@@ -406,11 +412,11 @@ export const MerkezView: React.FC = () => {
             <div className="flex items-center gap-2 pt-3 border-t border-rose-500/15">
               <button
                 onClick={() => handleManualSync(service)}
-                disabled={syncingId === service.id}
+                disabled={syncingId === service.id || !service.isActive}
                 className="frosted-pill-button flex items-center justify-center gap-1.5 py-2 px-3 rounded-full text-xs font-bold text-rose-200 hover:text-white cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 ${syncingId === service.id ? 'animate-spin' : ''}`} />
-                <span>{syncingId === service.id ? 'Çekiliyor...' : 'Canlı Çek'}</span>
+                <span>{syncingId === service.id ? 'Eşitleniyor...' : service.isActive ? 'Eşitle' : 'Bağlantı Gerekli'}</span>
               </button>
 
               <button
@@ -423,7 +429,7 @@ export const MerkezView: React.FC = () => {
 
               <button
                 onClick={() =>
-                  openAssistantWithQuery(`${service.name} servisimdeki en son verileri analiz et ve bana brifing ver.`)
+                  openAssistantWithQuery(`${service.name} için bağlantı kurulumunda hangi izinlere ihtiyaç duyduğumu açıkla.`)
                 }
                 title="AYZEK'e Sor"
                 className="w-9 h-9 rounded-full crimson-orb-glow flex items-center justify-center text-white hover:scale-105 transition-transform cursor-pointer shadow-md"
