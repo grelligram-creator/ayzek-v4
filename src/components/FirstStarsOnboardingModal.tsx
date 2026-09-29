@@ -97,7 +97,7 @@ export const FirstStarsOnboardingModal: React.FC = () => {
                     Smart Guard 18:00 Koruma Kalkanı
                   </h4>
                   <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
-                    İş toplantıları mesai bitiminde otomatik durdurulur, zihninin dinlenmesi için akşam boşluğu garantiye alınır.
+                    Akşam saatleri için kişisel bir koruma tercihi kaydedebilirsin. Takvim entegrasyonu kurulana kadar otomatik toplantı değişikliği yapılmaz.
                   </p>
                 </div>
               </div>
@@ -111,7 +111,7 @@ export const FirstStarsOnboardingModal: React.FC = () => {
                     Karar Matrisi & Psikolog Stratejisi
                   </h4>
                   <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
-                    Kariyer, yatırım ve yaşam ikilemlerini duygusal tükenmişliğe girmeden rasyonel artı/eksi analizleriyle netleştirir.
+                    Kariyer, yatırım ve yaşam ikilemlerini kendi verdiğin bilgilerle artı/eksi çerçevesinde değerlendirmene yardımcı olur; profesyonel psikolojik destek yerine geçmez.
                   </p>
                 </div>
               </div>
@@ -125,7 +125,7 @@ export const FirstStarsOnboardingModal: React.FC = () => {
                     Uygulamaya Canlı Eylem Senkronu
                   </h4>
                   <p className="text-[11px] text-slate-600 dark:text-slate-400 mt-0.5 leading-relaxed">
-                    AYZEK ile sesli veya yazılı ne konuşursan, ajandana, market listene veya hedeflerine anında işlenir.
+                    Sohbet yanıtları kaydedilir. Görev, plan veya bağlantılı uygulama değişiklikleri yalnızca ayrı bir onay adımıyla uygulanır.
                   </p>
                 </div>
               </div>
