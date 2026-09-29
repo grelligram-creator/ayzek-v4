@@ -147,6 +147,22 @@ async function startServer() {
     }
   });
 
+  app.delete('/api/conversations', requireVerifiedUser, rateLimit(3, 60 * 60_000), async (req: AuthenticatedRequest, res) => {
+    if (req.body?.confirmation !== 'CLEAR_CONVERSATION_HISTORY') {
+      return res.status(400).json({ error: 'Sohbet geçmişi silme onayı geçersiz.', requestId: req.requestId });
+    }
+    if (!adminDb || !req.authUser) {
+      return res.status(503).json({ error: 'Sohbet geçmişi silme hizmeti yapılandırılmadı.', requestId: req.requestId });
+    }
+    try {
+      await adminDb.recursiveDelete(adminDb.collection('users').doc(req.authUser.uid).collection('conversations'));
+      return res.status(204).send();
+    } catch (error) {
+      console.error('Sohbet geçmişi silme başarısız', { requestId: req.requestId, userId: req.authUser.uid, error: error instanceof Error ? error.message : 'unknown' });
+      return res.status(500).json({ error: 'Sohbet geçmişi silinemedi.', requestId: req.requestId });
+    }
+  });
+
   // Multi-model Gemini caller with fallback to avoid quota exhaustion
   async function callGeminiWithFallback(params: {
     contents: string;

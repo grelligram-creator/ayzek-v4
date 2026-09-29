@@ -130,6 +130,7 @@ interface AppContextType {
   renameActiveConversation: (title: string) => Promise<void>;
   archiveActiveConversation: () => Promise<void>;
   deleteActiveConversation: () => Promise<void>;
+  clearConversationHistory: () => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
   isChatLoading: boolean;
   isAssistantOpen: boolean;
@@ -1193,6 +1194,20 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMessages(currentUid ? await loadConversationMessages(currentUid, generalConversation.id) : []);
   };
 
+  const clearConversationHistory = async () => {
+    const response = await authenticatedFetch('/api/conversations', {
+      method: 'DELETE',
+      body: JSON.stringify({ confirmation: 'CLEAR_CONVERSATION_HISTORY' }),
+    });
+    if (!response.ok) {
+      const body = await response.json().catch(() => ({}));
+      throw new Error(body.error || 'Sohbet geçmişi silinemedi.');
+    }
+    setMessages([]);
+    setConversations([generalConversation]);
+    setActiveConversationId(generalConversation.id);
+  };
+
   const openAssistantWithQuery = (query: string) => {
     setIsAssistantOpen(true);
     sendMessage(query);
@@ -1468,6 +1483,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         renameActiveConversation,
         archiveActiveConversation,
         deleteActiveConversation,
+        clearConversationHistory,
         sendMessage,
         isChatLoading,
         isAssistantOpen,

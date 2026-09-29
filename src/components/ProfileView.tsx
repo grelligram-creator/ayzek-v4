@@ -38,6 +38,7 @@ export const ProfileView: React.FC = () => {
     setIsOnboardingOpen,
     setIsQuickTourOpen,
     updateProfileInfo,
+    clearConversationHistory,
   } = useApp();
 
   const [jobTitle, setJobTitle] = useState(userProfile?.jobTitle || '');
@@ -131,6 +132,17 @@ export const ProfileView: React.FC = () => {
       await logout();
     } catch (error) {
       setDeleteError(error instanceof Error ? error.message : 'Hesap silinemedi.');
+    }
+  };
+
+  const handleClearConversationHistory = async () => {
+    const confirmation = window.prompt('Sohbet geçmişini kalıcı olarak silmek için CLEAR_CONVERSATION_HISTORY yazın.');
+    if (confirmation !== 'CLEAR_CONVERSATION_HISTORY') return;
+    setDeleteError(null);
+    try {
+      await clearConversationHistory();
+    } catch (error) {
+      setDeleteError(error instanceof Error ? error.message : 'Sohbet geçmişi silinemedi.');
     }
   };
 
@@ -419,6 +431,15 @@ export const ProfileView: React.FC = () => {
         </div>
         {exportError && <p className="text-xs text-amber-300">{exportError}</p>}
         <p className="text-[11px] text-rose-200/50">Şifre, erişim anahtarı ve token alanları dışa aktarımın dışında tutulur.</p>
+        <div className="pt-2 border-t border-rose-500/15 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold text-rose-200">Sohbet geçmişini temizle</p>
+            <p className="text-[11px] text-rose-200/55">Tüm konuşmalar ve mesajlar kalıcı olarak silinir; profil ve görevler korunur.</p>
+          </div>
+          <button type="button" onClick={handleClearConversationHistory} className="shrink-0 px-3 py-2 rounded-xl border border-rose-500/40 text-xs font-bold text-rose-200 hover:bg-rose-500/15">
+            Geçmişi temizle
+          </button>
+        </div>
         <div className="pt-2 border-t border-rose-500/15 flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-rose-200">Hesabı sil</p>
