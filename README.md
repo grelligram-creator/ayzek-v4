@@ -70,6 +70,17 @@ remote delivery. The `/api/push/test` endpoint is rate-limited and requires an
 authenticated user, so it can be used by the UI or a future admin-only test
 tool without exposing a public send endpoint.
 
+## Background notification jobs
+
+`POST /api/jobs/notification` lets an authenticated user schedule a single
+push notification for their own saved devices (30 seconds to 31 days ahead).
+Jobs live in Firestore and are atomically claimed by the server worker, so a
+multi-instance deployment does not send the same job twice. Failed deliveries
+are retried up to three times. This is a dependable application-level baseline;
+high-volume or strict SLA delivery should move the scanner to a managed queue
+and scheduler. Deploy the included `firestore.indexes.json` before enabling
+large-scale scheduling so due-job scans use the required composite index.
+
 For a stable public deployment, use a managed host with a custom domain or a
 provider URL. AI Studio's public share is appropriate for sharing the app, but
 it is not a replacement for production operations, backups, monitoring, or a

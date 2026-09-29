@@ -442,6 +442,85 @@ async function startServer() {
     return res.json({ delivered });
   });
 
+  const deliverPushToUser = async (userId: string, payload: { title: string; body: string; url?: string }) => {
+    if (!adminDb || !pushConfiguration().configured) return { delivered: 0, configured: false };
+    const subscriptions = await adminDb.collection('users').doc(userId).collection('pushSubscriptions').get();
+    let delivered = 0;
+    await Promise.all(subscriptions.docs.map(async (document) => {
+      const subscription = document.data();
+      if (!isBrowserPushSubscription(subscription)) return;
+      try {
+        await webpush.sendNotification(subscription, JSON.stringify(payload), { TTL: 60 });
+        delivered += 1;
+      } catch (error: any) {
+        if (error?.statusCode === 404 || error?.statusCode === 410) await document.ref.delete();
+        else throw error;
+      }
+    }));
+    return { delivered, configured: true };
+  };
+
+  const processBackgroundJobs = async () => {
+    if (!adminDb || !pushConfiguration().configured) return;
+    const now = new Date().toISOString();
+    const candidates = await adminDb.collection('backgroundJobs')
+      .where('status', '==', 'pending')
+      .where('runAt', '<=', now)
+      .orderBy('runAt')
+      .limit(20)
+      .get();
+    await Promise.all(candidates.docs.map(async (document) => {
+      const claimed = await adminDb!.runTransaction(async (transaction) => {
+        const snapshot = await transaction.get(document.ref);
+        const job = snapshot.data();
+        if (!snapshot.exists || job?.status !== 'pending' || typeof job.runAt !== 'string' || job.runAt > new Date().toISOString()) return null;
+        transaction.update(document.ref, { status: 'processing', processingAt: new Date().toISOString() });
+        return job;
+      });
+      if (!claimed) return;
+      try {
+        await deliverPushToUser(String(claimed.userId), { title: String(claimed.title), body: String(claimed.body), url: typeof claimed.url === 'string' ? claimed.url : '/' });
+        await document.ref.update({ status: 'completed', completedAt: new Date().toISOString() });
+      } catch (error) {
+        const attempts = Number(claimed.attempts || 0) + 1;
+        await document.ref.update(attempts >= 3
+          ? { status: 'failed', attempts, failedAt: new Date().toISOString() }
+          : { status: 'pending', attempts, runAt: new Date(Date.now() + attempts * 60_000).toISOString(), lastErrorAt: new Date().toISOString() });
+        console.error('Background job failed', { jobId: document.id, error: error instanceof Error ? error.message : 'unknown' });
+      }
+    }));
+  };
+
+  app.post('/api/jobs/notification', requireVerifiedUser, rateLimit(20, 60 * 60_000), async (req: AuthenticatedRequest, res) => {
+    if (!adminDb || !req.authUser) return res.status(503).json({ error: 'Arka plan işi hizmeti yapılandırılmadı.', requestId: req.requestId });
+    const { title, body, runAt, url = '/' } = req.body || {};
+    const runDate = new Date(runAt);
+    if (typeof title !== 'string' || title.length < 1 || title.length > 100 || typeof body !== 'string' || body.length < 1 || body.length > 500 || Number.isNaN(runDate.getTime()) || runDate.getTime() < Date.now() + 30_000 || runDate.getTime() > Date.now() + 31 * 24 * 60 * 60_000 || typeof url !== 'string' || !url.startsWith('/')) {
+      return res.status(400).json({ error: 'Bildirim işi verisi geçersiz.', requestId: req.requestId });
+    }
+    const job = await adminDb.collection('backgroundJobs').add({
+      type: 'push_notification',
+      userId: req.authUser.uid,
+      title,
+      body,
+      url,
+      runAt: runDate.toISOString(),
+      status: 'pending',
+      attempts: 0,
+      createdAt: new Date().toISOString(),
+    });
+    return res.status(201).json({ id: job.id, runAt: runDate.toISOString() });
+  });
+
+  // Firestore transactions make concurrent server instances safely claim a job.
+  // This worker is intentionally best-effort; a managed queue is still the next
+  // operational step for strict delivery guarantees at larger scale.
+  const backgroundJobTimer = setInterval(() => {
+    void processBackgroundJobs().catch((error) => console.error('Background job scan failed', error));
+  }, 30_000);
+  backgroundJobTimer.unref();
+  void processBackgroundJobs().catch((error) => console.error('Initial background job scan failed', error));
+
   // Revokes refresh tokens for every device. The caller is also signed out by
   // the client immediately after this endpoint succeeds. Firebase invalidates
   // outstanding ID tokens on their next verification/refresh cycle.
