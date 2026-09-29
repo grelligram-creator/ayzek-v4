@@ -25,10 +25,7 @@ export const CrimsonHeroCard: React.FC = () => {
 
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
-  const nextFocusTask = tasks.find((t) => !t.isCompleted) || {
-    title: 'Grispi Q3 Sprint Planlaması',
-    time: '14:00 · Teams',
-  };
+  const nextFocusTask = tasks.find((t) => !t.isCompleted);
 
   return (
     <div className="space-y-4">
@@ -84,7 +81,7 @@ export const CrimsonHeroCard: React.FC = () => {
               AYZEK BİLİŞSEL MERKEZ
             </span>
             <p className="text-xs text-rose-100/70 mt-0.5">
-              07:45 Günlük Sesli Brifing & Biyo-Ritim Hazır
+              Günlük brifing, yalnızca eklediğiniz bilgilerle hazırlanır
             </p>
           </div>
         </div>
@@ -96,7 +93,7 @@ export const CrimsonHeroCard: React.FC = () => {
             className="frosted-pill-button w-full py-3.5 px-6 rounded-full text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer"
           >
             <Headphones className="w-4 h-4 text-rose-400" />
-            <span>07:45 Sesli Brifingi Dinle</span>
+            <span>Sesli Brifingi Dinle</span>
           </button>
         </div>
       </div>
@@ -168,10 +165,10 @@ export const CrimsonHeroCard: React.FC = () => {
           </div>
           <div className="min-w-0">
             <h4 className="text-xs font-bold text-white truncate">
-              {nextFocusTask.title}
+              {nextFocusTask?.title || 'Henüz odak görevi yok'}
             </h4>
             <p className="text-[10px] text-rose-300/70 truncate">
-              {nextFocusTask.time} · 15 dk Akıllı Tampon Hazır
+              {nextFocusTask ? nextFocusTask.time : 'Planından ilk görevi ekleyerek başlayabilirsin'}
             </p>
           </div>
         </div>
