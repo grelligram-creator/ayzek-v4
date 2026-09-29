@@ -32,6 +32,7 @@ export const PlanView: React.FC = () => {
   const [newDetails, setNewDetails] = useState('');
   const [withBuffer, setWithBuffer] = useState(true);
   const [isAdding, setIsAdding] = useState(false);
+  const [dailyRecommendation, setDailyRecommendation] = useState<string | null>(null);
 
   // Generate 14-day strip (Today + Next 13 days)
   const dateStrip = Array.from({ length: 14 }).map((_, i) => {
@@ -50,6 +51,17 @@ export const PlanView: React.FC = () => {
     if (activeFilter === 'all') return true;
     return t.category === activeFilter;
   });
+
+  const buildDailyRecommendation = () => {
+    const openTasks = filteredTasks.filter((task) => !task.isCompleted);
+    if (!openTasks.length) {
+      setDailyRecommendation('Bu tarih için açık görev yok. Önce küçük ve net bir görev ekleyerek planına başlayabilirsin.');
+      return;
+    }
+    const rank = { finans: 0, is: 1, aile: 2, kisisel: 3, alisveris: 4 };
+    const priorities = [...openTasks].sort((a, b) => rank[a.category] - rank[b.category]).slice(0, 3);
+    setDailyRecommendation(`Bugünün odağı: ${priorities.map((task) => `“${task.title}”`).join(', ')}. Bu öneri yalnızca kaydettiğin açık görevlere dayanır; takvim veya bağlı uygulama verisi kullanılmadı.`);
+  };
 
   const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
@@ -125,20 +137,21 @@ export const PlanView: React.FC = () => {
           )}
 
           <button
-            onClick={() =>
-              openAssistantWithQuery(
-                `${formattedSelectedDate} tarihindeki takvimimi ve görevlerimi enerjime, biyoritmime ve konumuma (${
-                  userProfile?.location || 'İstanbul'
-                }) göre en dengeli şekilde planla.`
-              )
-            }
+            onClick={buildDailyRecommendation}
             className="coral-gradient hover:opacity-95 text-white px-4 py-2 rounded-full text-xs font-bold flex items-center gap-2 shadow-lg shadow-rose-950/60 cursor-pointer"
           >
             <Sparkles className="w-3.5 h-3.5 text-white animate-pulse" />
-            <span>AYZEK ile Dengele</span>
+            <span>Günlük odağı oluştur</span>
           </button>
         </div>
       </section>
+
+      {dailyRecommendation && (
+        <section className="rounded-2xl border border-rose-500/25 bg-rose-500/10 p-4 text-xs text-rose-100">
+          <span className="font-bold text-rose-300">Günlük plan önerisi</span>
+          <p className="mt-1 leading-relaxed">{dailyRecommendation}</p>
+        </section>
+      )}
 
       {/* 2. Date Picker Strip with Smoked Crimson Glass */}
       <div className="space-y-2">
