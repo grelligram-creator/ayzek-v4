@@ -17,9 +17,27 @@ export async function getOrCreateUserProfile(user: { uid: string; email?: string
   try {
     const userRef = doc(db, 'users', user.uid);
     const snap = await getDoc(userRef);
+    const now = new Date().toISOString();
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+    const locale = navigator.language || 'tr-TR';
 
     if (snap.exists()) {
-      return snap.data() as UserProfile;
+      const stored = snap.data() as Partial<UserProfile>;
+      const normalized: UserProfile = {
+        ...stored,
+        uid: user.uid,
+        email: user.email || stored.email || '',
+        displayName: user.displayName || stored.displayName || user.email?.split('@')[0] || 'Yeni kullanıcı',
+        subscriptionTier: stored.subscriptionTier || 'free',
+        subscriptionStatus: stored.subscriptionStatus || 'trial',
+        timezone: stored.timezone || timezone,
+        locale: stored.locale || locale,
+        createdAt: stored.createdAt || now,
+        updatedAt: now,
+        lastLoginAt: now,
+      };
+      await setDoc(userRef, normalized, { merge: true });
+      return normalized;
     }
 
     const newProfile: UserProfile = {
@@ -33,7 +51,11 @@ export async function getOrCreateUserProfile(user: { uid: string; email?: string
       location: '',
       hobbies: [],
       lifeMission: '',
-      createdAt: new Date().toISOString(),
+      timezone,
+      locale,
+      createdAt: now,
+      updatedAt: now,
+      lastLoginAt: now,
       onboardingCompleted: false,
     };
 

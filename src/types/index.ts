@@ -25,7 +25,11 @@ export interface UserProfile {
   cardBrand?: string;
   membershipId?: string;
   renewalDate?: string;
+  timezone: string;
+  locale: string;
   createdAt: string;
+  updatedAt: string;
+  lastLoginAt: string;
   onboardingCompleted?: boolean;
 }
 
