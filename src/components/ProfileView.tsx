@@ -180,7 +180,7 @@ export const ProfileView: React.FC = () => {
     }
   };
 
-  const emailVerified = 'emailVerified' in (user || {}) && Boolean(user?.emailVerified);
+  const emailVerified = Boolean(user && 'emailVerified' in user && user.emailVerified);
 
   return (
     <div className="space-y-6 pb-28 animate-fadeIn max-w-2xl mx-auto">
