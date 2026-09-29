@@ -187,8 +187,8 @@ export const PlanView: React.FC = () => {
               </div>
               <p className="text-xs text-rose-200/70 mt-0.5">
                 {balance.smartGuardActive
-                  ? 'Saat 18:00 sonrasına otomatik toplantı kabulü engellendi. Akşam boşluğu kalkan altında.'
-                  : 'Smart Guard kapalı. Akşam saatleri serbest planlamaya açık.'}
+                  ? 'Akşam saatlerini koruma tercihin kaydedildi. Takvim entegrasyonu kurulana kadar otomatik engelleme yapılmaz.'
+                  : 'Akşam koruma tercihi kapalı. Takvimde otomatik bir değişiklik yapılmaz.'}
               </p>
             </div>
           </div>
@@ -210,7 +210,7 @@ export const PlanView: React.FC = () => {
       <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar text-xs font-medium">
         {[
           { id: 'all', label: 'Tüm Planlar' },
-          { id: 'is', label: 'İş (Teams & Meet)' },
+          { id: 'is', label: 'İş' },
           { id: 'kisisel', label: 'Kişisel & Sağlık' },
           { id: 'finans', label: 'Finans & Fatura' },
           { id: 'alisveris', label: 'Alışveriş & Ev' },
