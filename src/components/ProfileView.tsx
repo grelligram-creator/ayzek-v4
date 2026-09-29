@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { AyzekLogo } from './AyzekLogo';
-import { deleteMemory, listMemories, saveExplicitMemory } from '../services/firestoreService';
+import { deleteMemory, exportUserData, listMemories, saveExplicitMemory } from '../services/firestoreService';
 import { MemoryItem } from '../types';
 import {
   User,
@@ -47,6 +47,7 @@ export const ProfileView: React.FC = () => {
   const [memories, setMemories] = useState<MemoryItem[]>([]);
   const [memoryNote, setMemoryNote] = useState('');
   const [memoryError, setMemoryError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!user?.uid) {
@@ -88,6 +89,23 @@ export const ProfileView: React.FC = () => {
       setTimeout(() => setSavedSuccess(false), 2000);
     } catch (error) {
       setSaveError(error instanceof Error ? error.message : 'Profil kaydedilemedi.');
+    }
+  };
+
+  const handleExport = async () => {
+    if (!user?.uid) return;
+    setExportError(null);
+    try {
+      const data = await exportUserData(user.uid);
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `ayzek-verilerim-${new Date().toISOString().slice(0, 10)}.json`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch {
+      setExportError('Veriler dışa aktarılamadı. Lütfen tekrar deneyin.');
     }
   };
 
@@ -327,6 +345,20 @@ export const ProfileView: React.FC = () => {
             </div>
           )}
         </div>
+      </section>
+
+      <section className="p-5 rounded-[28px] crimson-glass border border-rose-500/25 text-white shadow-xl space-y-3">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-sm font-bold">Verilerim ve gizlilik</h3>
+            <p className="text-xs text-rose-200/70 mt-1">Profil, çalışma alanı, konuşmalar ve açıkça kaydettiğiniz hafıza notları JSON olarak indirilir.</p>
+          </div>
+          <button type="button" onClick={handleExport} className="shrink-0 inline-flex items-center gap-2 px-3 py-2 rounded-xl border border-rose-500/30 text-xs font-bold text-rose-100 hover:bg-rose-500/10">
+            <Download className="w-4 h-4" /> Dışa aktar
+          </button>
+        </div>
+        {exportError && <p className="text-xs text-amber-300">{exportError}</p>}
+        <p className="text-[11px] text-rose-200/50">Şifre, erişim anahtarı ve token alanları dışa aktarımın dışında tutulur.</p>
       </section>
 
       {/* 3. iOS App installation card */}

@@ -194,6 +194,45 @@ export async function deleteMemory(uid: string, memoryId: string): Promise<void>
   await deleteDoc(doc(db, 'users', uid, 'memories', memoryId));
 }
 
+function removeSecrets(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(removeSecrets);
+  if (!value || typeof value !== 'object') return value;
+  return Object.fromEntries(
+    Object.entries(value as Record<string, unknown>)
+      .filter(([key]) => !/(token|secret|password|credential)/i.test(key))
+      .map(([key, nestedValue]) => [key, removeSecrets(nestedValue)])
+  );
+}
+
+export async function exportUserData(uid: string): Promise<Record<string, unknown>> {
+  const [profileSnapshot, workspaceSnapshot, conversationsSnapshot, memories] = await Promise.all([
+    getDoc(doc(db, 'users', uid)),
+    getDoc(doc(db, 'userData', uid)),
+    getDocs(collection(db, 'users', uid, 'conversations')),
+    listMemories(uid),
+  ]);
+
+  const conversations = await Promise.all(conversationsSnapshot.docs.map(async (conversation) => {
+    const messagesSnapshot = await getDocs(collection(db, 'users', uid, 'conversations', conversation.id, 'messages'));
+    return {
+      ...(removeSecrets(conversation.data()) as Record<string, unknown>),
+      id: conversation.id,
+      messages: messagesSnapshot.docs.map((message) => ({
+        id: message.id,
+        ...(removeSecrets(message.data()) as Record<string, unknown>),
+      })),
+    };
+  }));
+
+  return {
+    generatedAt: new Date().toISOString(),
+    profile: profileSnapshot.exists() ? removeSecrets(profileSnapshot.data()) : null,
+    workspace: workspaceSnapshot.exists() ? removeSecrets(workspaceSnapshot.data()) : null,
+    conversations,
+    memories: removeSecrets(memories),
+  };
+}
+
 export async function loadConversationMessages(uid: string, conversationId = defaultConversationId): Promise<ChatMessage[]> {
   const messagesRef = collection(db, 'users', uid, 'conversations', conversationId, 'messages');
   const snapshot = await getDocs(query(messagesRef, orderBy('createdAt', 'asc'), limit(100)));
