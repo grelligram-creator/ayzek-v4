@@ -56,7 +56,7 @@ export const Header: React.FC = () => {
               </span>
             </div>
             <span className="text-[10px] text-rose-300/70 font-medium truncate max-w-[130px] sm:max-w-none">
-              {userProfile?.displayName || 'Görkem Elligram'}
+              {userProfile?.displayName || user?.displayName || 'Profilini tamamla'}
             </span>
           </div>
         </div>

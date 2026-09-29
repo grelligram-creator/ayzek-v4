@@ -88,7 +88,7 @@ export const AkisView: React.FC = () => {
     updateCheckin({ focus });
   };
 
-  const displayName = userProfile?.displayName || user?.displayName || 'Görkem';
+  const displayName = userProfile?.displayName || user?.displayName || 'Misafir';
 
   return (
     <div className="space-y-5 pb-24 animate-fadeIn">
