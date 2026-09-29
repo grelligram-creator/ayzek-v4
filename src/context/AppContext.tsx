@@ -651,6 +651,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isMeetingShadowOpen, setIsMeetingShadowOpen] = useState(false);
   const [isFutureSelfOpen, setIsFutureSelfOpen] = useState(false);
 
+  // Clear legacy fixture state as soon as the app starts. Authenticated users are
+  // then hydrated from their own Firestore workspace; visitors see only neutral
+  // empty states while that happens.
+  useEffect(() => {
+    setAutonomousLogs([]);
+    setProactiveInsights([]);
+    setProactiveAlert(null);
+    setTasks([]);
+    setDilemmas([]);
+    setBalance({ score: 0, status: 'Dengeli', smartGuardActive: false, cutOffTime: '18:00', connectedCount: 0 });
+    setCheckin({ energy: 'balanced', mood: 'calm', focus: 'balanced', note: '', aiAdvice: '', updatedAt: '' });
+    setCoachGoal({
+      id: 'goal-new', title: 'İlk hedefini oluştur', category: 'Başlangıç', timeline: 'Hazır olduğunda',
+      subtext: 'AYZEK, seçtiğin hedefe göre kişisel bir plan hazırlayacak.', progress: 0, progressDelta: '',
+      quote: 'Küçük ve net bir başlangıç, sürdürülebilir bir değişimin ilk adımıdır.', microStep: 'Bir hedef belirle ve ilk adımı seç.',
+    });
+    setBioRhythm({ phase: 'Ayarlanmadı', day: 0, physicalAdvice: 'Bu alanı istersen kişisel tercihlerinle ayarlayabilirsin.', mentalAdvice: 'Henüz bir ritim değerlendirmesi yapılmadı.', nextExpectedDate: '—' });
+    setRoutineSummary({ workHours: 'Planlanmadı', completedCount: 0, remainingCount: 0, eveningFreeMinutes: 0 });
+    setServices((current) => current.map((service) => ({ ...service, account: 'Bağlantı kurulmadı', items: [], unreadCount: 0, isActive: false })));
+  }, []);
+
   // Auth observer
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
