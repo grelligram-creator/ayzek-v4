@@ -1022,39 +1022,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userText,
-          history: messages.slice(-5).map((m) => ({ role: m.role, content: m.content })),
-          userState: {
-            displayName: userProfile?.displayName,
-            location: userProfile?.location,
-            hobbies: userProfile?.hobbies,
-            lifeMission: userProfile?.lifeMission,
-            balanceScore: balance.score,
-            smartGuardActive: balance.smartGuardActive,
-            energy: checkin.energy,
-            mood: checkin.mood,
-            focus: checkin.focus,
-            tasks: tasks.map((t) => ({ id: t.id, title: t.title, isCompleted: t.isCompleted, date: t.date })),
-            bioPhase: bioRhythm.phase,
-          },
         }),
       });
 
       const data = await response.json();
-
-      const appliedDescriptions: string[] = [];
-      if (Array.isArray(data.actions) && data.actions.length > 0) {
-        data.actions.forEach((act: AppAction) => {
-          executeAppAction(act);
-          if (act.description) appliedDescriptions.push(act.description);
-        });
+      if (!response.ok) {
+        throw new Error(data.error || 'Yanıt üretilemedi.');
       }
 
       const assistantMessage: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        content: data.message || 'Yanıtınızı işledim ve gerekli güncellemeleri yaptım.',
+        content: data.message || 'Yanıt şu anda üretilemedi. Lütfen tekrar deneyin.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        actionsApplied: appliedDescriptions,
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
