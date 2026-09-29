@@ -27,6 +27,23 @@ export const MeetingShadowModal: React.FC = () => {
 
   if (!isMeetingShadowOpen) return null;
 
+  // A transcript provider has not been connected yet. Do not show a fictional
+  // meeting or create agenda tasks from fixture content.
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md">
+      <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 text-slate-900 dark:text-white shadow-2xl space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3"><div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-950/70 text-indigo-600 dark:text-indigo-300 flex items-center justify-center"><Video className="w-5 h-5" /></div><div><h2 className="text-base font-black">Gölge Noter</h2><p className="text-xs text-slate-500 dark:text-slate-400">Toplantı özeti ve eylem çıkarma</p></div></div>
+          <button onClick={() => setIsMeetingShadowOpen(false)} aria-label="Kapat" className="w-8 h-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center"><X className="w-4 h-4" /></button>
+        </div>
+        <div className="rounded-2xl border border-indigo-200 dark:border-indigo-800 bg-indigo-50 dark:bg-indigo-950/30 p-4 text-xs leading-relaxed text-slate-700 dark:text-slate-200">
+          Henüz yetkilendirilmiş bir toplantı kaynağı veya transkript yok. Gerçek bir sağlayıcı bağlantısı kurulduğunda bu ekran yalnızca izin verdiğiniz toplantı metninden özet ve görev önerileri üretir.
+        </div>
+        <button onClick={() => setIsMeetingShadowOpen(false)} className="w-full rounded-full bg-indigo-600 py-3 text-xs font-bold text-white">Anladım</button>
+      </div>
+    </div>
+  );
+
   const meetingData = {
     grispi_sprint: {
       title: 'Grispi Q3 Mimari & API Entegrasyon Toplantısı',
