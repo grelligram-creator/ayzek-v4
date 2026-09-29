@@ -225,5 +225,6 @@ export interface PendingAction {
   category: TaskItem['category'];
   date?: string;
   time?: string;
+  details?: string;
   scheduleLabel?: string;
 }

@@ -1130,12 +1130,36 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       category: pendingAction.category,
       date: pendingAction.date,
       time: pendingAction.time ? `${pendingAction.time} · AYZEK Sohbeti` : undefined,
+      details: pendingAction.details,
       highlight: '⚡ Sohbette onaylandı',
     });
     setPendingAction(null);
   };
 
   const dismissPendingAction = () => setPendingAction(null);
+
+  const formatSuggestedTask = (action: unknown): PendingAction | null => {
+    if (!action || typeof action !== 'object') return null;
+    const item = action as { type?: unknown; payload?: Record<string, unknown> };
+    if (item.type !== 'ADD_TASK' || !item.payload) return null;
+    const title = String(item.payload.title || '').trim();
+    const category = item.payload.category;
+    if (title.length < 3 || title.length > 160 || !['is', 'kisisel', 'finans', 'alisveris', 'aile'].includes(String(category))) return null;
+    const date = typeof item.payload.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(item.payload.date) ? item.payload.date : undefined;
+    const time = typeof item.payload.time === 'string' && /^(?:[01]\d|2[0-3]):[0-5]\d$/.test(item.payload.time) ? item.payload.time : undefined;
+    const details = typeof item.payload.details === 'string' ? item.payload.details.replace(/\s+/g, ' ').trim().slice(0, 500) : undefined;
+    const scheduleLabel = date || time ? `${date || 'Tarih belirsiz'}${time ? ` · ${time}` : ''}` : undefined;
+    return { type: 'create_task', title, category: category as TaskItem['category'], date, time, details, scheduleLabel };
+  };
+
+  const formatSuggestedMemory = (candidate: unknown): MemoryCandidate | null => {
+    if (!candidate || typeof candidate !== 'object') return null;
+    const item = candidate as { content?: unknown; category?: unknown };
+    const content = String(item.content || '').replace(/\s+/g, ' ').trim();
+    const category = String(item.category || '');
+    if (content.length < 8 || content.length > 500 || !['preference', 'goal', 'work_context', 'instruction'].includes(category)) return null;
+    return { content, category: category as MemoryCandidate['category'] };
+  };
 
   const executeAppAction = (action: AppAction) => {
     switch (action.type) {
@@ -1278,14 +1302,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         throw new Error(data.error || 'Yanıt üretilemedi.');
       }
 
+      const clarifyingQuestion = typeof data.clarifyingQuestion === 'string' ? data.clarifyingQuestion.trim() : '';
       const assistantMessage: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        content: data.message || 'Yanıt şu anda üretilemedi. Lütfen tekrar deneyin.',
+        content: [data.message, clarifyingQuestion].filter(Boolean).join('\n\n') || 'Yanıt şu anda üretilemedi. Lütfen tekrar deneyin.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
 
       setMessages((prev) => [...prev, assistantMessage]);
+      // The model may identify useful context or a task, but AYZEK never writes
+      // either one until the user accepts the visible confirmation card.
+      if (!candidate && Array.isArray(data.memoryCandidates)) {
+        const suggestedMemory = formatSuggestedMemory(data.memoryCandidates[0]);
+        if (suggestedMemory) setMemoryCandidate(suggestedMemory);
+      }
+      if (!action && Array.isArray(data.actions)) {
+        const suggestedTask = formatSuggestedTask(data.actions[0]);
+        if (suggestedTask) setPendingAction(suggestedTask);
+      }
       if (user?.uid) {
         saveConversationMessage(user.uid, assistantMessage, activeConversationId).catch((error) => console.error('Yanıt kaydedilemedi:', error));
       }
