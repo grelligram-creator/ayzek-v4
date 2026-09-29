@@ -40,14 +40,12 @@ export const VoiceBriefingModal: React.FC = () => {
   const progressTimerRef = useRef<any>(null);
 
   const sentences = [
-    `Günaydın ${userProfile?.displayName?.split(' ')[0] || 'Görkem'}. Saat tam 07:45.`,
-    `Apple Health ve Oura verilerine göre dün gece %86 derin uykuyla uyandın. Otonom sinir sistemin dengede.`,
-    `Biyolojik ritminde Foliküler Evrenin 8. günündesin; prefrontal korteks berraklığın ve yaratıcı problem çözme enerjin bu sabah zirvede.`,
-    `Günün ajandasında en kritik odak bloğun saat 14:00'teki Grispi Q3 Sprint Planlaması.`,
-    `Bu toplantının hemen ardından zihinsel tükenmişliği önlemek için takvimine 15 dakikalık Akıllı Nefes Tamponu konumlandırıldı.`,
-    `Finansal nöbetçimiz yarın son günü olan Enerjisa elektrik faturanı hatırlatıyor.`,
-    `Ayrıca annenin doğum günü için hatıralarınızdan derlenen sevgi dolu mektup taslağın hazır, dilediğin an inceleyebilirsin.`,
-    `Günün geri kalanında zihnini berrak, adımlarını sakin tut. Harika bir gün olsun.`,
+    `Merhaba ${userProfile?.displayName?.split(' ')[0] || 'orada'}.`,
+    tasks.length > 0 ? `Bugün için ${tasks.filter((task) => !task.isCompleted).length} açık görevin var.` : 'Bugün için henüz görev eklemedin.',
+    bioRhythm.phase !== 'Ayarlanmadı' ? `Kişisel ritim notun: ${bioRhythm.phase}.` : 'Kişisel ritim değerlendirmesi henüz ayarlanmadı.',
+    balance.smartGuardActive ? 'Smart Guard tercihin açık.' : 'Smart Guard tercihin kapalı.',
+    'Bağlı servislerden doğrulanmış veri olmadığında ek varsayım yapmam.',
+    'İstersen bir hedef veya görev ekleyerek gününü planlamaya başlayabilirsin.',
   ];
 
   const fullBriefingText = sentences.join(' ');

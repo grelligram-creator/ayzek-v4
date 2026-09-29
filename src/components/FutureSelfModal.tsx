@@ -30,18 +30,18 @@ export const FutureSelfModal: React.FC = () => {
     {
       id: 'fut-1',
       sender: 'future_self',
-      text: `Selam Görkem. Ben 2031'deki senim; aradan tam 5 yıl geçti. 2026'daki o koşturmanı, Grispi mimarisini büyütürken aynı zamanda ruhsal huzurunu koruma çabanı çok iyi hatırlıyorum. Sana temin ederim: attığın adımların hiçbiri boşa gitmedi. Bugün zihnini en çok ne kurcalıyor, geleceğin gözüyle birlikte bakalım mı?`,
-      time: '2031 · 17:00',
+      text: 'Bu alan, uzun vadeli bakış açısıyla düşünmene yardımcı olacak bir yansıtma egzersizidir. Kişisel verin veya model yanıtı olmadan geleceğin hakkında kesin çıkarım yapmaz.',
+      time: 'Yansıtma modu',
     },
   ]);
 
   if (!isFutureSelfOpen) return null;
 
   const quickPrompts = [
-    '2026\'daki Grispi kariyer ikilemim 2031\'den nasıl görünüyor?',
-    'Şu an yaşadığım yoğunluk ve yorgunluk gerçekten geleceğe değer mi?',
-    'Bugün vereceğim kararlarda en çok neyi pusula yapmalıyım?',
-    'C1 İngilizce ve uluslararası hedeflerimize ulaştık mı?',
+    'Bu kararın beş yıl sonraki etkilerini nasıl düşünebilirim?',
+    'Bugünkü yoğunluğum ile uzun vadeli değerlerim uyumlu mu?',
+    'Kararımda hangi ilkeleri pusula yapmalıyım?',
+    'Hedefimi küçük, ölçülebilir adımlara nasıl bölebilirim?',
   ];
 
   const handleSendMessage = (questionText?: string) => {
@@ -60,18 +60,7 @@ export const FutureSelfModal: React.FC = () => {
     setIsThinking(true);
 
     setTimeout(() => {
-      let reply = '';
-      const lower = textToSend.toLowerCase();
-
-      if (lower.includes('kariyer') || lower.includes('grispi') || lower.includes('ayrıl')) {
-        reply = `O günlerdeki endişeni o kadar iyi anlıyorum ki. Grispi'de kurduğun sağlam mimari ve kazandığın liderlik kasları olmasaydı, 2031'deki global ölçekli vizyonumuzu inşa edemezdik. O ikilemde önemli olan nereye gittiğin değil, masaya ne koyduğun ve sınırlarını nasıl koruduğundu. Değerlerine sadık kaldın ve harika bir kapı açıldı. Korkma, cesaretle kendi standartlarını belirle.`;
-      } else if (lower.includes('yorgun') || lower.includes('değer') || lower.includes('yoğun')) {
-        reply = `Evet, kesinlikle değdi. Ama sana 2031'den vereceğim en büyük öğüt: Kendini tüketerek kazanılan hiçbir zafer kalıcı olmuyor. O dönemde AYZEK'in sana koyduğu 18:00 korumaları ve 15 dakikalık nefes tamponları sayesinde tükenmişlik yaşamadın. Şimdi arkana yaslan, bu bir maraton. Sevdiklerine ayırdığın zamanı asla erteleme.`;
-      } else if (lower.includes('ingilizce') || lower.includes('c1') || lower.includes('hedef')) {
-        reply = `Haftada 3 gün işe giderken dinlediğin o 15 dakikalık podcast'ler var ya? İşte onlar sayesinde şu an global ekiplerle Berlin ve Londra sunumlarını kendi ana dilin gibi rahatça yapıyoruz. Büyük sıçramalar değil, küçük günlük temaslar kazandırdı. Rutinine güven!`;
-      } else {
-        reply = `2031'deki dinginliğimden sana baktığımda tek bir şey görüyorum: Zihnindeki şüphelerin çoğu asla gerçekleşmedi. Önündeki kararları alırken kısa vadeli korkularla değil, uzun vadeli kim olmak istediğinle hareket et. Sen doğru yoldasın, kendine şefkat göster.`;
-      }
+      const reply = 'Bu düşünceyi somutlaştırmak için üç soru sor: En iyi olası sonuç nedir? En zor sonuç nedir? Bu iki durumda bugün kontrol edebileceğin ilk küçük adım ne olur? Bu, kesin bir gelecek tahmini değildir.';
 
       const futureReply: FutureMessage = {
         id: `f-${Date.now()}`,
@@ -147,7 +136,7 @@ export const FutureSelfModal: React.FC = () => {
               }`}
             >
               <div className="flex items-center gap-1.5 mb-1 px-1 text-[10px] text-slate-400 font-medium">
-                <span>{m.sender === 'user' ? 'Sen (2026)' : 'Görkem (2031 · 5 Yıl Sonrası)'}</span>
+                <span>{m.sender === 'user' ? 'Sen' : 'Yansıtma rehberi'}</span>
                 <span>•</span>
                 <span>{m.time}</span>
               </div>
