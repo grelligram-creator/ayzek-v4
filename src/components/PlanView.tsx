@@ -12,11 +12,13 @@ import {
   Check,
   ChevronRight,
   ArrowRight,
+  Pencil,
+  Trash2,
 } from 'lucide-react';
 import { TaskItem } from '../types';
 
 export const PlanView: React.FC = () => {
-  const { tasks, toggleTask, addTask, balance, toggleSmartGuard, openAssistantWithQuery, userProfile } =
+  const { tasks, toggleTask, addTask, updateTask, deleteTask, balance, toggleSmartGuard, openAssistantWithQuery, userProfile } =
     useApp();
 
   const [activeFilter, setActiveFilter] = useState<'all' | 'is' | 'kisisel' | 'finans' | 'alisveris'>('all');
@@ -68,6 +70,19 @@ export const PlanView: React.FC = () => {
     setNewTitle('');
     setNewDetails('');
     setIsAdding(false);
+  };
+
+  const handleEditTask = (task: TaskItem) => {
+    const title = window.prompt('Görev adı', task.title);
+    if (title === null || !title.trim()) return;
+    const time = window.prompt('Saat / zaman bilgisi', task.time);
+    if (time === null || !time.trim()) return;
+    updateTask(task.id, { title, time });
+  };
+
+  const handleDeleteTask = (task: TaskItem) => {
+    if (!window.confirm(`"${task.title}" görevi silinsin mi?`)) return;
+    deleteTask(task.id);
   };
 
   const selectedDateObj = new Date(selectedDate + 'T00:00:00');
@@ -382,15 +397,10 @@ export const PlanView: React.FC = () => {
                 </div>
               </div>
 
-              <button
-                onClick={() =>
-                  openAssistantWithQuery(`"${task.title}" planının detaylarını düzenle ve saatini revize et.`)
-                }
-                className="frosted-pill-button px-3 py-1.5 rounded-full text-xs font-semibold text-rose-300 hover:text-white shrink-0 cursor-pointer flex items-center gap-1"
-              >
-                <span>Düzenle</span>
-                <ChevronRight className="w-3 h-3" />
-              </button>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button onClick={() => handleEditTask(task)} className="frosted-pill-button p-2 rounded-full text-rose-300 hover:text-white" aria-label="Görevi düzenle"><Pencil className="w-3.5 h-3.5" /></button>
+                <button onClick={() => handleDeleteTask(task)} className="frosted-pill-button p-2 rounded-full text-rose-300 hover:text-white" aria-label="Görevi sil"><Trash2 className="w-3.5 h-3.5" /></button>
+              </div>
             </div>
           ))
         )}

@@ -116,6 +116,8 @@ interface AppContextType {
   tasks: TaskItem[];
   toggleTask: (id: string) => void;
   addTask: (task: Partial<TaskItem>) => void;
+  updateTask: (id: string, changes: Partial<TaskItem>) => void;
+  deleteTask: (id: string) => void;
   services: ConnectedService[];
   toggleService: (id: string) => void;
 
@@ -1332,6 +1334,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     addNotification('task', `Yeni görev eklendi: ${newTask.title}`);
   };
 
+  const updateTask = (id: string, changes: Partial<TaskItem>) => {
+    const title = changes.title?.trim();
+    if (title !== undefined && !title) return;
+    setTasks((previous) => previous.map((task) => task.id === id ? {
+      ...task,
+      ...changes,
+      ...(title ? { title } : {}),
+      updatedAt: new Date().toISOString(),
+    } : task));
+    showSyncNotification('Görev güncellendi.');
+  };
+
+  const deleteTask = (id: string) => {
+    setTasks((previous) => {
+      const target = previous.find((task) => task.id === id);
+      const updated = previous.filter((task) => task.id !== id);
+      if (target && !target.isCompleted) {
+        setRoutineSummary((summary) => ({ ...summary, remainingCount: Math.max(0, summary.remainingCount - 1) }));
+      }
+      if (target) addNotification('task', `Görev silindi: ${target.title}`);
+      return updated;
+    });
+    showSyncNotification('Görev silindi.');
+  };
+
   const addDilemma = (dilemma: Partial<DilemmaItem>) => {
     const newDilemma: DilemmaItem = {
       id: `dilemma-${Date.now()}`,
@@ -1429,6 +1456,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         tasks,
         toggleTask,
         addTask,
+        updateTask,
+        deleteTask,
         services,
         toggleService,
         messages,
