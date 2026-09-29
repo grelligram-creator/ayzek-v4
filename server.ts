@@ -229,6 +229,13 @@ async function startServer() {
     }
   }
 
+  function requireVerifiedEmail(req: AuthenticatedRequest, res: express.Response, next: express.NextFunction) {
+    if (req.authUser?.email_verified !== true) {
+      return res.status(403).json({ error: 'Bu işlem için doğrulanmış e-posta adresi gerekir.', requestId: req.requestId });
+    }
+    next();
+  }
+
   // Shared Gemini client with telemetry header
   const ai = new GoogleGenAI({
     apiKey: process.env.GEMINI_API_KEY,
@@ -298,7 +305,7 @@ async function startServer() {
     }
   });
 
-  app.get('/api/oauth/:provider/url', requireVerifiedUser, rateLimit(5, 60_000), async (req: AuthenticatedRequest, res) => {
+  app.get('/api/oauth/:provider/url', requireVerifiedUser, requireVerifiedEmail, rateLimit(5, 60_000), async (req: AuthenticatedRequest, res) => {
     const provider = req.params.provider as OAuthProviderId;
     if (provider !== 'google' && provider !== 'microsoft') return res.status(404).json({ error: 'Bilinmeyen OAuth sağlayıcısı', requestId: req.requestId });
     const runtime = oauthConfiguration(provider);
@@ -398,7 +405,7 @@ async function startServer() {
     return res.json({ configured: config.configured, publicKey: config.configured ? config.publicKey : null });
   });
 
-  app.post('/api/push/subscriptions', requireVerifiedUser, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
+  app.post('/api/push/subscriptions', requireVerifiedUser, requireVerifiedEmail, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
     const config = pushConfiguration();
     const subscription = req.body?.subscription;
     if (!config.configured || !adminDb || !req.authUser) return res.status(503).json({ error: 'Uzaktan push henüz yapılandırılmadı.', requestId: req.requestId });
@@ -413,7 +420,7 @@ async function startServer() {
     return res.status(204).send();
   });
 
-  app.delete('/api/push/subscriptions', requireVerifiedUser, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
+  app.delete('/api/push/subscriptions', requireVerifiedUser, requireVerifiedEmail, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
     if (!adminDb || !req.authUser || typeof req.body?.endpoint !== 'string') return res.status(400).json({ error: 'Abonelik adresi zorunludur.', requestId: req.requestId });
     const subscriptionId = createHash('sha256').update(req.body.endpoint).digest('hex');
     await adminDb.collection('users').doc(req.authUser.uid).collection('pushSubscriptions').doc(subscriptionId).delete();
@@ -423,7 +430,7 @@ async function startServer() {
   // This is an explicit, user-triggered delivery check. Scheduled/background
   // notifications will use the same stored subscription format once a durable
   // job runner is configured.
-  app.post('/api/push/test', requireVerifiedUser, rateLimit(3, 60 * 60_000), async (req: AuthenticatedRequest, res) => {
+  app.post('/api/push/test', requireVerifiedUser, requireVerifiedEmail, rateLimit(3, 60 * 60_000), async (req: AuthenticatedRequest, res) => {
     const config = pushConfiguration();
     if (!config.configured || !adminDb || !req.authUser) return res.status(503).json({ error: 'Uzaktan push henüz yapılandırılmadı.', requestId: req.requestId });
     const subscriptions = await adminDb.collection('users').doc(req.authUser.uid).collection('pushSubscriptions').get();
@@ -491,7 +498,7 @@ async function startServer() {
     }));
   };
 
-  app.post('/api/jobs/notification', requireVerifiedUser, rateLimit(20, 60 * 60_000), async (req: AuthenticatedRequest, res) => {
+  app.post('/api/jobs/notification', requireVerifiedUser, requireVerifiedEmail, rateLimit(20, 60 * 60_000), async (req: AuthenticatedRequest, res) => {
     if (!adminDb || !req.authUser) return res.status(503).json({ error: 'Arka plan işi hizmeti yapılandırılmadı.', requestId: req.requestId });
     const { title, body, runAt, url = '/' } = req.body || {};
     const runDate = new Date(runAt);

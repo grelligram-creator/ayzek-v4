@@ -57,6 +57,7 @@ export interface AuthUserState {
   email: string | null;
   displayName: string | null;
   photoURL?: string | null;
+  emailVerified: boolean;
 }
 
 const sentReminderKeys = new Set<string>();
@@ -869,6 +870,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         uid: cred.user.uid,
         email: cred.user.email,
         displayName: cred.user.displayName || email.split('@')[0],
+        emailVerified: cred.user.emailVerified,
       };
       resolvedProfile = await getOrCreateUserProfile({
         uid: cred.user.uid,
@@ -900,6 +902,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         uid: cred.user.uid,
         email: cred.user.email,
         displayName: name || cred.user.displayName || email.split('@')[0],
+        emailVerified: cred.user.emailVerified,
       };
       resolvedProfile = await getOrCreateUserProfile({
         uid: cred.user.uid,
