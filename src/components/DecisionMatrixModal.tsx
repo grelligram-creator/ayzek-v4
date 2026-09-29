@@ -70,6 +70,7 @@ export const DecisionMatrixModal: React.FC = () => {
   };
 
   const handleRunMonteCarlo = async () => {
+    if (!currentItem) return;
     setIsSimulating(true);
     try {
       const res = await authenticatedFetch('/api/gemini/monte-carlo-dilemma', {
@@ -131,6 +132,18 @@ export const DecisionMatrixModal: React.FC = () => {
       setIsSimulating(false);
     }
   };
+
+  if (!currentItem) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div className="w-full max-w-md rounded-3xl bg-slate-900 border border-slate-700 p-6 text-white space-y-4">
+          <h2 className="text-lg font-bold">Karar Matrisi</h2>
+          <p className="text-sm text-slate-300">Henüz kaydedilmiş bir karar yok. Kararını AYZEK sohbetine yazarak analiz başlatabilirsin.</p>
+          <button onClick={() => { setIsDecisionModalOpen(false); openAssistantWithQuery('Bir kararımı değerlendirmek istiyorum.'); }} className="w-full rounded-xl bg-rose-600 py-3 text-sm font-bold">Sohbette Başlat</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
