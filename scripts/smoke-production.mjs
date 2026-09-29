@@ -40,6 +40,17 @@ try {
     throw new Error('Production server did not serve the application shell');
   }
 
+  const manifest = await fetch(`${baseUrl}/manifest.json`);
+  const manifestPayload = await manifest.json();
+  if (!manifest.ok || manifestPayload.display !== 'standalone' || !Array.isArray(manifestPayload.icons) || manifestPayload.icons.length === 0) {
+    throw new Error('Production PWA manifest is missing standalone mobile configuration');
+  }
+
+  const worker = await fetch(`${baseUrl}/notification-worker.js`);
+  if (!worker.ok || !(await worker.text()).includes("addEventListener('push'")) {
+    throw new Error('Production notification worker is unavailable');
+  }
+
   console.log('Production smoke test passed.');
 } finally {
   server.kill('SIGTERM');
