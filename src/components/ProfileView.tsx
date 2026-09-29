@@ -36,6 +36,7 @@ export const ProfileView: React.FC = () => {
     setActiveTab,
     setIsIosInstallModalOpen,
     setIsOnboardingOpen,
+    setIsQuickTourOpen,
     updateProfileInfo,
   } = useApp();
 
@@ -298,6 +299,14 @@ export const ProfileView: React.FC = () => {
           >
             <Edit3 className="w-3 h-3" />
             <span>Tanıtımı Tekrarla</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setIsQuickTourOpen(true)}
+            className="text-xs font-bold text-rose-300 hover:text-white flex items-center gap-1 cursor-pointer transition-colors"
+          >
+            <span>Hızlı tur</span>
+            <ChevronRight className="w-3 h-3" />
           </button>
         </div>
 

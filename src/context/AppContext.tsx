@@ -74,6 +74,9 @@ interface AppContextType {
   // First stars onboarding
   isOnboardingOpen: boolean;
   setIsOnboardingOpen: (open: boolean) => void;
+  isQuickTourOpen: boolean;
+  setIsQuickTourOpen: (open: boolean) => void;
+  completeQuickTour: () => Promise<void>;
 
   // Theme & Navigation
   theme: ThemeMode;
@@ -191,6 +194,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
+  const [isQuickTourOpen, setIsQuickTourOpen] = useState(false);
 
   // Autonomous background worker logs (User away from app intelligence)
   const [autonomousLogs, setAutonomousLogs] = useState<AutonomousLog[]>([
@@ -884,6 +888,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     showSyncNotification('Kullanıcı hafıza ve profil bilgileri güncellendi.');
   };
 
+  const completeQuickTour = async () => {
+    const currentUid = user?.uid || userProfile?.uid;
+    if (!currentUid) {
+      setIsQuickTourOpen(false);
+      return;
+    }
+    await updateUserProfileDetails(currentUid, { quickTourCompleted: true });
+    setUserProfile((previous) => previous ? { ...previous, quickTourCompleted: true } : previous);
+    setIsQuickTourOpen(false);
+  };
+
   const openCheckoutModal = (plan: PricingPlan, cycle: 'monthly' | 'yearly') => {
     setCheckoutPlan(plan);
     setCheckoutBillingCycle(cycle);
@@ -1338,6 +1353,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         proactiveInsights,
         isOnboardingOpen,
         setIsOnboardingOpen,
+        isQuickTourOpen,
+        setIsQuickTourOpen,
+        completeQuickTour,
         theme,
         setTheme,
         toggleTheme,

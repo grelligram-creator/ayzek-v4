@@ -31,6 +31,7 @@ export interface UserProfile {
   updatedAt: string;
   lastLoginAt: string;
   onboardingCompleted?: boolean;
+  quickTourCompleted?: boolean;
 }
 
 export interface AutonomousLog {
