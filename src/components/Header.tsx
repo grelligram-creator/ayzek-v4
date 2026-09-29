@@ -26,7 +26,6 @@ export const Header: React.FC = () => {
     user,
     setIsAuthModalOpen,
     setActiveTab,
-    triggerProactiveTest,
     balance,
     setIsIosInstallModalOpen,
     setIsVisionModalOpen,
@@ -65,14 +64,12 @@ export const Header: React.FC = () => {
         <div className="flex items-center gap-1.5 sm:gap-2">
           {/* Notification Bell with red pulse dot */}
           <button
-            onClick={triggerProactiveTest}
-            title="Bildirimler & Hatırlatmalar"
-            aria-label="Bildirimler"
+            onClick={() => setActiveTab('profile')}
+            title="Bildirim tercihleri"
+            aria-label="Bildirim tercihleri"
             className="relative w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-rose-200 border border-rose-500/20 transition-colors cursor-pointer"
           >
             <Bell className="w-4 h-4" />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500 animate-ping" />
-            <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500" />
           </button>
 
           {/* Sesli Brifing Trigger */}
