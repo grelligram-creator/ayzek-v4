@@ -12,6 +12,8 @@ import {
   Clock,
   ArrowRight,
   Plus,
+  Pencil,
+  Archive,
 } from 'lucide-react';
 
 export const AyzekAssistantModal: React.FC = () => {
@@ -23,6 +25,8 @@ export const AyzekAssistantModal: React.FC = () => {
     activeConversationId,
     startConversation,
     switchConversation,
+    renameActiveConversation,
+    archiveActiveConversation,
     sendMessage,
     isChatLoading,
     balance,
@@ -57,6 +61,20 @@ export const AyzekAssistantModal: React.FC = () => {
     } catch {
       // The authenticated workspace is required before a conversation can exist.
     }
+  };
+
+  const handleRenameConversation = async () => {
+    if (activeConversationId === 'default') return;
+    const currentTitle = conversations.find((conversation) => conversation.id === activeConversationId)?.title || '';
+    const title = window.prompt('Konuşma adı', currentTitle);
+    if (!title || title.trim() === currentTitle) return;
+    await renameActiveConversation(title);
+  };
+
+  const handleArchiveConversation = async () => {
+    if (activeConversationId === 'default') return;
+    if (!window.confirm('Bu konuşma arşivlenecek. Devam etmek istiyor musunuz?')) return;
+    await archiveActiveConversation();
   };
 
   // Web Speech API for voice dictation
@@ -145,6 +163,24 @@ export const AyzekAssistantModal: React.FC = () => {
                   className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 px-2 py-1 text-[11px] font-semibold text-rose-200 hover:text-white hover:bg-rose-500/10 disabled:opacity-50"
                 >
                   <Plus className="w-3 h-3" /> Yeni
+                </button>
+                <button
+                  type="button"
+                  aria-label="Konuşma adını değiştir"
+                  onClick={() => handleRenameConversation().catch(() => undefined)}
+                  disabled={isChatLoading || activeConversationId === 'default'}
+                  className="rounded-lg border border-rose-500/30 p-1 text-rose-200 hover:text-white hover:bg-rose-500/10 disabled:opacity-40"
+                >
+                  <Pencil className="w-3 h-3" />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Konuşmayı arşivle"
+                  onClick={() => handleArchiveConversation().catch(() => undefined)}
+                  disabled={isChatLoading || activeConversationId === 'default'}
+                  className="rounded-lg border border-rose-500/30 p-1 text-rose-200 hover:text-white hover:bg-rose-500/10 disabled:opacity-40"
+                >
+                  <Archive className="w-3 h-3" />
                 </button>
               </div>
             </div>

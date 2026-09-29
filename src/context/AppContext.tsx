@@ -35,7 +35,9 @@ import {
   getUserData,
   listConversations,
   createConversation,
+  archiveConversation,
   loadConversationMessages,
+  renameConversation,
   saveUserData,
   saveConversationMessage,
   updateUserProfileDetails,
@@ -112,6 +114,8 @@ interface AppContextType {
   activeConversationId: string;
   startConversation: () => Promise<void>;
   switchConversation: (conversationId: string) => Promise<void>;
+  renameActiveConversation: (title: string) => Promise<void>;
+  archiveActiveConversation: () => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
   isChatLoading: boolean;
   isAssistantOpen: boolean;
@@ -1089,6 +1093,31 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setMessages(storedMessages);
   };
 
+  const renameActiveConversation = async (title: string) => {
+    const currentUid = user?.uid || userProfile?.uid;
+    if (!currentUid) throw new Error('Konuşmayı değiştirmek için giriş yapmanız gerekiyor.');
+    if (activeConversationId === generalConversation.id) {
+      throw new Error('Genel konuşmanın adı değiştirilemez.');
+    }
+    await renameConversation(currentUid, activeConversationId, title);
+    setConversations((previous) => previous.map((conversation) => (
+      conversation.id === activeConversationId ? { ...conversation, title: title.trim(), updatedAt: new Date().toISOString() } : conversation
+    )));
+  };
+
+  const archiveActiveConversation = async () => {
+    const currentUid = user?.uid || userProfile?.uid;
+    if (!currentUid) throw new Error('Konuşmayı arşivlemek için giriş yapmanız gerekiyor.');
+    if (activeConversationId === generalConversation.id) {
+      throw new Error('Genel konuşma arşivlenemez.');
+    }
+    const archivedId = activeConversationId;
+    await archiveConversation(currentUid, archivedId);
+    setConversations((previous) => previous.filter((conversation) => conversation.id !== archivedId));
+    setActiveConversationId(generalConversation.id);
+    setMessages(await loadConversationMessages(currentUid, generalConversation.id));
+  };
+
   const openAssistantWithQuery = (query: string) => {
     setIsAssistantOpen(true);
     sendMessage(query);
@@ -1314,6 +1343,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         activeConversationId,
         startConversation,
         switchConversation,
+        renameActiveConversation,
+        archiveActiveConversation,
         sendMessage,
         isChatLoading,
         isAssistantOpen,
