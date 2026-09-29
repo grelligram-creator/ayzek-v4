@@ -11,6 +11,7 @@ import {
   CheckCircle2,
   Clock,
   ArrowRight,
+  Plus,
 } from 'lucide-react';
 
 export const AyzekAssistantModal: React.FC = () => {
@@ -18,6 +19,10 @@ export const AyzekAssistantModal: React.FC = () => {
     isAssistantOpen,
     setIsAssistantOpen,
     messages,
+    conversations,
+    activeConversationId,
+    startConversation,
+    switchConversation,
     sendMessage,
     isChatLoading,
     balance,
@@ -44,6 +49,14 @@ export const AyzekAssistantModal: React.FC = () => {
 
   const handlePromptChip = (chip: string) => {
     sendMessage(chip);
+  };
+
+  const handleNewConversation = async () => {
+    try {
+      await startConversation();
+    } catch {
+      // The authenticated workspace is required before a conversation can exist.
+    }
   };
 
   // Web Speech API for voice dictation
@@ -111,6 +124,29 @@ export const AyzekAssistantModal: React.FC = () => {
               <p className="text-[11px] text-rose-200/70 mt-0.5">
                 Yanıtlar kaydedilir; görev ve bağlantılı uygulama işlemleri ayrı onay gerektirir.
               </p>
+              <div className="mt-2 flex items-center gap-2">
+                <select
+                  aria-label="Konuşma seç"
+                  value={activeConversationId}
+                  onChange={(event) => switchConversation(event.target.value).catch(() => undefined)}
+                  disabled={isChatLoading}
+                  className="max-w-44 bg-black/25 border border-rose-500/25 rounded-lg px-2 py-1 text-[11px] text-rose-100 outline-none disabled:opacity-50"
+                >
+                  {conversations.map((conversation) => (
+                    <option key={conversation.id} value={conversation.id} className="bg-[#14050a] text-white">
+                      {conversation.title}
+                    </option>
+                  ))}
+                </select>
+                <button
+                  type="button"
+                  onClick={handleNewConversation}
+                  disabled={isChatLoading}
+                  className="inline-flex items-center gap-1 rounded-lg border border-rose-500/30 px-2 py-1 text-[11px] font-semibold text-rose-200 hover:text-white hover:bg-rose-500/10 disabled:opacity-50"
+                >
+                  <Plus className="w-3 h-3" /> Yeni
+                </button>
+              </div>
             </div>
           </div>
 

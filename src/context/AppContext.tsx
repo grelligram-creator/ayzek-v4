@@ -24,6 +24,7 @@ import {
   TaskItem,
   ConnectedService,
   ChatMessage,
+  ConversationSummary,
   AppAction,
   AutonomousLog,
   ProactiveInsight,
@@ -32,6 +33,8 @@ import { PricingPlan } from '../data/pricingPlans';
 import {
   getOrCreateUserProfile,
   getUserData,
+  listConversations,
+  createConversation,
   loadConversationMessages,
   saveUserData,
   saveConversationMessage,
@@ -105,6 +108,10 @@ interface AppContextType {
 
   // AI Chat & Sync
   messages: ChatMessage[];
+  conversations: ConversationSummary[];
+  activeConversationId: string;
+  startConversation: () => Promise<void>;
+  switchConversation: (conversationId: string) => Promise<void>;
   sendMessage: (text: string) => Promise<void>;
   isChatLoading: boolean;
   isAssistantOpen: boolean;
@@ -613,7 +620,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   // Assistant & Messages
+  const generalConversation: ConversationSummary = { id: 'default', title: 'Genel konuşma', createdAt: '', updatedAt: '' };
   const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [conversations, setConversations] = useState<ConversationSummary[]>([generalConversation]);
+  const [activeConversationId, setActiveConversationId] = useState('default');
   const [isAssistantOpen, setIsAssistantOpen] = useState(false);
   const [isChatLoading, setIsChatLoading] = useState(false);
 
@@ -672,6 +682,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUser(firebaseUser);
         setIsWorkspaceHydrated(false);
         setMessages([]);
+        setActiveConversationId('default');
         try {
           const profile = await getOrCreateUserProfile({
             uid: firebaseUser.uid,
@@ -708,7 +719,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setServices((current) => current.map((service) => ({ ...service, account: 'Bağlantı kurulmadı', items: [], unreadCount: 0, isActive: false })));
           }
 
-          const storedMessages = await loadConversationMessages(firebaseUser.uid);
+          const storedConversations = await listConversations(firebaseUser.uid);
+          setConversations([
+            generalConversation,
+            ...storedConversations.filter((conversation) => conversation.id !== generalConversation.id),
+          ]);
+          const storedMessages = await loadConversationMessages(firebaseUser.uid, generalConversation.id);
           setMessages(storedMessages);
         } catch (err) {
           console.error('Firestore profile sync error:', err);
@@ -718,6 +734,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } else {
         setIsWorkspaceHydrated(false);
         setMessages([]);
+        setConversations([generalConversation]);
+        setActiveConversationId('default');
       }
     });
 
@@ -815,6 +833,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUserProfile(null);
     setIsWorkspaceHydrated(false);
     setMessages([]);
+    setConversations([generalConversation]);
+    setActiveConversationId('default');
     showSyncNotification('Oturum kapatıldı.');
   };
 
@@ -1008,7 +1028,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setMessages((prev) => [...prev, userMessage]);
     if (user?.uid) {
-      saveConversationMessage(user.uid, userMessage).catch((error) => console.error('Mesaj kaydedilemedi:', error));
+      saveConversationMessage(user.uid, userMessage, activeConversationId).catch((error) => console.error('Mesaj kaydedilemedi:', error));
     }
     setIsChatLoading(true);
 
@@ -1035,7 +1055,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
       setMessages((prev) => [...prev, assistantMessage]);
       if (user?.uid) {
-        saveConversationMessage(user.uid, assistantMessage).catch((error) => console.error('Yanıt kaydedilemedi:', error));
+        saveConversationMessage(user.uid, assistantMessage, activeConversationId).catch((error) => console.error('Yanıt kaydedilemedi:', error));
       }
     } catch (err) {
       console.error('Mesaj gönderme hatası:', err);
@@ -1049,6 +1069,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } finally {
       setIsChatLoading(false);
     }
+  };
+
+  const startConversation = async () => {
+    const currentUid = user?.uid || userProfile?.uid;
+    if (!currentUid) throw new Error('Yeni konuşma oluşturmak için giriş yapmanız gerekiyor.');
+    const conversation = await createConversation(currentUid);
+    setConversations((previous) => [conversation, ...previous]);
+    setActiveConversationId(conversation.id);
+    setMessages([]);
+  };
+
+  const switchConversation = async (conversationId: string) => {
+    const currentUid = user?.uid || userProfile?.uid;
+    if (!currentUid) throw new Error('Konuşmaya erişmek için giriş yapmanız gerekiyor.');
+    setMessages([]);
+    setActiveConversationId(conversationId);
+    const storedMessages = await loadConversationMessages(currentUid, conversationId);
+    setMessages(storedMessages);
   };
 
   const openAssistantWithQuery = (query: string) => {
@@ -1272,6 +1310,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         services,
         toggleService,
         messages,
+        conversations,
+        activeConversationId,
+        startConversation,
+        switchConversation,
         sendMessage,
         isChatLoading,
         isAssistantOpen,
