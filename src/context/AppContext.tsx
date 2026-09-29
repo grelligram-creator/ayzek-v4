@@ -173,6 +173,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Auth state: never invent an authenticated user when Firebase is unavailable.
   const [user, setUser] = useState<User | AuthUserState | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isWorkspaceHydrated, setIsWorkspaceHydrated] = useState(false);
   const [isAuthLoading, setIsAuthLoading] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isOnboardingOpen, setIsOnboardingOpen] = useState(false);
@@ -655,6 +656,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
+        setIsWorkspaceHydrated(false);
         try {
           const profile = await getOrCreateUserProfile({
             uid: firebaseUser.uid,
@@ -695,7 +697,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           if (storedMessages.length) setMessages(storedMessages);
         } catch (err) {
           console.error('Firestore profile sync error:', err);
+        } finally {
+          setIsWorkspaceHydrated(true);
         }
+      } else {
+        setIsWorkspaceHydrated(false);
       }
     });
 
@@ -705,7 +711,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   // Sync to Firestore when important user states change
   useEffect(() => {
     const currentUid = user?.uid || userProfile?.uid;
-    if (!currentUid) return;
+    if (!currentUid || !isWorkspaceHydrated) return;
     const timeout = setTimeout(() => {
       saveUserData(currentUid, {
         balance,
@@ -714,11 +720,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         dilemmas,
         services,
         coachGoal,
-      }).catch((e) => console.warn('Kullanıcı verisi senkron:', e));
+      }).catch((e) => console.error('Kullanıcı verisi senkronu başarısız:', e));
     }, 1500);
 
     return () => clearTimeout(timeout);
-  }, [user, userProfile, balance, checkin, tasks, dilemmas, services, coachGoal]);
+  }, [user, userProfile, isWorkspaceHydrated, balance, checkin, tasks, dilemmas, services, coachGoal]);
 
   // Auth methods must fail closed; a failed login cannot create a paid local session.
   const loginWithEmail = async (email: string, pass: string) => {
@@ -791,6 +797,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } catch {}
     setUser(null);
     setUserProfile(null);
+    setIsWorkspaceHydrated(false);
     showSyncNotification('Oturum kapatıldı.');
   };
 

@@ -54,7 +54,8 @@ export async function getUserData(uid: string): Promise<UserPersistedData | null
       return snap.data() as UserPersistedData;
     }
   } catch (err) {
-    console.warn('Firestore userData fetch fallback:', err);
+    console.error('Firestore çalışma alanı okunamadı:', err);
+    throw new Error('Çalışma alanı verileri okunamadı. Lütfen bağlantınızı kontrol edip tekrar deneyin.');
   }
   return null;
 }
@@ -72,7 +73,8 @@ export async function saveUserData(uid: string, data: Partial<UserPersistedData>
       { merge: true }
     );
   } catch (err) {
-    console.warn('Firestore saveUserData fallback:', err);
+    console.error('Firestore çalışma alanı kaydedilemedi:', err);
+    throw new Error('Değişiklikler kaydedilemedi. Lütfen tekrar deneyin.');
   }
 }
 
@@ -85,7 +87,8 @@ export async function updateUserProfileDetails(
     const userRef = doc(db, 'users', uid);
     await setDoc(userRef, { ...details, updatedAt: new Date().toISOString() }, { merge: true });
   } catch (err) {
-    console.warn('Firestore updateUserProfileDetails fallback:', err);
+    console.error('Firestore profil güncellemesi başarısız:', err);
+    throw new Error('Profil güncellenemedi. Lütfen tekrar deneyin.');
   }
 }
 
