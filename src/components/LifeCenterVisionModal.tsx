@@ -44,6 +44,16 @@ export const LifeCenterVisionModal: React.FC = () => {
 
   if (!isVisionModalOpen) return null;
 
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div className="w-full max-w-lg rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 space-y-4 text-slate-900 dark:text-white">
+        <div className="flex items-center justify-between"><h2 className="text-lg font-bold">Hayatın Merkezi</h2><button onClick={() => setIsVisionModalOpen(false)} aria-label="Kapat">×</button></div>
+        <p className="text-sm leading-relaxed text-slate-600 dark:text-slate-300">Bu ekran AYZEK'in ürün vizyonunu anlatır. Takvim, mesaj, sağlık veya finans kanalları şu anda otomatik izlenmez; bu özellikler yalnızca ayrı izin, sağlayıcı bağlantısı ve güvenlik denetimi sonrasında etkinleşir.</p>
+        <button onClick={() => setIsVisionModalOpen(false)} className="w-full rounded-full bg-rose-600 py-3 text-sm font-bold text-white">Anladım</button>
+      </div>
+    </div>
+  );
+
   const visionPillars: VisionPillar[] = [
     {
       id: 'pillar-1',
