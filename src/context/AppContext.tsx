@@ -403,6 +403,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const todayStr = new Date().toISOString().split('T')[0];
+  const createTaskId = () => `task-${crypto.randomUUID()}`;
 
   // Tasks & Timeline Items
   const [tasks, setTasks] = useState<TaskItem[]>([
@@ -938,13 +939,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       case 'ADD_TASK': {
         const payload = action.payload || {};
         const newTask: TaskItem = {
-          id: `task-${Date.now()}`,
+          id: createTaskId(),
           title: payload.title || 'Yeni Görev',
           category: payload.category || 'kisisel',
           time: payload.time || 'Bugün · AYZEK Senkron',
           date: payload.date || todayStr,
           highlight: '⚡ AYZEK Konuşması ile Otomatik Eklendi',
           isCompleted: false,
+          status: 'open',
+          source: 'approved_ai',
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
           details: payload.details || payload.note || '',
           actionType: 'default',
         };
@@ -962,7 +967,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setTasks((prev) =>
           prev.map((t) => {
             if (t.id === id || (titleKeyword && t.title.toLowerCase().includes(titleKeyword))) {
-              return { ...t, isCompleted: true };
+              return { ...t, isCompleted: true, status: 'completed', completedAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
             }
             return t;
           })
@@ -1210,8 +1215,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       } catch {}
       showSyncNotification(
         nextActive
-          ? 'Smart Guard Aktif: 18:00 sonrası iş bildirimleri ve toplantılar kilitlendi.'
-          : 'Smart Guard Devre Dışı: 18:00 sonrası serbest erişim modu.'
+          ? 'Akşam koruma tercihi kaydedildi. Bağlı bir takvimde otomatik değişiklik yapılmadı.'
+          : 'Akşam koruma tercihi kapatıldı. Bağlı bir takvimde otomatik değişiklik yapılmadı.'
       );
       return nextState;
     });
@@ -1229,7 +1234,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setTasks((prev) => {
       const target = prev.find((t) => t.id === id);
       const isNowCompleted = target ? !target.isCompleted : false;
-      const updated = prev.map((t) => (t.id === id ? { ...t, isCompleted: isNowCompleted } : t));
+      const updated = prev.map((t) => (t.id === id ? {
+        ...t,
+        isCompleted: isNowCompleted,
+        status: isNowCompleted ? 'completed' as const : 'open' as const,
+        completedAt: isNowCompleted ? new Date().toISOString() : undefined,
+        updatedAt: new Date().toISOString(),
+      } : t));
 
       const completed = updated.filter((t) => t.isCompleted).length;
       const remaining = updated.filter((t) => !t.isCompleted).length;
@@ -1248,13 +1259,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addTask = (task: Partial<TaskItem>) => {
     const newTask: TaskItem = {
-      id: `task-${Date.now()}`,
+      id: createTaskId(),
       title: task.title || 'Yeni Görev',
       category: task.category || 'kisisel',
       time: task.time || 'Bugün · Serbest Zaman',
       date: task.date || todayStr,
       highlight: task.highlight || '⚡ Planlandı',
       isCompleted: false,
+      status: 'open',
+      source: 'manual',
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
       details: task.details,
       actionType: task.actionType || 'default',
     };

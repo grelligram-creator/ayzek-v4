@@ -127,6 +127,11 @@ export interface TaskItem {
   date?: string; // YYYY-MM-DD
   highlight: string;
   isCompleted: boolean;
+  status?: 'open' | 'completed';
+  source?: 'manual' | 'approved_ai';
+  createdAt?: string;
+  updatedAt?: string;
+  completedAt?: string;
   details?: string;
   badgeText?: string;
   actionType?: 'view_list' | 'pay_bill' | 'draft_message' | 'default';
