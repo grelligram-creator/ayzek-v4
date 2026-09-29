@@ -9,8 +9,9 @@ self.addEventListener('activate', (event) => {
 // client-side foundation and must not fabricate remote notification delivery.
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
+  const targetUrl = event.notification.data?.url || '/';
   event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clients) => {
-    const existing = clients[0];
-    return existing ? existing.focus() : self.clients.openWindow('/');
+    const existing = clients.find((client) => new URL(client.url).origin === self.location.origin);
+    return existing ? existing.focus() : self.clients.openWindow(targetUrl);
   }));
 });

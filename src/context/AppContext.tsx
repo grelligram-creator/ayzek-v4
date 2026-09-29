@@ -11,6 +11,7 @@ import {
 } from 'firebase/auth';
 import { auth } from '../lib/firebase';
 import { authenticatedFetch } from '../lib/api';
+import { showBrowserNotification } from '../lib/browserNotifications';
 import {
   ThemeMode,
   ViewMode,
@@ -994,6 +995,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const addNotification = (category: NotificationItem['category'], title: string) => {
     setNotifications((previous) => [{ id: crypto.randomUUID(), category, title, createdAt: new Date().toISOString() }, ...previous].slice(0, 100));
+
+    // Never interrupt the user while AYZEK is in the foreground. When the app
+    // is backgrounded, show only categories that the user has opted into.
+    const preferenceByCategory = {
+      task: 'tasks',
+      security: 'security',
+      integration: 'integrationProblems',
+      system: 'recommendations',
+    } as const;
+    const preference = preferenceByCategory[category];
+    if (typeof document !== 'undefined' && document.visibilityState === 'hidden' && userProfile?.notificationPreferences?.[preference] !== false) {
+      void showBrowserNotification('AYZEK', { body: title, tag: `ayzek-${category}`, data: { url: '/' } });
+    }
   };
 
   const markNotificationsRead = () => {
