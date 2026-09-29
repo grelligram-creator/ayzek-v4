@@ -1,6 +1,6 @@
 import { collection, doc, getDoc, getDocs, limit, orderBy, query, setDoc } from 'firebase/firestore';
 import { db } from '../lib/firebase';
-import { UserProfile, MoodCheckin, TaskItem, DilemmaItem, WorkLifeBalance, ConnectedService, CoachGoal, ChatMessage } from '../types';
+import { UserProfile, MoodCheckin, TaskItem, DilemmaItem, WorkLifeBalance, ConnectedService, CoachGoal, ChatMessage, ConversationSummary } from '../types';
 
 export interface UserPersistedData {
   balance: WorkLifeBalance;
@@ -116,8 +116,55 @@ export async function updateUserProfileDetails(
 
 const defaultConversationId = 'default';
 
-export async function loadConversationMessages(uid: string): Promise<ChatMessage[]> {
-  const messagesRef = collection(db, 'users', uid, 'conversations', defaultConversationId, 'messages');
+function conversationFromSnapshot(id: string, data: Record<string, unknown>): ConversationSummary {
+  return {
+    id,
+    title: typeof data.title === 'string' && data.title.trim() ? data.title : 'Yeni konuşma',
+    createdAt: typeof data.createdAt === 'string' ? data.createdAt : '',
+    updatedAt: typeof data.updatedAt === 'string' ? data.updatedAt : '',
+    ...(typeof data.archivedAt === 'string' ? { archivedAt: data.archivedAt } : {}),
+  };
+}
+
+export async function listConversations(uid: string): Promise<ConversationSummary[]> {
+  const conversationsRef = collection(db, 'users', uid, 'conversations');
+  const snapshot = await getDocs(query(conversationsRef, orderBy('updatedAt', 'desc'), limit(50)));
+  return snapshot.docs
+    .map((entry) => conversationFromSnapshot(entry.id, entry.data()))
+    .filter((conversation) => !conversation.archivedAt);
+}
+
+export async function createConversation(uid: string, title = 'Yeni konuşma'): Promise<ConversationSummary> {
+  const now = new Date().toISOString();
+  const ref = doc(collection(db, 'users', uid, 'conversations'));
+  const conversation: ConversationSummary = { id: ref.id, title: title.trim() || 'Yeni konuşma', createdAt: now, updatedAt: now };
+  await setDoc(ref, conversation);
+  return conversation;
+}
+
+export async function renameConversation(uid: string, conversationId: string, title: string): Promise<void> {
+  const normalizedTitle = title.trim();
+  if (!normalizedTitle || normalizedTitle.length > 120) {
+    throw new Error('Konuşma adı 1–120 karakter arasında olmalıdır.');
+  }
+  await setDoc(doc(db, 'users', uid, 'conversations', conversationId), {
+    title: normalizedTitle,
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
+}
+
+export async function archiveConversation(uid: string, conversationId: string): Promise<void> {
+  if (conversationId === defaultConversationId) {
+    throw new Error('Varsayılan konuşma arşivlenemez. Önce yeni bir konuşma oluşturun.');
+  }
+  await setDoc(doc(db, 'users', uid, 'conversations', conversationId), {
+    archivedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  }, { merge: true });
+}
+
+export async function loadConversationMessages(uid: string, conversationId = defaultConversationId): Promise<ChatMessage[]> {
+  const messagesRef = collection(db, 'users', uid, 'conversations', conversationId, 'messages');
   const snapshot = await getDocs(query(messagesRef, orderBy('createdAt', 'asc'), limit(100)));
   return snapshot.docs.map((entry) => {
     const data = entry.data();
@@ -131,11 +178,12 @@ export async function loadConversationMessages(uid: string): Promise<ChatMessage
   });
 }
 
-export async function saveConversationMessage(uid: string, message: ChatMessage): Promise<void> {
-  const conversationRef = doc(db, 'users', uid, 'conversations', defaultConversationId);
+export async function saveConversationMessage(uid: string, message: ChatMessage, conversationId = defaultConversationId): Promise<void> {
+  const conversationRef = doc(db, 'users', uid, 'conversations', conversationId);
   const messageRef = doc(conversationRef, 'messages', message.id);
   await setDoc(conversationRef, {
-    id: defaultConversationId,
+    id: conversationId,
+    ...(conversationId === defaultConversationId ? { title: 'Genel konuşma' } : {}),
     updatedAt: new Date().toISOString(),
     createdAt: new Date().toISOString(),
   }, { merge: true });

@@ -173,3 +173,11 @@ export interface ChatMessage {
   timestamp: string;
   actionsApplied?: string[];
 }
+
+export interface ConversationSummary {
+  id: string;
+  title: string;
+  createdAt: string;
+  updatedAt: string;
+  archivedAt?: string;
+}

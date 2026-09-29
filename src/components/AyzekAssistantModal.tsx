@@ -105,11 +105,11 @@ export const AyzekAssistantModal: React.FC = () => {
                 </h3>
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1 font-mono">
                   <Zap className="w-3 h-3 text-rose-400 fill-rose-400" />
-                  <span>Canlı Senkronize</span>
+                  <span>Güvenli öneri modu</span>
                 </span>
               </div>
               <p className="text-[11px] text-rose-200/70 mt-0.5">
-                Konuştuğun her şey uygulamaya anında işlenir ve takvimin dengelenir
+                Yanıtlar kaydedilir; görev ve bağlantılı uygulama işlemleri ayrı onay gerektirir.
               </p>
             </div>
           </div>
