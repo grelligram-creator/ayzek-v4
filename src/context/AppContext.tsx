@@ -71,6 +71,7 @@ interface AppContextType {
   loginWithEmail: (email: string, pass: string) => Promise<void>;
   registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
+  resendEmailVerification: () => Promise<void>;
   logout: () => Promise<void>;
   updateProfileInfo: (details: Partial<UserProfile>) => Promise<void>;
 
@@ -934,6 +935,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const resendEmailVerification = async () => {
+    const firebaseUser = auth.currentUser;
+    if (!firebaseUser) throw new Error('Doğrulama e-postası için giriş yapmanız gerekiyor.');
+    if (firebaseUser.emailVerified) {
+      showSyncNotification('E-posta adresiniz zaten doğrulanmış.');
+      return;
+    }
+    await sendEmailVerification(firebaseUser);
+    showSyncNotification('Doğrulama bağlantısı e-posta adresinize yeniden gönderildi.');
+  };
+
   const logout = async () => {
     try {
       await signOut(auth);
@@ -1593,6 +1605,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loginWithEmail,
         registerWithEmail,
         requestPasswordReset,
+        resendEmailVerification,
         logout,
         updateProfileInfo,
         autonomousLogs,

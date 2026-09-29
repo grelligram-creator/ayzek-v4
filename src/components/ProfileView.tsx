@@ -40,6 +40,7 @@ export const ProfileView: React.FC = () => {
     setIsQuickTourOpen,
     updateProfileInfo,
     clearConversationHistory,
+    resendEmailVerification,
   } = useApp();
 
   const [jobTitle, setJobTitle] = useState(userProfile?.jobTitle || '');
@@ -53,6 +54,7 @@ export const ProfileView: React.FC = () => {
   const [memoryError, setMemoryError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [securityNotice, setSecurityNotice] = useState<string | null>(null);
   const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(() => userProfile?.notificationPreferences || {
     reminders: true, tasks: true, recommendations: false, integrationProblems: true, security: true,
   });
@@ -167,6 +169,18 @@ export const ProfileView: React.FC = () => {
       setDeleteError(error instanceof Error ? error.message : 'Oturumlar sonlandırılamadı.');
     }
   };
+
+  const handleResendEmailVerification = async () => {
+    setSecurityNotice(null);
+    try {
+      await resendEmailVerification();
+      setSecurityNotice('Doğrulama bağlantısı gönderildi. E-postanızı açtıktan sonra sayfayı yenileyin.');
+    } catch (error) {
+      setSecurityNotice(error instanceof Error ? error.message : 'Doğrulama e-postası gönderilemedi.');
+    }
+  };
+
+  const emailVerified = 'emailVerified' in (user || {}) && Boolean(user?.emailVerified);
 
   return (
     <div className="space-y-6 pb-28 animate-fadeIn max-w-2xl mx-auto">
@@ -466,6 +480,14 @@ export const ProfileView: React.FC = () => {
         </div>
         {exportError && <p className="text-xs text-amber-300">{exportError}</p>}
         <p className="text-[11px] text-rose-200/50">Şifre, erişim anahtarı ve token alanları dışa aktarımın dışında tutulur.</p>
+        <div className="pt-2 border-t border-rose-500/15 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold text-rose-200">E-posta doğrulaması</p>
+            <p className="text-[11px] text-rose-200/55">{emailVerified ? 'E-posta adresiniz doğrulandı.' : 'Doğrulanmış e-posta, oturum güvenliği ve MFA için temel gereksinimdir.'}</p>
+          </div>
+          {!emailVerified && <button type="button" onClick={() => handleResendEmailVerification().catch(() => undefined)} className="shrink-0 px-3 py-2 rounded-xl border border-sky-400/40 text-xs font-bold text-sky-200 hover:bg-sky-400/10">Doğrulama e-postası gönder</button>}
+        </div>
+        {securityNotice && <p className="text-xs text-sky-200">{securityNotice}</p>}
         <div className="pt-2 border-t border-rose-500/15 flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-semibold text-rose-200">Tüm cihazlardan çıkış yap</p>
