@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useApp } from '../context/AppContext';
 import { authenticatedFetch } from '../lib/api';
-import { BrowserNotificationStatus, getBrowserNotificationStatus, requestBrowserNotificationPermission } from '../lib/browserNotifications';
+import { BrowserNotificationStatus, createRemotePushSubscription, getBrowserNotificationStatus, requestBrowserNotificationPermission } from '../lib/browserNotifications';
 import { AyzekLogo } from './AyzekLogo';
 import { deleteMemory, exportUserData, listMemories, saveExplicitMemory } from '../services/firestoreService';
 import { MemoryItem, NotificationPreferences } from '../types';
@@ -106,6 +106,27 @@ export const ProfileView: React.FC = () => {
   const handleBrowserNotificationPermission = async () => {
     const result = await requestBrowserNotificationPermission();
     setBrowserNotificationStatus(result);
+    if (result !== 'granted') return;
+    try {
+      const configuration = await authenticatedFetch('/api/push/config');
+      const config = await configuration.json();
+      if (!configuration.ok || !config.configured || !config.publicKey) {
+        setSecurityNotice('Tarayıcı izni verildi. Uzaktan push için sunucuda VAPID Secrets tanımlanması bekleniyor.');
+        return;
+      }
+      const subscription = await createRemotePushSubscription(config.publicKey);
+      const response = await authenticatedFetch('/api/push/subscriptions', {
+        method: 'POST',
+        body: JSON.stringify({ subscription: subscription.toJSON() }),
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Push aboneliği kaydedilemedi.');
+      }
+      setSecurityNotice('Bu cihaz uzaktan push bildirimleri için kaydedildi.');
+    } catch (error) {
+      setSecurityNotice(error instanceof Error ? error.message : 'Push aboneliği oluşturulamadı.');
+    }
   };
 
   const handleExport = async () => {
@@ -455,7 +476,7 @@ export const ProfileView: React.FC = () => {
         <div className="rounded-xl border border-rose-500/20 bg-[#14060a]/80 p-3 text-xs">
           <p className="font-semibold text-rose-100">Tarayıcı bildirimi</p>
           <p className="mt-1 text-rose-200/65">
-            {browserNotificationStatus === 'granted' && 'İzin verildi. Uygulama arka plandayken izin verdiğiniz görev ve güvenlik gelişmeleri ile yaklaşan görev hatırlatmaları cihaz bildirimi olarak gösterilir. Uzaktan push henüz yapılandırılmadı.'}
+            {browserNotificationStatus === 'granted' && 'İzin verildi. Bu cihaz, sunucuda VAPID yapılandırması varsa uzaktan push için güvenle kaydedilir; iPhone/iPad’de bu özellik uygulama Ana Ekrana eklendikten sonra kullanılabilir.'}
             {browserNotificationStatus === 'default' && 'İzin henüz verilmedi.'}
             {browserNotificationStatus === 'denied' && 'İzin tarayıcı tarafından engellendi; tarayıcı ayarlarından açabilirsiniz.'}
             {browserNotificationStatus === 'unsupported' && 'Bu tarayıcı bildirim ve servis çalışanını desteklemiyor.'}

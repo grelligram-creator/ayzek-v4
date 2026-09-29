@@ -46,9 +46,22 @@ self.addEventListener('fetch', (event) => {
     })));
 });
 
-// Server-originated push events are deliberately not handled until a VAPID
-// subscription endpoint is configured. This worker never fabricates remote
-// notification delivery.
+self.addEventListener('push', (event) => {
+  let payload = { title: 'AYZEK', body: 'Yeni bir güncellemeniz var.', url: '/' };
+  try {
+    payload = { ...payload, ...(event.data ? event.data.json() : {}) };
+  } catch {
+    // A malformed provider payload must not break the worker or navigation.
+  }
+  event.waitUntil(self.registration.showNotification(payload.title, {
+    body: payload.body,
+    icon: '/icon-192.svg',
+    badge: '/icon-192.svg',
+    tag: payload.tag || 'ayzek-remote-push',
+    data: { url: payload.url || '/' },
+  }));
+});
+
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();
   const targetUrl = event.notification.data?.url || '/';

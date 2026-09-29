@@ -18,6 +18,22 @@ export async function registerBrowserNotificationWorker(): Promise<void> {
   await navigator.serviceWorker.register('/notification-worker.js', { scope: '/' });
 }
 
+function publicKeyToUint8Array(publicKey: string): Uint8Array {
+  const padded = `${publicKey}${'='.repeat((4 - publicKey.length % 4) % 4)}`;
+  const base64 = padded.replace(/-/g, '+').replace(/_/g, '/');
+  const bytes = atob(base64);
+  return Uint8Array.from(bytes, (character) => character.charCodeAt(0));
+}
+
+/** Creates a real Push API subscription after an explicit user interaction. */
+export async function createRemotePushSubscription(publicKey: string): Promise<PushSubscription> {
+  if (!('PushManager' in window)) throw new Error('Bu tarayıcı uzaktan push bildirimini desteklemiyor.');
+  const registration = await navigator.serviceWorker.ready;
+  const existing = await registration.pushManager.getSubscription();
+  if (existing) return existing;
+  return registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: publicKeyToUint8Array(publicKey) as unknown as BufferSource });
+}
+
 /**
  * Displays an on-device browser notification for an app event. This is kept
  * deliberately separate from remote Web Push: it never creates a subscription

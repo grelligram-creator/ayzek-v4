@@ -3,7 +3,8 @@ import { createServer as createViteServer } from 'vite';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { createCipheriv, createDecipheriv, createHmac, randomBytes, timingSafeEqual } from 'crypto';
+import { createCipheriv, createHmac, createHash, randomBytes, timingSafeEqual } from 'crypto';
+import webpush from 'web-push';
 import { GoogleGenAI, Type } from '@google/genai';
 import { applicationDefault, cert, getApps, initializeApp } from 'firebase-admin/app';
 import { getAuth as getAdminAuth, DecodedIdToken } from 'firebase-admin/auth';
@@ -100,12 +101,18 @@ function encryptOAuthToken(tokenResponse: Record<string, unknown>, key: Buffer):
   return [iv.toString('base64url'), cipher.getAuthTag().toString('base64url'), encrypted.toString('base64url')].join('.');
 }
 
-function decryptOAuthToken(value: string, key: Buffer): Record<string, unknown> {
-  const [ivValue, authTagValue, ciphertext] = value.split('.');
-  if (!ivValue || !authTagValue || !ciphertext) throw new Error('Geçersiz şifreli OAuth token biçimi');
-  const decipher = createDecipheriv('aes-256-gcm', key, Buffer.from(ivValue, 'base64url'));
-  decipher.setAuthTag(Buffer.from(authTagValue, 'base64url'));
-  return JSON.parse(Buffer.concat([decipher.update(Buffer.from(ciphertext, 'base64url')), decipher.final()]).toString('utf8'));
+type BrowserPushSubscription = { endpoint: string; keys: { p256dh: string; auth: string } };
+
+function isBrowserPushSubscription(value: unknown): value is BrowserPushSubscription {
+  if (!value || typeof value !== 'object') return false;
+  const subscription = value as BrowserPushSubscription;
+  try {
+    return new URL(subscription.endpoint).protocol === 'https:'
+      && typeof subscription.keys?.p256dh === 'string' && subscription.keys.p256dh.length > 20
+      && typeof subscription.keys?.auth === 'string' && subscription.keys.auth.length > 10;
+  } catch {
+    return false;
+  }
 }
 
 const memoryStopWords = new Set([
@@ -375,6 +382,64 @@ async function startServer() {
       console.error('OAuth callback failed', { provider, error: error instanceof Error ? error.message : 'unknown' });
       return fail('server_error');
     }
+  });
+
+  const pushConfiguration = () => {
+    const publicKey = process.env.VAPID_PUBLIC_KEY?.trim();
+    const privateKey = process.env.VAPID_PRIVATE_KEY?.trim();
+    const subject = process.env.VAPID_SUBJECT?.trim();
+    const configured = Boolean(publicKey && privateKey && subject && adminDb);
+    if (configured && publicKey && privateKey && subject) webpush.setVapidDetails(subject, publicKey, privateKey);
+    return { publicKey, configured };
+  };
+
+  app.get('/api/push/config', requireVerifiedUser, rateLimit(30, 60_000), (_req: AuthenticatedRequest, res) => {
+    const config = pushConfiguration();
+    return res.json({ configured: config.configured, publicKey: config.configured ? config.publicKey : null });
+  });
+
+  app.post('/api/push/subscriptions', requireVerifiedUser, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
+    const config = pushConfiguration();
+    const subscription = req.body?.subscription;
+    if (!config.configured || !adminDb || !req.authUser) return res.status(503).json({ error: 'Uzaktan push henüz yapılandırılmadı.', requestId: req.requestId });
+    if (!isBrowserPushSubscription(subscription)) return res.status(400).json({ error: 'Geçersiz push aboneliği.', requestId: req.requestId });
+    const subscriptionId = createHash('sha256').update(subscription.endpoint).digest('hex');
+    await adminDb.collection('users').doc(req.authUser.uid).collection('pushSubscriptions').doc(subscriptionId).set({
+      endpoint: subscription.endpoint,
+      keys: subscription.keys,
+      updatedAt: new Date().toISOString(),
+      createdAt: new Date().toISOString(),
+    }, { merge: true });
+    return res.status(204).send();
+  });
+
+  app.delete('/api/push/subscriptions', requireVerifiedUser, rateLimit(10, 60_000), async (req: AuthenticatedRequest, res) => {
+    if (!adminDb || !req.authUser || typeof req.body?.endpoint !== 'string') return res.status(400).json({ error: 'Abonelik adresi zorunludur.', requestId: req.requestId });
+    const subscriptionId = createHash('sha256').update(req.body.endpoint).digest('hex');
+    await adminDb.collection('users').doc(req.authUser.uid).collection('pushSubscriptions').doc(subscriptionId).delete();
+    return res.status(204).send();
+  });
+
+  // This is an explicit, user-triggered delivery check. Scheduled/background
+  // notifications will use the same stored subscription format once a durable
+  // job runner is configured.
+  app.post('/api/push/test', requireVerifiedUser, rateLimit(3, 60 * 60_000), async (req: AuthenticatedRequest, res) => {
+    const config = pushConfiguration();
+    if (!config.configured || !adminDb || !req.authUser) return res.status(503).json({ error: 'Uzaktan push henüz yapılandırılmadı.', requestId: req.requestId });
+    const subscriptions = await adminDb.collection('users').doc(req.authUser.uid).collection('pushSubscriptions').get();
+    let delivered = 0;
+    await Promise.all(subscriptions.docs.map(async (document) => {
+      const subscription = document.data();
+      if (!isBrowserPushSubscription(subscription)) return;
+      try {
+        await webpush.sendNotification(subscription, JSON.stringify({ title: 'AYZEK', body: 'Uzaktan push bağlantısı başarıyla doğrulandı.', url: '/' }), { TTL: 60 });
+        delivered += 1;
+      } catch (error: any) {
+        if (error?.statusCode === 404 || error?.statusCode === 410) await document.ref.delete();
+        else console.error('Push delivery failed', { requestId: req.requestId, error: error?.message || 'unknown' });
+      }
+    }));
+    return res.json({ delivered });
   });
 
   // Revokes refresh tokens for every device. The caller is also signed out by

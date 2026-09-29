@@ -55,6 +55,21 @@ never returns raw provider tokens to the browser. Current scopes are read-only
 calendar access for Google and Microsoft; no calendar entry is created or
 changed by connecting an account.
 
+## Remote Web Push
+
+Remote push uses the standards-based Push API and VAPID. Add
+`VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, and `VAPID_SUBJECT` through the host's
+secret manager. The public key is shared only with an authenticated browser;
+the private key is never exposed. A user explicitly enables notifications from
+Profile, then the device subscription is stored under that user in Firestore.
+
+On iPhone and iPad, web push is supported only after AYZEK is installed to the
+Home Screen as a PWA, and permission must be granted after a user gesture. The
+temporary localtunnel URL is appropriate for development checks, not dependable
+remote delivery. The `/api/push/test` endpoint is rate-limited and requires an
+authenticated user, so it can be used by the UI or a future admin-only test
+tool without exposing a public send endpoint.
+
 For a stable public deployment, use a managed host with a custom domain or a
 provider URL. AI Studio's public share is appropriate for sharing the app, but
 it is not a replacement for production operations, backups, monitoring, or a
