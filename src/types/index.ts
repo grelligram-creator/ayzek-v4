@@ -32,6 +32,15 @@ export interface UserProfile {
   lastLoginAt: string;
   onboardingCompleted?: boolean;
   quickTourCompleted?: boolean;
+  notificationPreferences?: NotificationPreferences;
+}
+
+export interface NotificationPreferences {
+  reminders: boolean;
+  tasks: boolean;
+  recommendations: boolean;
+  integrationProblems: boolean;
+  security: boolean;
 }
 
 export interface AutonomousLog {

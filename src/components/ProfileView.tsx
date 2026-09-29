@@ -3,7 +3,7 @@ import { useApp } from '../context/AppContext';
 import { authenticatedFetch } from '../lib/api';
 import { AyzekLogo } from './AyzekLogo';
 import { deleteMemory, exportUserData, listMemories, saveExplicitMemory } from '../services/firestoreService';
-import { MemoryItem } from '../types';
+import { MemoryItem, NotificationPreferences } from '../types';
 import {
   User,
   Mail,
@@ -51,6 +51,9 @@ export const ProfileView: React.FC = () => {
   const [memoryError, setMemoryError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [notificationPreferences, setNotificationPreferences] = useState<NotificationPreferences>(() => userProfile?.notificationPreferences || {
+    reminders: true, tasks: true, recommendations: false, integrationProblems: true, security: true,
+  });
 
   useEffect(() => {
     if (!user?.uid) {
@@ -87,7 +90,7 @@ export const ProfileView: React.FC = () => {
     e.preventDefault();
     setSaveError(null);
     try {
-      await updateProfileInfo({ jobTitle, company, location, lifeMission });
+      await updateProfileInfo({ jobTitle, company, location, lifeMission, notificationPreferences });
       setSavedSuccess(true);
       setTimeout(() => setSavedSuccess(false), 2000);
     } catch (error) {
@@ -375,6 +378,33 @@ export const ProfileView: React.FC = () => {
             </div>
           )}
         </div>
+      </section>
+
+      <section className="p-5 rounded-[28px] crimson-glass border border-rose-500/25 text-white shadow-xl space-y-3">
+        <div>
+          <h3 className="text-sm font-bold">Bildirim tercihleri</h3>
+          <p className="mt-1 text-xs text-rose-200/70">Bu ayarlar hangi bildirim kategorilerinin ileride gönderilebileceğini belirler. Tarayıcı izni henüz istenmez.</p>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {[
+            ['reminders', 'Hatırlatmalar'],
+            ['tasks', 'Görev güncellemeleri'],
+            ['recommendations', 'AI önerileri'],
+            ['integrationProblems', 'Entegrasyon sorunları'],
+            ['security', 'Güvenlik bildirimleri'],
+          ].map(([key, label]) => (
+            <label key={key} className="flex items-center justify-between rounded-xl border border-rose-500/20 bg-[#14060a]/80 px-3 py-2.5 text-xs text-rose-100 cursor-pointer">
+              <span>{label}</span>
+              <input
+                type="checkbox"
+                checked={notificationPreferences[key as keyof NotificationPreferences]}
+                onChange={(event) => setNotificationPreferences((previous) => ({ ...previous, [key]: event.target.checked }))}
+                className="accent-rose-500"
+              />
+            </label>
+          ))}
+        </div>
+        <p className="text-[11px] text-rose-200/55">Değişiklikleri kalıcılaştırmak için aşağıdaki profil kaydet düğmesini kullan.</p>
       </section>
 
       <section className="p-5 rounded-[28px] crimson-glass border border-rose-500/25 text-white shadow-xl space-y-3">
