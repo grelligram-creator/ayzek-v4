@@ -1092,15 +1092,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const extractPendingAction = (text: string): PendingAction | null => {
     const lower = text.toLocaleLowerCase('tr-TR');
     if (!/\b(ekle|planla|hatırlat)\b/.test(lower)) return null;
-    const title = text.replace(/\b(ekle|planla|hatırlat|lütfen|bugün|yarın)\b/gi, '').trim();
+    const now = new Date();
+    const localDateKey = (date: Date) => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
+    const isTomorrow = /\byarın\b/i.test(text);
+    const isToday = /\bbugün\b/i.test(text);
+    const scheduledDate = isTomorrow ? new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1) : now;
+    const explicitTime = text.match(/\bsaat\s*(\d{1,2})(?:[:.](\d{2}))?/i);
+    let time = explicitTime ? `${String(Math.min(23, Number(explicitTime[1]))).padStart(2, '0')}:${String(Math.min(59, Number(explicitTime[2] || 0))).padStart(2, '0')}` : undefined;
+    if (!time && /\bsabah\b/i.test(text)) time = '09:00';
+    if (!time && /\böğleden sonra\b/i.test(text)) time = '14:00';
+    if (!time && /\bakşam\b/i.test(text)) time = '19:00';
+
+    const title = text
+      .replace(/\b(ekle|planla|hatırlat|lütfen|bugün|yarın|sabah|öğleden sonra|akşam|gece)\b/gi, '')
+      .replace(/\bsaat\s*\d{1,2}(?:[:.]\d{2})?(?:['’]?(?:da|de))?/gi, '')
+      .replace(/\s{2,}/g, ' ')
+      .trim();
     if (title.length < 3 || title.length > 160) return null;
     const category: TaskItem['category'] = /\b(fatura|ödeme|banka|para)\b/i.test(text) ? 'finans' : /\b(market|alışveriş)\b/i.test(text) ? 'alisveris' : /\b(toplantı|proje|iş)\b/i.test(text) ? 'is' : 'kisisel';
-    return { type: 'create_task', title, category };
+    const hasSchedule = isTomorrow || isToday || Boolean(time);
+    const dayLabel = isTomorrow ? 'Yarın' : 'Bugün';
+    return {
+      type: 'create_task',
+      title,
+      category,
+      ...(hasSchedule ? { date: localDateKey(scheduledDate), time, scheduleLabel: time ? `${dayLabel} · ${time}` : `${dayLabel} · Serbest zaman` } : {}),
+    };
   };
 
   const approvePendingAction = () => {
     if (!pendingAction) return;
-    addTask({ title: pendingAction.title, category: pendingAction.category, highlight: '⚡ Sohbette onaylandı' });
+    addTask({
+      title: pendingAction.title,
+      category: pendingAction.category,
+      date: pendingAction.date,
+      time: pendingAction.time ? `${pendingAction.time} · AYZEK Sohbeti` : undefined,
+      highlight: '⚡ Sohbette onaylandı',
+    });
     setPendingAction(null);
   };
 

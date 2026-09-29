@@ -223,4 +223,7 @@ export interface PendingAction {
   type: 'create_task';
   title: string;
   category: TaskItem['category'];
+  date?: string;
+  time?: string;
+  scheduleLabel?: string;
 }
