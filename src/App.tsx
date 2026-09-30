@@ -39,7 +39,7 @@ const AppContent: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-[#080204] text-rose-50 selection:bg-rose-600 selection:text-white">
+    <div className="min-h-screen ayzek-app-shell selection:bg-rose-600 selection:text-white">
       {/* Global Modals & Notifications */}
       <SyncNotification />
       <AyzekAssistantModal />
@@ -62,7 +62,7 @@ const AppContent: React.FC = () => {
 
       {viewMode === 'mobile_sim' ? (
         /* Mobile Simulator Mode: on large screens show phone mockup; on real phones display 100% edge-to-edge native layout */
-        <div className="min-h-screen flex flex-col items-center justify-start lg:py-6 lg:px-2 bg-[#050102]">
+        <div className="min-h-screen flex flex-col items-center justify-start lg:py-6 lg:px-2 ayzek-page-canvas">
           {/* Quick exit bar from simulator (visible on desktop) */}
           <div className="hidden lg:flex w-full max-w-[420px] mb-2 items-center justify-between px-2 text-xs font-semibold text-rose-300/80">
             <button
@@ -77,7 +77,7 @@ const AppContent: React.FC = () => {
             </span>
           </div>
 
-          <div className="w-full lg:max-w-[420px] min-h-screen lg:min-h-0 lg:h-[840px] lg:max-h-[92vh] lg:rounded-[48px] bg-[#090305] lg:border-[7px] border-neutral-900 lg:shadow-[0_25px_60px_-15px_rgba(225,29,72,0.4)] overflow-hidden flex flex-col relative">
+          <div className="w-full lg:max-w-[420px] min-h-screen lg:min-h-0 lg:h-[840px] lg:max-h-[92vh] lg:rounded-[48px] ayzek-page-canvas lg:border-[7px] border-neutral-900 lg:shadow-[0_25px_60px_-15px_rgba(225,29,72,0.4)] overflow-hidden flex flex-col relative">
             {/* Phone Speaker & Dynamic Island (Desktop mockup only) */}
             <div className="hidden lg:flex h-7 bg-[#090305] items-center justify-between px-6 shrink-0 z-30 pt-1 text-[11px] font-bold text-rose-200 border-b border-rose-950/40">
               <span>{currentTime}</span>
@@ -95,7 +95,7 @@ const AppContent: React.FC = () => {
             </div>
 
             {/* Scrollable Mobile Body */}
-            <main className="flex-1 overflow-y-auto px-3.5 sm:px-4 py-3 no-scrollbar touch-pan-y overscroll-contain pb-24 crimson-ambient">
+            <main className="flex-1 overflow-y-auto px-3.5 sm:px-4 py-3 no-scrollbar touch-pan-y overscroll-contain pb-24 ayzek-main-canvas">
               <Suspense fallback={<ViewFallback />}>
                 {activeTab === 'akis' && <AkisView />}
                 {activeTab === 'plan' && <PlanView />}
@@ -116,10 +116,10 @@ const AppContent: React.FC = () => {
         </div>
       ) : (
         /* Full Desktop Responsive Mode */
-        <div className="min-h-screen flex flex-col bg-[#080204]">
+        <div className="min-h-screen flex flex-col ayzek-page-canvas">
           <Header />
 
-          <main className="flex-1 max-w-4xl w-full mx-auto px-3.5 sm:px-6 py-4 sm:py-8 touch-pan-y pb-24 crimson-ambient">
+          <main className="flex-1 max-w-5xl w-full mx-auto px-3.5 sm:px-6 py-4 sm:py-8 touch-pan-y pb-24 ayzek-main-canvas">
             <Suspense fallback={<ViewFallback />}>
               {activeTab === 'akis' && <AkisView />}
               {activeTab === 'plan' && <PlanView />}

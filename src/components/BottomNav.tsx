@@ -10,7 +10,7 @@ export const BottomNav: React.FC = () => {
     <div className="fixed bottom-3 sm:bottom-5 pb-[env(safe-area-inset-bottom,0px)] left-0 right-0 z-40 flex justify-center px-3 sm:px-4 pointer-events-none">
       <nav
         aria-label="Ana Navigasyon"
-        className="pointer-events-auto flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full shadow-[0_20px_50px_rgba(0,0,0,0.9)] backdrop-blur-2xl transition-all border bg-[#110508]/95 border-rose-500/30 text-rose-200/80"
+        className="ayzek-pill pointer-events-auto flex items-center gap-2 sm:gap-3 px-4 sm:px-5 py-2 sm:py-2.5 rounded-full backdrop-blur-2xl transition-all"
       >
         {/* Tab 1: Akış (Home) */}
         <button
@@ -19,8 +19,8 @@ export const BottomNav: React.FC = () => {
           title="Akış Sayfası"
           className={`flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all cursor-pointer ${
             activeTab === 'akis'
-              ? 'border border-rose-500/60 bg-rose-500/20 text-rose-200 shadow-xs'
-              : 'text-rose-200/50 hover:text-white hover:bg-white/5'
+              ? 'ayzek-selected shadow-xs'
+              : 'ayzek-text-muted hover:text-rose-500 hover:bg-rose-500/5'
           }`}
         >
           <Home className="w-5 h-5" />
@@ -33,8 +33,8 @@ export const BottomNav: React.FC = () => {
           title="Plan & Ajanda"
           className={`flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all cursor-pointer ${
             activeTab === 'plan'
-              ? 'border border-rose-500/60 bg-rose-500/20 text-rose-200 shadow-xs'
-              : 'text-rose-200/50 hover:text-white hover:bg-white/5'
+              ? 'ayzek-selected shadow-xs'
+              : 'ayzek-text-muted hover:text-rose-500 hover:bg-rose-500/5'
           }`}
         >
           <Calendar className="w-5 h-5" />
@@ -69,8 +69,8 @@ export const BottomNav: React.FC = () => {
           title="Merkez & Entegrasyonlar"
           className={`flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all relative cursor-pointer ${
             activeTab === 'merkez'
-              ? 'border border-rose-500/60 bg-rose-500/20 text-rose-200 shadow-xs'
-              : 'text-rose-200/50 hover:text-white hover:bg-white/5'
+              ? 'ayzek-selected shadow-xs'
+              : 'ayzek-text-muted hover:text-rose-500 hover:bg-rose-500/5'
           }`}
         >
           <LayoutGrid className="w-5 h-5" />
@@ -90,8 +90,8 @@ export const BottomNav: React.FC = () => {
           title="Profil & Bilişsel Kart"
           className={`flex items-center justify-center p-2 sm:p-2.5 rounded-xl transition-all cursor-pointer ${
             activeTab === 'profile' || activeTab === 'pricing'
-              ? 'border border-rose-500/60 bg-rose-500/20 text-rose-200 shadow-xs'
-              : 'text-rose-200/50 hover:text-white hover:bg-white/5'
+              ? 'ayzek-selected shadow-xs'
+              : 'ayzek-text-muted hover:text-rose-500 hover:bg-rose-500/5'
           }`}
         >
           <User className="w-5 h-5" />

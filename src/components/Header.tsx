@@ -36,7 +36,7 @@ export const Header: React.FC = () => {
   } = useApp();
 
   return (
-    <header className="sticky top-0 z-40 w-full backdrop-blur-2xl transition-colors duration-200 bg-[#080204]/90 border-b border-rose-500/20 pt-[env(safe-area-inset-top,0px)]">
+    <header className="ayzek-header sticky top-0 z-40 w-full backdrop-blur-2xl transition-colors duration-200 border-b pt-[env(safe-area-inset-top,0px)]">
       <div className="max-w-5xl mx-auto px-3 sm:px-6 h-14 sm:h-16 flex items-center justify-between gap-2">
         {/* Brand & Greeting with AYZEK Logo */}
         <div
@@ -49,14 +49,14 @@ export const Header: React.FC = () => {
 
           <div className="flex flex-col">
             <div className="flex items-center gap-1.5">
-              <span className="text-xs sm:text-sm font-black tracking-tight text-white">
+              <span className="text-xs sm:text-sm font-black tracking-tight ayzek-text-primary">
                 AYZEK OS
               </span>
               <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
                 2026
               </span>
             </div>
-            <span className="text-[10px] text-rose-300/70 font-medium truncate max-w-[130px] sm:max-w-none">
+            <span className="text-[10px] ayzek-text-muted font-medium truncate max-w-[130px] sm:max-w-none">
               {userProfile?.displayName || user?.displayName || 'Profilini tamamla'}
             </span>
           </div>
@@ -69,7 +69,7 @@ export const Header: React.FC = () => {
             onClick={() => setIsNotificationsOpen(true)}
             title="Bildirim merkezi"
             aria-label="Bildirim merkezi"
-            className="relative w-9 h-9 rounded-full flex items-center justify-center bg-white/5 hover:bg-white/10 text-rose-200 border border-rose-500/20 transition-colors cursor-pointer"
+            className="ayzek-header-control relative w-9 h-9 rounded-full flex items-center justify-center transition-colors cursor-pointer"
           >
             <Bell className="w-4 h-4" />
             {notifications.some((notification) => !notification.readAt) && <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-rose-500" />}
@@ -80,7 +80,7 @@ export const Header: React.FC = () => {
             onClick={() => setIsVoiceBriefingOpen(true)}
             title="07:45 Sesli Sabah Brifingini Dinle"
             aria-label="Sesli Brifing"
-            className="flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-full text-xs font-bold transition-all border bg-rose-500/15 hover:bg-rose-500/25 text-rose-200 border-rose-500/30 shadow-2xs min-h-[36px] justify-center cursor-pointer"
+            className="ayzek-pill-primary flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs min-h-[36px] justify-center cursor-pointer"
           >
             <Headphones className="w-4 h-4 text-rose-400 animate-pulse shrink-0" />
             <span className="hidden lg:inline">Sesli Brifing</span>
@@ -91,7 +91,7 @@ export const Header: React.FC = () => {
             onClick={() => setIsAlwaysOnWatchOpen(true)}
             title="Apple Watch & Dinamik Ada Canlı Kadranı"
             aria-label="Canlı Kadran"
-            className="flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-full text-xs font-medium transition-all border bg-white/5 hover:bg-white/10 text-rose-200 border-rose-500/20 shadow-2xs min-h-[36px] justify-center cursor-pointer"
+            className="ayzek-header-control flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-full text-xs font-medium transition-all shadow-2xs min-h-[36px] justify-center cursor-pointer"
           >
             <Watch className="w-4 h-4 text-rose-400 shrink-0" />
             <span className="hidden xl:inline">Kadran</span>
@@ -102,7 +102,7 @@ export const Header: React.FC = () => {
             onClick={() => setIsVisionModalOpen(true)}
             title="AYZEK 2026: Hayatın Merkezi Vizyonu"
             aria-label="Hayatın Merkezi"
-            className="flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-full text-xs font-bold transition-all border bg-gradient-to-r from-rose-500/20 via-orange-500/15 to-amber-500/15 hover:from-rose-500/30 hover:to-orange-500/25 text-rose-200 border-rose-400/40 shadow-2xs min-h-[36px] justify-center cursor-pointer"
+            className="ayzek-header-control flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs min-h-[36px] justify-center cursor-pointer"
           >
             <Sparkles className="w-4 h-4 text-rose-400 animate-pulse shrink-0" />
             <span className="hidden sm:inline">Hayatın Merkezi</span>
@@ -113,7 +113,7 @@ export const Header: React.FC = () => {
             onClick={toggleViewMode}
             title={viewMode === 'mobile_sim' ? 'Geniş Masaüstü Görünümüne Geç' : 'Mobil Cihaz Görünümüne Geç'}
             aria-label="Cihaz Görünümü"
-            className="hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all border bg-white/5 hover:bg-white/10 text-rose-200 border-rose-500/20 shadow-2xs min-h-[36px] cursor-pointer"
+            className="ayzek-header-control hidden lg:flex items-center gap-1.5 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all shadow-2xs min-h-[36px] cursor-pointer"
           >
             {viewMode === 'mobile_sim' ? (
               <>
@@ -133,7 +133,7 @@ export const Header: React.FC = () => {
             onClick={toggleTheme}
             title={theme === 'light' ? 'Crimson Gece Moduna Geç' : 'Gündüz Moduna Geç'}
             aria-label="Tema Değiştir"
-            className="w-9 h-9 rounded-full flex items-center justify-center transition-colors border bg-white/5 hover:bg-white/10 text-rose-200 border-rose-500/20 shrink-0 cursor-pointer"
+            className="ayzek-header-control w-9 h-9 rounded-full flex items-center justify-center transition-colors shrink-0 cursor-pointer"
           >
             {theme === 'light' ? (
               <Moon className="w-4 h-4 text-rose-300" />

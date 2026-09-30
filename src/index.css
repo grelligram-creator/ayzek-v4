@@ -3,9 +3,38 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
 @layer base {
+  :root {
+    --ayzek-page: #000000;
+    --ayzek-layout: #000000;
+    --ayzek-surface: #0c0507;
+    --ayzek-elevated: #15080c;
+    --ayzek-secondary: #1b0b10;
+    --ayzek-text: #fff8fa;
+    --ayzek-muted: #b9a8ae;
+    --ayzek-border: rgba(245, 34, 79, 0.32);
+    --ayzek-soft-border: rgba(255, 255, 255, 0.12);
+    --ayzek-primary: #f5224f;
+    --ayzek-coral: #ff554e;
+    --ayzek-orange: #ff8145;
+    --ayzek-shadow: 0 20px 55px -28px rgba(0, 0, 0, 0.9);
+  }
+
+  html.light {
+    --ayzek-page: #ffffff;
+    --ayzek-layout: #ffffff;
+    --ayzek-surface: #ffffff;
+    --ayzek-elevated: rgba(255, 255, 255, 0.92);
+    --ayzek-secondary: #fff8fa;
+    --ayzek-text: #171215;
+    --ayzek-muted: #756a70;
+    --ayzek-border: rgba(180, 35, 70, 0.12);
+    --ayzek-soft-border: rgba(180, 35, 70, 0.1);
+    --ayzek-shadow: 0 20px 50px -30px rgba(132, 32, 58, 0.24);
+  }
+
   html, body {
-    background-color: #080204;
-    color: #fff1f2;
+    background-color: var(--ayzek-page);
+    color: var(--ayzek-text);
     min-height: 100vh;
   }
 }
@@ -87,6 +116,177 @@
 
   .text-crimson-glow {
     text-shadow: 0 0 20px rgba(255, 42, 74, 0.45);
+  }
+
+  /* AYZEK design-system primitives: Ant-inspired controls with a shared
+     light/dark token layer. These classes intentionally keep layout and
+     behaviour in components while centralising the visual hierarchy. */
+  .ayzek-app-shell { background: var(--ayzek-page); color: var(--ayzek-text); }
+  .ayzek-page-canvas { background: var(--ayzek-layout); }
+  .ayzek-main-canvas {
+    background:
+      radial-gradient(900px 350px at 50% -120px, color-mix(in srgb, var(--ayzek-primary) 14%, transparent), transparent 70%),
+      var(--ayzek-layout);
+  }
+  html.light .ayzek-main-canvas {
+    background:
+      radial-gradient(800px 340px at 50% -120px, rgba(245, 34, 79, 0.08), transparent 70%),
+      #fff;
+  }
+
+  .ayzek-header {
+    background: color-mix(in srgb, var(--ayzek-surface) 88%, transparent);
+    border-color: var(--ayzek-border);
+    color: var(--ayzek-text);
+    box-shadow: 0 8px 28px -22px rgba(0,0,0,.55);
+  }
+  .ayzek-header-control,
+  .ayzek-pill {
+    min-height: 40px;
+    border: 1px solid var(--ayzek-border);
+    background: color-mix(in srgb, var(--ayzek-elevated) 90%, transparent);
+    color: var(--ayzek-text);
+    border-radius: 999px;
+    transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+  }
+  .ayzek-header-control:hover,
+  .ayzek-pill:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--ayzek-primary) 60%, var(--ayzek-border)); box-shadow: 0 9px 20px -15px rgba(245,34,79,.55); }
+  .ayzek-pill-primary { background: linear-gradient(135deg, var(--ayzek-primary), var(--ayzek-coral), var(--ayzek-orange)); color: #fff; border-color: transparent; }
+
+  .ayzek-hero {
+    background: linear-gradient(145deg, #150509 0%, #080405 58%, #150308 100%);
+    border: 1px solid var(--ayzek-border);
+    box-shadow: var(--ayzek-shadow), inset 0 1px 0 rgba(255,255,255,.09);
+  }
+  html.light .ayzek-hero {
+    background: linear-gradient(145deg, #fffdfd 0%, #fff1f4 52%, #fff9f8 100%);
+    box-shadow: var(--ayzek-shadow), inset 0 1px 0 rgba(255,255,255,.92);
+  }
+  .ayzek-hero::before,
+  .ayzek-metric-card::before,
+  .ayzek-feature-card::after,
+  .ayzek-horizontal-card::after {
+    content: '';
+    position: absolute;
+    pointer-events: none;
+    inset: auto -12% -22% 22%;
+    height: 74%;
+    opacity: .38;
+    background:
+      radial-gradient(70% 45% at 12% 100%, transparent 56%, rgba(255,77,109,.48) 57%, transparent 59%),
+      radial-gradient(70% 45% at 36% 100%, transparent 56%, rgba(255,128,69,.34) 57%, transparent 59%),
+      radial-gradient(70% 45% at 60% 100%, transparent 56%, rgba(245,34,79,.35) 57%, transparent 59%);
+    transform: rotate(-5deg);
+  }
+  html.light .ayzek-hero::before { opacity: .2; }
+  .ayzek-editorial-title { color: var(--ayzek-text); }
+  .ayzek-editorial-subtitle { color: var(--ayzek-primary); }
+  .ayzek-hero-meta { color: var(--ayzek-muted); }
+  .ayzek-audio-control {
+    min-height: 52px;
+    background: color-mix(in srgb, var(--ayzek-elevated) 78%, transparent);
+    color: var(--ayzek-text);
+    border: 1px solid var(--ayzek-soft-border);
+    box-shadow: 0 14px 28px -20px rgba(0,0,0,.6), inset 0 1px 0 rgba(255,255,255,.16);
+  }
+  .ayzek-orb { box-shadow: 0 0 42px 5px rgba(245,34,79,.44), inset 0 2px 7px rgba(255,255,255,.56); }
+
+  .ayzek-section-card,
+  .ayzek-feature-panel {
+    position: relative;
+    overflow: hidden;
+    background: var(--ayzek-elevated);
+    color: var(--ayzek-text);
+    border: 1px solid var(--ayzek-border);
+    box-shadow: var(--ayzek-shadow), inset 0 1px 0 rgba(255,255,255,.08);
+  }
+  html.light .ayzek-section-card,
+  html.light .ayzek-feature-panel { box-shadow: var(--ayzek-shadow), inset 0 1px 0 rgba(255,255,255,.9); }
+  .ayzek-feature-card,
+  .ayzek-inner-card {
+    position: relative;
+    overflow: hidden;
+    background: var(--ayzek-secondary);
+    border: 1px solid var(--ayzek-soft-border);
+    color: var(--ayzek-text);
+    box-shadow: 0 11px 25px -22px rgba(0,0,0,.72);
+  }
+  .ayzek-feature-card:hover { border-color: color-mix(in srgb, var(--ayzek-primary) 60%, var(--ayzek-border)); transform: translateY(-2px); }
+  .ayzek-tag { background: color-mix(in srgb, var(--ayzek-primary) 12%, transparent); color: var(--ayzek-primary); border: 1px solid color-mix(in srgb, var(--ayzek-primary) 24%, transparent); }
+  .ayzek-status { background: #e8fff4; color: #139a67; border: 1px solid rgba(19,154,103,.16); }
+  html.dark .ayzek-status, html.crimson .ayzek-status { background: rgba(16,185,129,.16); color: #73e6b8; border-color: rgba(16,185,129,.28); }
+  .ayzek-text-primary { color: var(--ayzek-text); }
+  .ayzek-text-muted { color: var(--ayzek-muted); }
+  .ayzek-action { color: var(--ayzek-primary); }
+  .ayzek-input { background: var(--ayzek-secondary); color: var(--ayzek-text); border-color: var(--ayzek-border); }
+  .ayzek-input::placeholder { color: var(--ayzek-muted); opacity: .78; }
+  .ayzek-input:focus { border-color: var(--ayzek-primary); box-shadow: 0 0 0 3px color-mix(in srgb, var(--ayzek-primary) 16%, transparent); }
+  .ayzek-selected { background: linear-gradient(135deg, var(--ayzek-primary), var(--ayzek-coral), var(--ayzek-orange)); color: #fff; border-color: transparent; box-shadow: 0 12px 22px -17px rgba(245,34,79,.86); }
+  .ayzek-progress-track { background: color-mix(in srgb, var(--ayzek-primary) 10%, var(--ayzek-secondary)); }
+
+  html.light .ayzek-section-card .text-white,
+  html.light .ayzek-feature-panel .text-white,
+  html.light .ayzek-feature-card .text-white,
+  html.light .ayzek-inner-card .text-white { color: var(--ayzek-text); }
+  html.light .ayzek-section-card .text-rose-200,
+  html.light .ayzek-section-card .text-rose-200\/60,
+  html.light .ayzek-section-card .text-rose-200\/70,
+  html.light .ayzek-section-card .text-rose-100,
+  html.light .ayzek-section-card .text-rose-100\/80,
+  html.light .ayzek-feature-panel .text-rose-200\/70,
+  html.light .ayzek-feature-card .text-rose-200\/60 { color: var(--ayzek-muted); }
+  html.light .ayzek-section-card .bg-\[\#14060a\]\/90,
+  html.light .ayzek-section-card .bg-\[\#14060a\]\/80,
+  html.light .ayzek-section-card .bg-\[\#130509\]\/80 { background: var(--ayzek-secondary); }
+
+  /* Shared modal treatment. Components keep their existing content and
+     behaviour; this only makes every popup read as the same product system. */
+  .fixed.inset-0.z-50 { color: var(--ayzek-text); }
+  html.light .fixed.inset-0.z-50 > div:not([class*="absolute"]) {
+    border-color: var(--ayzek-border) !important;
+    box-shadow: var(--ayzek-shadow), inset 0 1px 0 rgba(255,255,255,.9);
+  }
+  html.light .fixed.inset-0.z-50 > div[class*="bg-slate"],
+  html.light .fixed.inset-0.z-50 > div[class*="bg-[#"],
+  html.light .fixed.inset-0.z-50 > section {
+    background: var(--ayzek-elevated) !important;
+    color: var(--ayzek-text) !important;
+  }
+  html.light .fixed.inset-0.z-50 input,
+  html.light .fixed.inset-0.z-50 textarea,
+  html.light .fixed.inset-0.z-50 select {
+    background: var(--ayzek-secondary) !important;
+    border-color: var(--ayzek-border) !important;
+    color: var(--ayzek-text) !important;
+  }
+  /* Legacy feature modals used blue/purple utility accents. Re-map them to
+     AYZEK crimson so popup experiences follow the same identity. */
+  .fixed.inset-0.z-50 [class*="text-sky"],
+  .fixed.inset-0.z-50 [class*="text-cyan"],
+  .fixed.inset-0.z-50 [class*="text-indigo"],
+  .fixed.inset-0.z-50 [class*="text-purple"] { color: var(--ayzek-primary) !important; }
+  .fixed.inset-0.z-50 [class*="border-sky"],
+  .fixed.inset-0.z-50 [class*="border-cyan"],
+  .fixed.inset-0.z-50 [class*="border-indigo"],
+  .fixed.inset-0.z-50 [class*="border-purple"] { border-color: var(--ayzek-border) !important; }
+  .fixed.inset-0.z-50 [class*="bg-sky"],
+  .fixed.inset-0.z-50 [class*="bg-cyan"],
+  .fixed.inset-0.z-50 [class*="bg-indigo"],
+  .fixed.inset-0.z-50 [class*="bg-purple"] { background-color: color-mix(in srgb, var(--ayzek-primary) 13%, var(--ayzek-secondary)) !important; }
+  .fixed.inset-0.z-50 [class*="from-sky"],
+  .fixed.inset-0.z-50 [class*="from-cyan"],
+  .fixed.inset-0.z-50 [class*="from-indigo"],
+  .fixed.inset-0.z-50 [class*="from-purple"] { --tw-gradient-from: var(--ayzek-primary) var(--tw-gradient-from-position) !important; }
+  .fixed.inset-0.z-50 [class*="to-sky"],
+  .fixed.inset-0.z-50 [class*="to-cyan"],
+  .fixed.inset-0.z-50 [class*="to-indigo"],
+  .fixed.inset-0.z-50 [class*="to-purple"] { --tw-gradient-to: var(--ayzek-coral) var(--tw-gradient-to-position) !important; }
+  html.light .fixed.inset-0.z-50 [class*="bg-slate"] { background-color: var(--ayzek-secondary) !important; }
+  html.light .fixed.inset-0.z-50 [class*="text-slate"] { color: var(--ayzek-muted) !important; }
+  html.light .fixed.inset-0.z-50 [class*="border-slate"] { border-color: var(--ayzek-soft-border) !important; }
+  :where(button, input, textarea, select, a):focus-visible {
+    outline: 3px solid color-mix(in srgb, var(--ayzek-primary) 42%, transparent);
+    outline-offset: 2px;
   }
 }
 

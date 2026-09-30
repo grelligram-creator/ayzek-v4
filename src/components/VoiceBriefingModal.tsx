@@ -208,15 +208,15 @@ export const VoiceBriefingModal: React.FC = () => {
   if (!isVoiceBriefingOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-md transition-all">
-      <div className="relative w-full max-w-lg bg-slate-900 border border-sky-500/30 rounded-3xl shadow-2xl overflow-hidden flex flex-col text-white max-h-[92vh]">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md transition-all">
+      <div className="ayzek-section-card relative w-full max-w-lg rounded-3xl overflow-hidden flex flex-col max-h-[92vh]">
         {/* Ambient Top Glow */}
-        <div className="absolute top-0 inset-x-0 h-36 bg-gradient-to-b from-sky-500/20 via-indigo-500/10 to-transparent pointer-events-none" />
+        <div className="absolute top-0 inset-x-0 h-36 bg-gradient-to-b from-rose-500/20 via-orange-500/10 to-transparent pointer-events-none" />
 
         {/* Header Bar */}
         <div className="relative px-5 pt-5 pb-3 flex items-center justify-between border-b border-slate-800/80">
           <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-2xl bg-sky-500/20 text-sky-400 border border-sky-400/30 flex items-center justify-center">
+            <div className="w-9 h-9 rounded-2xl ayzek-tag flex items-center justify-center">
               <Headphones className="w-5 h-5 animate-pulse" />
             </div>
             <div>
@@ -224,7 +224,7 @@ export const VoiceBriefingModal: React.FC = () => {
                 <h2 className="text-base font-black tracking-tight text-white">
                   07:45 Sesli Sabah Brifingi
                 </h2>
-                <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-400/30">
+                <span className="ayzek-tag text-[10px] font-bold px-2 py-0.5 rounded-full">
                   Canlı Podcast
                 </span>
               </div>
@@ -261,14 +261,14 @@ export const VoiceBriefingModal: React.FC = () => {
                 }}
                 className={`p-2.5 rounded-xl border text-left transition-all ${
                   selectedVoice === 'cem'
-                    ? 'bg-sky-500/20 border-sky-400 text-white shadow-sm'
+                    ? 'ayzek-selected shadow-sm'
                     : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:border-slate-600'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold">Cem (Tok & Dingin)</span>
                   {selectedVoice === 'cem' && (
-                    <UserCheck className="w-3.5 h-3.5 text-sky-400" />
+                    <UserCheck className="w-3.5 h-3.5 text-rose-400" />
                   )}
                 </div>
                 <p className="text-[10px] text-slate-400 mt-0.5">
@@ -286,14 +286,14 @@ export const VoiceBriefingModal: React.FC = () => {
                 }}
                 className={`p-2.5 rounded-xl border text-left transition-all ${
                   selectedVoice === 'elif'
-                    ? 'bg-indigo-500/20 border-indigo-400 text-white shadow-sm'
+                    ? 'ayzek-selected shadow-sm'
                     : 'bg-slate-800/80 border-slate-700 text-slate-400 hover:border-slate-600'
                 }`}
               >
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold">Elif (Bilişsel Mentör)</span>
                   {selectedVoice === 'elif' && (
-                    <UserCheck className="w-3.5 h-3.5 text-indigo-400" />
+                    <UserCheck className="w-3.5 h-3.5 text-rose-400" />
                   )}
                 </div>
                 <p className="text-[10px] text-slate-400 mt-0.5">
@@ -316,7 +316,7 @@ export const VoiceBriefingModal: React.FC = () => {
                     }}
                     className={`w-1.5 rounded-full transition-all duration-300 ${
                       isPlaying
-                        ? 'bg-gradient-to-t from-sky-500 to-cyan-300 shadow-xs shadow-cyan-400/50'
+                        ? 'bg-gradient-to-t from-rose-500 to-orange-300 shadow-xs shadow-rose-400/50'
                         : 'bg-slate-700'
                     }`}
                   />
@@ -329,7 +329,7 @@ export const VoiceBriefingModal: React.FC = () => {
               <div className="w-full bg-slate-800 h-1.5 rounded-full overflow-hidden">
                 <div
                   style={{ width: `${progress}%` }}
-                  className="bg-gradient-to-r from-sky-400 to-indigo-400 h-full transition-all duration-300"
+                  className="coral-gradient h-full transition-all duration-300"
                 />
               </div>
               <div className="flex justify-between text-[10px] text-slate-400">
@@ -348,7 +348,7 @@ export const VoiceBriefingModal: React.FC = () => {
                     onClick={() => changeSpeed(speed)}
                     className={`px-2 py-0.5 rounded-md text-[11px] font-bold transition-colors ${
                       playbackSpeed === speed
-                        ? 'bg-sky-500 text-slate-950 font-black'
+                        ? 'coral-gradient text-white font-black'
                         : 'bg-slate-800 text-slate-400 hover:text-white'
                     }`}
                   >
@@ -370,21 +370,21 @@ export const VoiceBriefingModal: React.FC = () => {
                 <button
                   onClick={playAudio}
                   disabled={isSynthesizing}
-                  className="px-5 py-2.5 rounded-2xl bg-gradient-to-r from-cyan-400 via-sky-500 to-indigo-500 hover:opacity-95 text-slate-950 font-black text-xs flex items-center gap-2 shadow-lg shadow-sky-500/25 transition-transform active:scale-95"
+                  className="ayzek-pill-primary px-5 py-2.5 rounded-2xl hover:opacity-95 font-black text-xs flex items-center gap-2 shadow-lg shadow-rose-500/25 transition-transform active:scale-95"
                 >
                   {isSynthesizing ? (
                     <>
-                      <Sparkles className="w-4 h-4 animate-spin text-slate-950" />
+                      <Sparkles className="w-4 h-4 animate-spin text-white" />
                       <span>Ses Hazırlanıyor...</span>
                     </>
                   ) : isPlaying ? (
                     <>
-                      <Pause className="w-4 h-4 fill-slate-950 text-slate-950" />
+                      <Pause className="w-4 h-4 fill-white text-white" />
                       <span>Duraklat</span>
                     </>
                   ) : (
                     <>
-                      <Play className="w-4 h-4 fill-slate-950 text-slate-950" />
+                      <Play className="w-4 h-4 fill-white text-white" />
                       <span>Brifingi Dinle</span>
                     </>
                   )}
@@ -404,7 +404,7 @@ export const VoiceBriefingModal: React.FC = () => {
               <span className="text-[11px] font-bold text-slate-300">
                 Canlı Metin Senkronizasyonu:
               </span>
-              <span className="text-[10px] text-sky-400">
+              <span className="text-[10px] text-rose-400">
                 Cümle {activeSentenceIndex + 1}/{sentences.length}
               </span>
             </div>
@@ -418,7 +418,7 @@ export const VoiceBriefingModal: React.FC = () => {
                   }}
                   className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
                     activeSentenceIndex === idx
-                      ? 'bg-sky-500/20 text-sky-200 border-l-2 border-sky-400 font-medium'
+                      ? 'bg-rose-500/15 text-rose-500 border-l-2 border-rose-400 font-medium'
                       : 'text-slate-400 hover:text-slate-200'
                   }`}
                 >
@@ -436,7 +436,7 @@ export const VoiceBriefingModal: React.FC = () => {
               setIsVoiceBriefingOpen(false);
               openAssistantWithQuery('Günün brifingiyle ilgili sorularım var.');
             }}
-            className="text-xs font-semibold text-sky-400 hover:text-sky-300 flex items-center gap-1"
+            className="text-xs font-semibold text-rose-500 hover:text-rose-400 flex items-center gap-1"
           >
             <span>AYZEK'e Soru Sor</span>
             <ChevronRight className="w-3.5 h-3.5" />

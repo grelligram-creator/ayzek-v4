@@ -98,22 +98,22 @@ export const AkisView: React.FC = () => {
       {/* 1. Header Greeting & Top Anchors */}
       <section className="space-y-3">
         <div className="flex items-center justify-between">
-          <span className="text-xs font-bold tracking-wider uppercase text-rose-400 font-mono">
+            <span className="text-xs font-bold tracking-wider uppercase ayzek-action font-mono">
             AYZEK KİŞİSEL YAŞAM ASİSTANI & MENTÖR
           </span>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-            <span className="text-[11px] font-semibold text-rose-200/70">
+            <span className="text-[11px] font-semibold ayzek-text-muted">
               Canlı Senkronize
             </span>
           </div>
         </div>
 
         <div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-slate-900 dark:text-white">
+          <h1 className="ayzek-text-primary text-2xl sm:text-3xl font-extrabold tracking-tight">
             Günaydın ☀️, {displayName}
           </h1>
-          <p className="text-sm text-slate-600 dark:text-slate-400 mt-1">
+          <p className="ayzek-text-muted text-sm mt-1">
             Bugün senin için bilmen gereken en önemli 3 konu:
           </p>
         </div>
@@ -122,7 +122,7 @@ export const AkisView: React.FC = () => {
         <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar">
           <button
             onClick={() => setIsVoiceBriefingOpen(true)}
-            className="frosted-pill-button px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border border-rose-500/40 text-rose-100 hover:text-white"
+            className="ayzek-pill ayzek-pill-primary px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Headphones className="w-3.5 h-3.5 text-rose-400 animate-pulse" />
             <span>07:45 Sesli Brifing</span>
@@ -130,7 +130,7 @@ export const AkisView: React.FC = () => {
 
           <button
             onClick={() => setIsCognitiveWrappedOpen(true)}
-            className="frosted-pill-button px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border border-rose-500/30 text-rose-200/90 hover:text-white"
+            className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Award className="w-3.5 h-3.5 text-rose-400" />
             <span>Bilişsel Karne</span>
@@ -138,7 +138,7 @@ export const AkisView: React.FC = () => {
 
           <button
             onClick={() => setIsPoliteDeclineOpen(true)}
-            className="frosted-pill-button px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border border-rose-500/30 text-rose-200/90 hover:text-white"
+            className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <ShieldAlert className="w-3.5 h-3.5 text-rose-400" />
             <span>Hayır De (Sınır)</span>
@@ -146,7 +146,7 @@ export const AkisView: React.FC = () => {
 
           <button
             onClick={() => setIsAlwaysOnWatchOpen(true)}
-            className="frosted-pill-button px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border border-rose-500/30 text-rose-200/90 hover:text-white"
+            className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Watch className="w-3.5 h-3.5 text-rose-400" />
             <span>Canlı Kadran & Ada</span>
@@ -154,7 +154,7 @@ export const AkisView: React.FC = () => {
 
           <button
             onClick={() => setIsMeetingShadowOpen(true)}
-            className="frosted-pill-button px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border border-rose-500/30 text-rose-200/90 hover:text-white"
+            className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Video className="w-3.5 h-3.5 text-rose-400" />
             <span>Gölge Noter</span>
@@ -162,7 +162,7 @@ export const AkisView: React.FC = () => {
 
           <button
             onClick={() => setIsFutureSelfOpen(true)}
-            className="frosted-pill-button px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer border border-rose-500/30 text-rose-200/90 hover:text-white"
+            className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer"
           >
             <Compass className="w-3.5 h-3.5 text-rose-400" />
             <span>2031 Benliğim</span>
@@ -170,17 +170,17 @@ export const AkisView: React.FC = () => {
         </div>
 
         {/* AYZEK OS 2026: 6 Yeni Cazibe Gücü (Crimson Obsidian Kokpit Vitrini) */}
-        <div className="p-5 sm:p-6 rounded-[32px] crimson-glass border border-rose-500/25 text-white shadow-2xl space-y-4 relative overflow-hidden">
+        <div className="ayzek-feature-panel p-5 sm:p-6 rounded-[28px] space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 rounded-2xl crimson-orb-glow flex items-center justify-center font-bold text-white shadow-md">
                 <Sparkles className="w-5 h-5 animate-pulse text-white" />
               </div>
               <div>
-                <h3 className="text-sm font-black text-white tracking-tight">
+                <h3 className="ayzek-text-primary text-sm font-black tracking-tight">
                   AYZEK 2026 Süper Güçler & Bilişsel Kokpit
                 </h3>
-                <p className="text-[11px] text-rose-200/70">
+                <p className="ayzek-text-muted text-[11px]">
                   Uygulamayı hayatının vazgeçilmez merkezine dönüştüren 6 özel yetenek
                 </p>
               </div>
@@ -188,7 +188,7 @@ export const AkisView: React.FC = () => {
 
             <button
               onClick={() => setIsVisionModalOpen(true)}
-              className="text-xs font-bold text-rose-300 hover:text-white flex items-center gap-1 transition-colors cursor-pointer"
+              className="ayzek-pill px-3 py-1.5 text-xs font-bold flex items-center gap-1 cursor-pointer"
             >
               <span>Vizyon</span>
               <ChevronRight className="w-3.5 h-3.5" />
@@ -199,19 +199,19 @@ export const AkisView: React.FC = () => {
             {/* 1. Voice Podcast */}
             <div
               onClick={() => setIsVoiceBriefingOpen(true)}
-              className="p-3.5 rounded-2xl bg-[#14060b]/80 hover:bg-[#1e0710] border border-rose-500/20 hover:border-rose-400/50 transition-all cursor-pointer group flex flex-col justify-between shadow-md"
+              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-lg">🎙️</span>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <span className="ayzek-tag text-[9px] font-bold px-2 py-0.5 rounded-full">
                     İnsancıl Ses
                   </span>
                 </div>
-                <h4 className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors">
+                <h4 className="ayzek-text-primary text-xs font-bold group-hover:text-rose-500 transition-colors">
                   Sesli Sabah Brifingi
                 </h4>
-                <p className="text-[10px] text-rose-200/60 mt-0.5 line-clamp-2">
+                <p className="ayzek-text-muted text-[10px] mt-0.5 line-clamp-2">
                   Ekrana bakmadan Cem veya Elif sesleriyle 90 sn podcast brifingi
                 </p>
               </div>
@@ -223,19 +223,19 @@ export const AkisView: React.FC = () => {
             {/* 2. Cognitive Wrapped */}
             <div
               onClick={() => setIsCognitiveWrappedOpen(true)}
-              className="p-3.5 rounded-2xl bg-[#14060b]/80 hover:bg-[#1e0710] border border-rose-500/20 hover:border-rose-400/50 transition-all cursor-pointer group flex flex-col justify-between shadow-md"
+              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-lg">📊</span>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <span className="ayzek-tag text-[9px] font-bold px-2 py-0.5 rounded-full">
                     Wrapped Formatı
                   </span>
                 </div>
-                <h4 className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors">
+                <h4 className="ayzek-text-primary text-xs font-bold group-hover:text-rose-500 transition-colors">
                   Bilişsel Yaşam Karnesi
                 </h4>
-                <p className="text-[10px] text-rose-200/60 mt-0.5 line-clamp-2">
+                <p className="ayzek-text-muted text-[10px] mt-0.5 line-clamp-2">
                   Haftalık derin odak zirveleri, kurtarılan saatler ve arketip hikayesi
                 </p>
               </div>
@@ -247,19 +247,19 @@ export const AkisView: React.FC = () => {
             {/* 3. Polite Decline */}
             <div
               onClick={() => setIsPoliteDeclineOpen(true)}
-              className="p-3.5 rounded-2xl bg-[#14060b]/80 hover:bg-[#1e0710] border border-rose-500/20 hover:border-rose-400/50 transition-all cursor-pointer group flex flex-col justify-between shadow-md"
+              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-lg">🛡️</span>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <span className="ayzek-tag text-[9px] font-bold px-2 py-0.5 rounded-full">
                     Sınır Kalkanı
                   </span>
                 </div>
-                <h4 className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors">
+                <h4 className="ayzek-text-primary text-xs font-bold group-hover:text-rose-500 transition-colors">
                   Benim İçin Hayır De
                 </h4>
-                <p className="text-[10px] text-rose-200/60 mt-0.5 line-clamp-2">
+                <p className="ayzek-text-muted text-[10px] mt-0.5 line-clamp-2">
                   Gereksiz toplantı ve taleplere 3 farklı tonda diplomatik red şablonu
                 </p>
               </div>
@@ -271,19 +271,19 @@ export const AkisView: React.FC = () => {
             {/* 4. Always-On Watch & Dynamic Island */}
             <div
               onClick={() => setIsAlwaysOnWatchOpen(true)}
-              className="p-3.5 rounded-2xl bg-[#14060b]/80 hover:bg-[#1e0710] border border-rose-500/20 hover:border-rose-400/50 transition-all cursor-pointer group flex flex-col justify-between shadow-md"
+              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-lg">⌚</span>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <span className="ayzek-tag text-[9px] font-bold px-2 py-0.5 rounded-full">
                     Canlı Kadran
                   </span>
                 </div>
-                <h4 className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors">
+                <h4 className="ayzek-text-primary text-xs font-bold group-hover:text-rose-500 transition-colors">
                   Dinamik Ada & Watch
                 </h4>
-                <p className="text-[10px] text-rose-200/60 mt-0.5 line-clamp-2">
+                <p className="ayzek-text-muted text-[10px] mt-0.5 line-clamp-2">
                   Apple Watch Titanium ve OLED Gece Masası Always-On kadranı
                 </p>
               </div>
@@ -295,19 +295,19 @@ export const AkisView: React.FC = () => {
             {/* 5. Meeting Shadow AI */}
             <div
               onClick={() => setIsMeetingShadowOpen(true)}
-              className="p-3.5 rounded-2xl bg-[#14060b]/80 hover:bg-[#1e0710] border border-rose-500/20 hover:border-rose-400/50 transition-all cursor-pointer group flex flex-col justify-between shadow-md"
+              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-lg">🤝</span>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <span className="ayzek-tag text-[9px] font-bold px-2 py-0.5 rounded-full">
                     Otomatik Eylem
                   </span>
                 </div>
-                <h4 className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors">
+                <h4 className="ayzek-text-primary text-xs font-bold group-hover:text-rose-500 transition-colors">
                   Gölge Noter (Shadow AI)
                 </h4>
-                <p className="text-[10px] text-rose-200/60 mt-0.5 line-clamp-2">
+                <p className="ayzek-text-muted text-[10px] mt-0.5 line-clamp-2">
                   Toplantıdan kararları süz, tek tıkla ajandana görev olarak aktar
                 </p>
               </div>
@@ -319,19 +319,19 @@ export const AkisView: React.FC = () => {
             {/* 6. Future Self Dialogue */}
             <div
               onClick={() => setIsFutureSelfOpen(true)}
-              className="p-3.5 rounded-2xl bg-[#14060b]/80 hover:bg-[#1e0710] border border-rose-500/20 hover:border-rose-400/50 transition-all cursor-pointer group flex flex-col justify-between shadow-md"
+              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
                   <span className="text-lg">🔮</span>
-                  <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                  <span className="ayzek-tag text-[9px] font-bold px-2 py-0.5 rounded-full">
                     2031 Simülasyonu
                   </span>
                 </div>
-                <h4 className="text-xs font-bold text-white group-hover:text-rose-300 transition-colors">
+                <h4 className="ayzek-text-primary text-xs font-bold group-hover:text-rose-500 transition-colors">
                   Gelecekteki Benliğim
                 </h4>
-                <p className="text-[10px] text-rose-200/60 mt-0.5 line-clamp-2">
+                <p className="ayzek-text-muted text-[10px] mt-0.5 line-clamp-2">
                   5 yıl sonraki bilge benliğinle kariyer ve hayat ikilemlerini tartış
                 </p>
               </div>
@@ -345,7 +345,7 @@ export const AkisView: React.FC = () => {
         {/* AYZEK OS 2026: Hayatın Merkezi Vizyon & Otonom Sütunlar Kartı */}
         <div
           onClick={() => setIsVisionModalOpen(true)}
-          className="relative overflow-hidden p-5 rounded-[32px] bg-gradient-to-r from-[#1a050d] via-[#260814] to-[#120409] text-white border border-rose-500/35 shadow-2xl cursor-pointer hover:border-rose-400 transition-all group"
+          className="ayzek-horizontal-card ayzek-section-card relative overflow-hidden p-5 rounded-[24px] cursor-pointer transition-all group"
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3.5">
@@ -375,7 +375,7 @@ export const AkisView: React.FC = () => {
       </section>
 
       {/* 2. İş & Özel Hayat Dengesi Card */}
-      <section className="p-5 md:p-6 rounded-[32px] crimson-glass border border-rose-500/25 text-white shadow-2xl space-y-4 transition-all">
+      <section className="ayzek-section-card p-5 md:p-6 rounded-[28px] space-y-4 transition-all">
         <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-3.5">
             <div className="w-11 h-11 rounded-2xl crimson-orb-glow text-white flex items-center justify-center font-bold shadow-md">
@@ -386,7 +386,7 @@ export const AkisView: React.FC = () => {
                 <h2 className="text-base font-bold text-white tracking-tight">
                   İş & Özel Hayat Dengesi
                 </h2>
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+                <span className="ayzek-status text-xs font-semibold px-2.5 py-0.5 rounded-full">
                   {balance.status} · %{balance.score}
                 </span>
               </div>
@@ -398,7 +398,7 @@ export const AkisView: React.FC = () => {
 
           <button
             onClick={() => setActiveTab('merkez')}
-            className="frosted-pill-button px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
+            className="ayzek-pill px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1 cursor-pointer"
           >
             <span>Yönet</span>
             <ChevronRight className="w-3.5 h-3.5" />
@@ -407,13 +407,13 @@ export const AkisView: React.FC = () => {
 
         {/* Status badges row */}
         <div className="flex items-center gap-2 flex-wrap text-xs font-medium">
-          <span className="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-200 border border-rose-500/25">
+          <span className="ayzek-tag px-2.5 py-1 rounded-full">
             Teams: 2 Toplantı
           </span>
-          <span className="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-200 border border-rose-500/25">
+          <span className="ayzek-tag px-2.5 py-1 rounded-full">
             Gmail: E-Fatura Aksiyonu
           </span>
-          <span className="px-2.5 py-1 rounded-lg bg-rose-500/15 text-rose-200 border border-rose-500/25">
+          <span className="ayzek-tag px-2.5 py-1 rounded-full">
             WhatsApp: Konuşma Analizi
           </span>
           <button
@@ -430,7 +430,7 @@ export const AkisView: React.FC = () => {
       </section>
 
       {/* 3. BUGÜN NASILSIN? Check-in Card */}
-      <section className="p-5 md:p-6 rounded-[32px] crimson-glass border border-rose-500/25 text-white shadow-2xl space-y-4.5 transition-all">
+      <section className="ayzek-section-card p-5 md:p-6 rounded-[28px] space-y-4.5 transition-all">
         <div className="flex items-start gap-3">
           <div className="w-11 h-11 rounded-2xl crimson-orb-glow flex items-center justify-center shrink-0 shadow-md">
             <span className="text-xl">😊</span>
@@ -457,8 +457,8 @@ export const AkisView: React.FC = () => {
               onClick={() => handleEnergySelect('low')}
               className={`p-3 rounded-2xl text-left transition-all border cursor-pointer ${
                 checkin.energy === 'low'
-                  ? 'coral-gradient text-white font-bold border-rose-400 shadow-md'
-                  : 'bg-[#14060a]/80 hover:bg-[#1f0810] text-rose-200 border-rose-500/20'
+                  ? 'ayzek-selected font-bold shadow-md'
+                  : 'ayzek-inner-card hover:border-rose-400/50 ayzek-text-primary'
               }`}
             >
               <div className="flex items-center gap-1.5">
@@ -475,8 +475,8 @@ export const AkisView: React.FC = () => {
               onClick={() => handleEnergySelect('balanced')}
               className={`p-3 rounded-2xl text-left transition-all border cursor-pointer ${
                 checkin.energy === 'balanced'
-                  ? 'coral-gradient text-white font-bold border-rose-400 shadow-md'
-                  : 'bg-[#14060a]/80 hover:bg-[#1f0810] text-rose-200 border-rose-500/20'
+                  ? 'ayzek-selected font-bold shadow-md'
+                  : 'ayzek-inner-card hover:border-rose-400/50 ayzek-text-primary'
               }`}
             >
               <div className="flex items-center gap-1.5">
@@ -493,8 +493,8 @@ export const AkisView: React.FC = () => {
               onClick={() => handleEnergySelect('high')}
               className={`p-3 rounded-2xl text-left transition-all border cursor-pointer ${
                 checkin.energy === 'high'
-                  ? 'coral-gradient text-white font-bold border-rose-400 shadow-md'
-                  : 'bg-[#14060a]/80 hover:bg-[#1f0810] text-rose-200 border-rose-500/20'
+                  ? 'ayzek-selected font-bold shadow-md'
+                  : 'ayzek-inner-card hover:border-rose-400/50 ayzek-text-primary'
               }`}
             >
               <div className="flex items-center gap-1.5">
@@ -530,8 +530,8 @@ export const AkisView: React.FC = () => {
                 onClick={() => handleMoodSelect(m.id)}
                 className={`px-3 py-1.5 rounded-xl text-xs font-medium whitespace-nowrap transition-all border cursor-pointer ${
                   checkin.mood === m.id
-                    ? 'coral-gradient text-white font-bold border-rose-400 shadow-sm'
-                    : 'bg-[#14060a]/80 hover:bg-[#1f0810] text-rose-200 border-rose-500/20'
+                    ? 'ayzek-selected font-bold shadow-sm'
+                    : 'ayzek-inner-card hover:border-rose-400/50 ayzek-text-primary'
                 }`}
               >
                 <span className="mr-1">{m.icon}</span>
@@ -553,8 +553,8 @@ export const AkisView: React.FC = () => {
               onClick={() => handleFocusSelect('scattered')}
               className={`p-2.5 rounded-2xl text-left transition-all border cursor-pointer ${
                 checkin.focus === 'scattered'
-                  ? 'coral-gradient text-white font-bold border-rose-400 shadow-sm'
-                  : 'bg-[#14060a]/80 hover:bg-[#1f0810] text-rose-200 border-rose-500/20'
+                  ? 'ayzek-selected font-bold shadow-sm'
+                  : 'ayzek-inner-card hover:border-rose-400/50 ayzek-text-primary'
               }`}
             >
               <div className="flex items-center gap-1.5">
@@ -571,8 +571,8 @@ export const AkisView: React.FC = () => {
               onClick={() => handleFocusSelect('balanced')}
               className={`p-2.5 rounded-2xl text-left transition-all border cursor-pointer ${
                 checkin.focus === 'balanced'
-                  ? 'coral-gradient text-white font-bold border-rose-400 shadow-sm'
-                  : 'bg-[#14060a]/80 hover:bg-[#1f0810] text-rose-200 border-rose-500/20'
+                  ? 'ayzek-selected font-bold shadow-sm'
+                  : 'ayzek-inner-card hover:border-rose-400/50 ayzek-text-primary'
               }`}
             >
               <div className="flex items-center gap-1.5">
@@ -589,8 +589,8 @@ export const AkisView: React.FC = () => {
               onClick={() => handleFocusSelect('deep')}
               className={`p-2.5 rounded-2xl text-left transition-all border cursor-pointer ${
                 checkin.focus === 'deep'
-                  ? 'coral-gradient text-white font-bold border-rose-400 shadow-sm'
-                  : 'bg-[#14060a]/80 hover:bg-[#1f0810] text-rose-200 border-rose-500/20'
+                  ? 'ayzek-selected font-bold shadow-sm'
+                  : 'ayzek-inner-card hover:border-rose-400/50 ayzek-text-primary'
               }`}
             >
               <div className="flex items-center gap-1.5">
@@ -611,7 +611,7 @@ export const AkisView: React.FC = () => {
             value={checkin.note}
             onChange={(e) => updateCheckin({ note: e.target.value })}
             placeholder="Kısa bir not (örn: Sabah biraz yorgundum, hafif tempo iyi gelir)..."
-            className="flex-1 px-4 py-2.5 rounded-full text-xs bg-[#130509]/80 border border-rose-500/25 text-white placeholder-rose-200/40 focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
+            className="ayzek-input flex-1 px-4 py-2.5 rounded-full text-xs border focus:outline-hidden transition-colors"
           />
 
           <button
@@ -631,7 +631,7 @@ export const AkisView: React.FC = () => {
 
         {/* Display AI Advice if exists */}
         {checkin.aiAdvice && (
-          <div className="p-3.5 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-100 text-xs flex items-start gap-2.5">
+          <div className="ayzek-inner-card p-3.5 rounded-2xl text-xs flex items-start gap-2.5">
             <span className="text-base shrink-0">💡</span>
             <div>
               <span className="font-bold text-rose-300 block mb-0.5">
@@ -644,7 +644,7 @@ export const AkisView: React.FC = () => {
       </section>
 
       {/* 4. YAŞAM KOÇU & BİLGE REHBER */}
-      <section className="p-5 md:p-6 rounded-[32px] crimson-glass border border-rose-500/25 text-white shadow-2xl space-y-4 transition-all">
+      <section className="ayzek-section-card p-5 md:p-6 rounded-[28px] space-y-4 transition-all">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-2xl crimson-orb-glow flex items-center justify-center font-bold text-xs text-white">
@@ -655,7 +655,7 @@ export const AkisView: React.FC = () => {
                 <span className="text-xs font-bold uppercase tracking-wider text-rose-400">
                   Yaşam Koçu Notu
                 </span>
-                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30">
+                <span className="ayzek-tag text-[10px] font-semibold px-2 py-0.5 rounded-full">
                   {coachGoal.category}
                 </span>
               </div>
@@ -680,7 +680,7 @@ export const AkisView: React.FC = () => {
         </h3>
 
         {/* Progress line */}
-        <div className="w-full bg-white/10 h-2 rounded-full overflow-hidden">
+        <div className="ayzek-progress-track w-full h-2 rounded-full overflow-hidden">
           <div
             className="coral-gradient h-full rounded-full transition-all duration-500"
             style={{ width: `${coachGoal.progress}%` }}
@@ -688,7 +688,7 @@ export const AkisView: React.FC = () => {
         </div>
 
         {/* Coach Quote Container */}
-        <div className="p-4 rounded-2xl bg-[#14060a]/90 border border-rose-500/20 shadow-sm space-y-2">
+        <div className="ayzek-inner-card p-4 rounded-2xl shadow-sm space-y-2">
           <div className="flex items-start gap-2">
             <Sparkles className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
             <p className="text-xs sm:text-sm italic font-medium text-rose-100 leading-relaxed">
@@ -719,7 +719,7 @@ export const AkisView: React.FC = () => {
             onClick={() =>
               openAssistantWithQuery('15 dakikalık İngilizce podcast dinleme görevini bugünkü planıma ekle.')
             }
-            className="frosted-pill-button px-3.5 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
+            className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold flex items-center gap-1.5 cursor-pointer"
           >
             <Plus className="w-3.5 h-3.5 text-rose-400" />
             <span>Planıma Ekle (15 Dk)</span>
@@ -728,7 +728,7 @@ export const AkisView: React.FC = () => {
       </section>
 
       {/* 5. Bugünkü Rutin & Zaman Dağılımı */}
-      <section className="p-5 md:p-6 rounded-[32px] crimson-glass border border-rose-500/25 text-white shadow-2xl space-y-3 transition-all">
+      <section className="ayzek-section-card p-5 md:p-6 rounded-[28px] space-y-3 transition-all">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Clock className="w-4 h-4 text-rose-400" />
@@ -742,7 +742,7 @@ export const AkisView: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-3 gap-2.5 text-center">
-          <div className="p-3 rounded-2xl bg-[#14060a]/90 border border-rose-500/20">
+          <div className="ayzek-inner-card p-3 rounded-2xl">
             <span className="text-[11px] text-rose-200/60 block">
               Tamamlanan
             </span>
@@ -751,7 +751,7 @@ export const AkisView: React.FC = () => {
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#14060a]/90 border border-rose-500/20">
+          <div className="ayzek-inner-card p-3 rounded-2xl">
             <span className="text-[11px] text-rose-200/60 block">
               Kalan İş
             </span>
@@ -760,7 +760,7 @@ export const AkisView: React.FC = () => {
             </span>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#14060a]/90 border border-rose-500/20">
+          <div className="ayzek-inner-card p-3 rounded-2xl">
             <span className="text-[11px] text-rose-200/60 block">
               Akşam Boşluğu
             </span>
@@ -772,7 +772,7 @@ export const AkisView: React.FC = () => {
       </section>
 
       {/* 6. BİYOLOJİK HORMONAL RİTİM */}
-      <section className="p-5 md:p-6 rounded-[32px] crimson-glass border border-rose-500/25 text-white shadow-2xl space-y-4 transition-all">
+      <section className="ayzek-section-card p-5 md:p-6 rounded-[28px] space-y-4 transition-all">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2.5">
             <div className="w-9 h-9 rounded-2xl crimson-orb-glow text-white flex items-center justify-center font-bold text-xs">
@@ -806,7 +806,7 @@ export const AkisView: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          <div className="p-3.5 rounded-2xl bg-[#14060a]/90 border border-rose-500/20">
+          <div className="ayzek-inner-card p-3.5 rounded-2xl">
             <span className="text-[11px] font-semibold text-rose-300 block mb-1">
               Beden & Antrenman
             </span>
@@ -815,7 +815,7 @@ export const AkisView: React.FC = () => {
             </p>
           </div>
 
-          <div className="p-3.5 rounded-2xl bg-[#14060a]/90 border border-rose-500/20">
+          <div className="ayzek-inner-card p-3.5 rounded-2xl">
             <span className="text-[11px] font-semibold text-rose-300 block mb-1">
               Zihinsel Odak
             </span>
