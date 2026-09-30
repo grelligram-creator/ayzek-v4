@@ -62,6 +62,20 @@ export interface AuthUserState {
 
 const sentReminderKeys = new Set<string>();
 
+function readableAuthError(error: unknown, intent: 'login' | 'register'): string {
+  const code = typeof error === 'object' && error && 'code' in error ? String((error as { code?: unknown }).code) : '';
+  if (code === 'auth/operation-not-allowed') {
+    return 'E-posta/şifre ile giriş henüz Firebase Authentication’da etkin değil. Proje sahibi Firebase Console → Authentication → Sign-in method bölümünden Email/Password sağlayıcısını açmalı.';
+  }
+  if (code === 'auth/email-already-in-use') return 'Bu e-posta adresiyle zaten bir hesap var. “Giriş Yap” sekmesini kullanabilirsin.';
+  if (code === 'auth/invalid-email') return 'Geçerli bir e-posta adresi girmen gerekiyor.';
+  if (code === 'auth/weak-password') return 'Şifren en az 6 karakter olmalı.';
+  if (code === 'auth/invalid-credential' || code === 'auth/user-not-found' || code === 'auth/wrong-password') return 'E-posta veya şifre hatalı. Gerekirse şifreni sıfırlayabilirsin.';
+  return intent === 'register'
+    ? 'Hesap oluşturulamadı. Lütfen bağlantını tekrar dene veya Firebase Authentication ayarlarını kontrol et.'
+    : 'Giriş yapılamadı. Lütfen bilgilerini ve Firebase Authentication ayarlarını kontrol et.';
+}
+
 interface AppContextType {
   // Auth state
   user: User | AuthUserState | null;
@@ -877,9 +891,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         email: cred.user.email,
         displayName: cred.user.displayName,
       });
-    } catch {
+    } catch (error) {
       setIsAuthLoading(false);
-      throw new Error('Giriş yapılamadı. Lütfen bilgilerinizi ve Firebase yapılandırmasını kontrol edin.');
+      throw new Error(readableAuthError(error, 'login'));
     }
 
     setUser(resolvedUser);
@@ -912,9 +926,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await sendEmailVerification(cred.user).catch((error) => {
         console.warn('E-posta doğrulama bağlantısı gönderilemedi:', error);
       });
-    } catch {
+    } catch (error) {
       setIsAuthLoading(false);
-      throw new Error('Hesap oluşturulamadı. Lütfen Firebase yapılandırmasını kontrol edin.');
+      throw new Error(readableAuthError(error, 'register'));
     }
 
     setUser(resolvedUser);
