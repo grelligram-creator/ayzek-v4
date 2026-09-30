@@ -41,15 +41,27 @@ export const CrimsonHeroCard: React.FC = () => {
 
       {/* 2. Layered Crimson Glassmorphic Hero Container (Screen 1 & 3 Aesthetic) */}
       <div className="ayzek-hero relative rounded-[32px] sm:rounded-[36px] p-5 sm:p-7 overflow-hidden group">
+        <img
+          src="/assets/ayzek-liquid-ribbons.png"
+          alt=""
+          aria-hidden="true"
+          className="ayzek-hero-ribbons"
+        />
         {/* Ambient Top Glow Spot */}
         <div className="absolute -top-16 left-1/2 -translate-x-1/2 w-64 h-64 bg-rose-600/35 rounded-full blur-3xl pointer-events-none -z-10" />
 
         {/* 3D Crimson Soundwave Sphere (Orb) from Screen 3 */}
-        <div className="flex flex-col items-center justify-center py-4 relative">
+        <div className="flex flex-col items-center justify-center py-4 relative z-10">
           <div
             onClick={() => setIsVoiceBriefingOpen(true)}
             className="ayzek-orb relative w-36 h-36 sm:w-44 sm:h-44 rounded-full crimson-orb-glow flex items-center justify-center cursor-pointer transition-transform duration-500 hover:scale-105 active:scale-95 group/orb"
           >
+            <img
+              src="/assets/ayzek-liquid-orb.png"
+              alt=""
+              aria-hidden="true"
+              className="ayzek-orb-art"
+            />
             {/* Outer Orbital Rings */}
             <div className="absolute inset-0 rounded-full border border-rose-400/30 animate-pulse" />
             <div className="absolute -inset-2 rounded-full border border-rose-500/20 rotate-45" />
@@ -87,7 +99,7 @@ export const CrimsonHeroCard: React.FC = () => {
         </div>
 
         {/* Frosted Glass Pill Action Button (Matches "Generate music" button from Screen 1) */}
-        <div className="pt-2">
+        <div className="pt-2 relative z-10">
           <button
             onClick={() => setIsVoiceBriefingOpen(true)}
             className="ayzek-audio-control w-full py-3.5 px-6 rounded-full text-sm font-semibold flex items-center justify-center gap-2 cursor-pointer relative z-10"
