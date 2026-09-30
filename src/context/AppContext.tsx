@@ -1349,10 +1349,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }
     } catch (err) {
       console.error('Mesaj gönderme hatası:', err);
+      const errorMessage = err instanceof Error ? err.message : '';
+      const requiresAuthentication = /kimlik doğrulaması|oturum|doğrulanmış e-posta/i.test(errorMessage);
+      if (requiresAuthentication) setIsAuthModalOpen(true);
       const fallbackMsg: ChatMessage = {
         id: `msg-${Date.now() + 1}`,
         role: 'assistant',
-        content: 'Yanıt şu anda oluşturulamadı. Lütfen bağlantınızı ve oturumunuzu kontrol edip tekrar deneyin.',
+        content: requiresAuthentication
+          ? 'Sana kişisel ve güvenli yanıt verebilmem için önce giriş yapıp e-posta adresini doğrulaman gerekiyor. Ardından sohbet, hafıza ve onaylı aksiyonlar aktif olacak.'
+          : 'Yanıt şu anda oluşturulamadı. Lütfen bağlantını kontrol edip kısa süre sonra tekrar dene.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, fallbackMsg]);
