@@ -16,7 +16,7 @@ import {
 } from 'lucide-react';
 
 export const AuthModal: React.FC = () => {
-  const { isAuthModalOpen, setIsAuthModalOpen, loginWithEmail, registerWithEmail, requestPasswordReset, user } = useApp();
+  const { isAuthModalOpen, setIsAuthModalOpen, loginWithEmail, loginWithGoogle, registerWithEmail, requestPasswordReset, user } = useApp();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -58,6 +58,19 @@ export const AuthModal: React.FC = () => {
       setError('Sıfırlama bağlantısı e-posta adresinize gönderildi.');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Sıfırlama bağlantısı gönderilemedi.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGoogleLogin = async () => {
+    setError(null);
+    setIsLoading(true);
+    try {
+      await loginWithGoogle();
+      setIsAuthModalOpen(false);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Google ile giriş başlatılamadı. Lütfen tekrar deneyin.');
     } finally {
       setIsLoading(false);
     }
@@ -143,6 +156,22 @@ export const AuthModal: React.FC = () => {
               {error}
             </div>
           )}
+
+          <button
+            type="button"
+            disabled={isLoading}
+            onClick={handleGoogleLogin}
+            className="ayzek-google-login w-full min-h-11 rounded-full border text-xs sm:text-sm font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+          >
+            <Globe className="w-4 h-4" />
+            Google ile devam et
+          </button>
+
+          <div className="flex items-center gap-3 text-[10px] text-rose-200/50">
+            <span className="h-px flex-1 bg-rose-500/20" />
+            veya e-posta ile
+            <span className="h-px flex-1 bg-rose-500/20" />
+          </div>
 
           {isRegister && (
             <div className="space-y-1">

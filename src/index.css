@@ -450,6 +450,15 @@ html.light .ayzek-header-control {
 }
 html.light .ayzek-header-control::after { opacity: .38; }
 html.dark .ayzek-header-control, html.crimson .ayzek-header-control { background: rgba(25,11,16,.78); border-color: rgba(245,34,79,.26); }
+.ayzek-google-login {
+  background: rgba(255,255,255,.08);
+  border-color: rgba(255,255,255,.18);
+  color: #fff8fa;
+  transition: background .18s ease, border-color .18s ease, transform .18s ease;
+}
+.ayzek-google-login:hover { background: rgba(255,255,255,.14); border-color: rgba(245,34,79,.5); transform: translateY(-1px); }
+html.light .ayzek-google-login { background: #fff; color: #24171b; border-color: rgba(180,35,70,.18); box-shadow: 0 9px 18px -16px rgba(119,24,50,.3); }
+html.light .ayzek-google-login:hover { background: #fff5f7; border-color: rgba(245,34,79,.44); }
 
 /* Typography matching the uploaded screenshot */
 .font-display {

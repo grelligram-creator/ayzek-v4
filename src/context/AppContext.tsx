@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import {
   User,
   signInWithEmailAndPassword,
+  signInWithPopup,
   createUserWithEmailAndPassword,
   signOut,
   onAuthStateChanged,
@@ -9,7 +10,7 @@ import {
   sendPasswordResetEmail,
   updateProfile,
 } from 'firebase/auth';
-import { auth } from '../lib/firebase';
+import { auth, googleProvider } from '../lib/firebase';
 import { authenticatedFetch } from '../lib/api';
 import { showBrowserNotification } from '../lib/browserNotifications';
 import {
@@ -84,6 +85,7 @@ interface AppContextType {
   isAuthModalOpen: boolean;
   setIsAuthModalOpen: (open: boolean) => void;
   loginWithEmail: (email: string, pass: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
   registerWithEmail: (email: string, pass: string, name: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<void>;
   resendEmailVerification: () => Promise<void>;
@@ -900,6 +902,34 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setUserProfile(resolvedProfile);
     showSyncNotification(`Hoş geldiniz, ${resolvedProfile.displayName}!`);
     setIsAuthLoading(false);
+  };
+
+  // Google is already an enabled provider in this Firebase project. Keeping it
+  // available makes first-run testing possible even while Email/Password is
+  // awaiting an owner-level Firebase configuration change.
+  const loginWithGoogle = async () => {
+    setIsAuthLoading(true);
+    try {
+      googleProvider.setCustomParameters({ prompt: 'select_account' });
+      const cred = await signInWithPopup(auth, googleProvider);
+      const resolvedProfile = await getOrCreateUserProfile({
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: cred.user.displayName,
+      });
+      setUser({
+        uid: cred.user.uid,
+        email: cred.user.email,
+        displayName: cred.user.displayName || cred.user.email?.split('@')[0] || 'AYZEK kullanıcısı',
+        emailVerified: cred.user.emailVerified,
+      });
+      setUserProfile(resolvedProfile);
+      showSyncNotification(`Hoş geldiniz, ${resolvedProfile.displayName}!`);
+    } catch (error) {
+      throw new Error(readableAuthError(error, 'login'));
+    } finally {
+      setIsAuthLoading(false);
+    }
   };
 
   const registerWithEmail = async (email: string, pass: string, name: string) => {
@@ -1732,6 +1762,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         isAuthModalOpen,
         setIsAuthModalOpen,
         loginWithEmail,
+        loginWithGoogle,
         registerWithEmail,
         requestPasswordReset,
         resendEmailVerification,
