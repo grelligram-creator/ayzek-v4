@@ -401,6 +401,56 @@ html.light .crimson-glass { background: linear-gradient(180deg, rgba(255,247,249
 html.light .crimson-glass .text-white { color: var(--ayzek-text); }
 html.light .crimson-glass .bg-\[\#14060a\]\/90 { background: var(--ayzek-secondary); }
 
+/* Legacy dashboard blocks are deliberately tokenised here instead of relying
+   on their old dark utility classes. This keeps the same components readable
+   in both themes without turning the light canvas grey or burgundy. */
+html.light .ayzek-main-canvas .bg-\[\#14060a\]\/90,
+html.light .ayzek-main-canvas .bg-\[\#14060a\]\/80,
+html.light .ayzek-main-canvas .bg-\[\#1e0710\],
+html.light .ayzek-main-canvas .bg-\[\#1f0810\] {
+  background: #fff !important;
+  border-color: var(--ayzek-soft-border) !important;
+  box-shadow: 0 12px 28px -24px rgba(91, 22, 42, .32) !important;
+}
+html.light .ayzek-main-canvas .text-white:not(.coral-gradient):not(.ayzek-pill-primary) { color: var(--ayzek-text); }
+html.light .ayzek-main-canvas .coral-gradient,
+html.light .ayzek-main-canvas .coral-gradient *,
+html.light .ayzek-main-canvas .ayzek-pill-primary,
+html.light .ayzek-main-canvas .ayzek-pill-primary *,
+html.light .ayzek-main-canvas .crimson-orb-glow,
+html.light .ayzek-main-canvas .crimson-orb-glow * { color: #fff; }
+html.light .ayzek-main-canvas .text-rose-100,
+html.light .ayzek-main-canvas .text-rose-100\/75,
+html.light .ayzek-main-canvas .text-rose-100\/80,
+html.light .ayzek-main-canvas .text-rose-200,
+html.light .ayzek-main-canvas .text-rose-200\/50,
+html.light .ayzek-main-canvas .text-rose-200\/60,
+html.light .ayzek-main-canvas .text-rose-200\/65,
+html.light .ayzek-main-canvas .text-rose-200\/70 { color: var(--ayzek-muted); }
+html.light .ayzek-main-canvas .shadow-rose-950\/40,
+html.light .ayzek-main-canvas .shadow-rose-950\/60 { --tw-shadow-color: rgba(132,32,58,.16); }
+html.light .ayzek-main-canvas .bg-white\/5 { background-color: rgba(245,34,79,.055); }
+
+html.light .crimson-glass {
+  background: linear-gradient(145deg, rgba(255,255,255,.98), rgba(255,247,249,.94)) !important;
+  border-color: var(--ayzek-border) !important;
+  box-shadow: 0 18px 38px -28px rgba(119,24,50,.30), inset 0 1px 0 #fff !important;
+}
+html.light .frosted-pill-button {
+  background: rgba(255,255,255,.9);
+  border-color: rgba(180,35,70,.16);
+  color: var(--ayzek-text);
+  box-shadow: 0 8px 18px -15px rgba(119,24,50,.38), inset 0 1px 0 #fff;
+}
+html.light .frosted-pill-button:hover { background: #fff4f6; border-color: rgba(245,34,79,.38); }
+html.light .ayzek-header-control {
+  background: rgba(255,255,255,.9);
+  border-color: rgba(180,35,70,.14);
+  box-shadow: 0 8px 18px -15px rgba(119,24,50,.28), inset 0 1px 0 #fff;
+}
+html.light .ayzek-header-control::after { opacity: .38; }
+html.dark .ayzek-header-control, html.crimson .ayzek-header-control { background: rgba(25,11,16,.78); border-color: rgba(245,34,79,.26); }
+
 /* Typography matching the uploaded screenshot */
 .font-display {
   font-family: "Playfair Display", Georgia, serif;
