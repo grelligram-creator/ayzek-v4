@@ -13,6 +13,23 @@ export interface UserPersistedData {
   updatedAt: string;
 }
 
+const TRIAL_DURATION_MS = 3 * 24 * 60 * 60 * 1000;
+
+function trialEndsAtFrom(createdAt: string, existingTrialEndsAt?: string): string {
+  if (existingTrialEndsAt && !Number.isNaN(Date.parse(existingTrialEndsAt))) return existingTrialEndsAt;
+  const createdAtMs = Date.parse(createdAt);
+  return new Date((Number.isNaN(createdAtMs) ? Date.now() : createdAtMs) + TRIAL_DURATION_MS).toISOString();
+}
+
+function normalizeSubscription(stored: Partial<UserProfile>, createdAt: string) {
+  const trialEndsAt = trialEndsAtFrom(createdAt, stored.trialEndsAt);
+  const wasTrial = !stored.subscriptionStatus || stored.subscriptionStatus === 'trial';
+  const subscriptionStatus = wasTrial && Date.parse(trialEndsAt) <= Date.now()
+    ? 'past_due'
+    : (stored.subscriptionStatus || 'trial');
+  return { trialEndsAt, subscriptionStatus } as const;
+}
+
 // Fetch or create user profile
 export async function getOrCreateUserProfile(user: { uid: string; email?: string | null; displayName?: string | null }): Promise<UserProfile> {
   try {
@@ -24,16 +41,19 @@ export async function getOrCreateUserProfile(user: { uid: string; email?: string
 
     if (snap.exists()) {
       const stored = snap.data() as Partial<UserProfile>;
+      const createdAt = stored.createdAt || now;
+      const subscription = normalizeSubscription(stored, createdAt);
       const normalized: UserProfile = {
         ...stored,
         uid: user.uid,
         email: user.email || stored.email || '',
         displayName: user.displayName || stored.displayName || user.email?.split('@')[0] || 'Yeni kullanıcı',
         subscriptionTier: stored.subscriptionTier || 'free',
-        subscriptionStatus: stored.subscriptionStatus || 'trial',
+        subscriptionStatus: subscription.subscriptionStatus,
+        trialEndsAt: subscription.trialEndsAt,
         timezone: stored.timezone || timezone,
         locale: stored.locale || locale,
-        createdAt: stored.createdAt || now,
+        createdAt,
         updatedAt: now,
         lastLoginAt: now,
       };
@@ -47,6 +67,7 @@ export async function getOrCreateUserProfile(user: { uid: string; email?: string
       displayName: user.displayName || user.email?.split('@')[0] || 'Yeni kullanıcı',
       subscriptionTier: 'free',
       subscriptionStatus: 'trial',
+      trialEndsAt: new Date(Date.now() + TRIAL_DURATION_MS).toISOString(),
       jobTitle: '',
       company: '',
       location: '',

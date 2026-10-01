@@ -72,6 +72,7 @@ export const AkisView: React.FC = () => {
     setIsAlwaysOnWatchOpen,
     setIsMeetingShadowOpen,
     setIsFutureSelfOpen,
+    setIsAuthModalOpen,
   } = useApp();
 
   const [activeGoalIndex, setActiveGoalIndex] = useState(0);
@@ -94,6 +95,13 @@ export const AkisView: React.FC = () => {
     <div className="space-y-5 pb-24 animate-fadeIn">
       {/* 0. Crimson Obsidian Luxury Hero & Soundwave Sphere */}
       <CrimsonHeroCard />
+
+      {!user && (
+        <section className="ayzek-login-start rounded-3xl p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center gap-4">
+          <div className="flex-1"><p className="ayzek-action text-[11px] font-bold uppercase tracking-wider">Kişisel test alanı</p><h2 className="mt-1 ayzek-text-primary text-lg font-black">AYZEK'i kendi verilerinle denemeye başla.</h2><p className="mt-1 ayzek-text-muted text-sm">Giriş sonrası profilini doldur, 3 günlük denemeni başlat ve AI sohbeti kişisel bağlamınla test et.</p></div>
+          <button onClick={() => setIsAuthModalOpen(true)} className="coral-gradient rounded-2xl px-5 min-h-11 text-sm font-bold text-white whitespace-nowrap">Giriş yap / hesap oluştur</button>
+        </section>
+      )}
 
       {/* 1. Header Greeting & Top Anchors */}
       <section className="space-y-3">
@@ -145,14 +153,6 @@ export const AkisView: React.FC = () => {
           </button>
 
           <button
-            onClick={() => setIsAlwaysOnWatchOpen(true)}
-            className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer"
-          >
-            <Watch className="w-3.5 h-3.5 text-rose-400" />
-            <span>Canlı Kadran & Ada</span>
-          </button>
-
-          <button
             onClick={() => setIsMeetingShadowOpen(true)}
             className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer"
           >
@@ -167,6 +167,13 @@ export const AkisView: React.FC = () => {
             <Compass className="w-3.5 h-3.5 text-rose-400" />
             <span>2031 Benliğim</span>
           </button>
+        </div>
+
+        <div className="ayzek-tools-rail flex items-center gap-2 overflow-x-auto no-scrollbar pb-1">
+          <span className="ayzek-action text-[10px] font-bold uppercase tracking-wider shrink-0">Araçlar</span>
+          <button onClick={() => setIsAlwaysOnWatchOpen(true)} className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 cursor-pointer"><Watch className="w-3.5 h-3.5 text-rose-400" />Canlı Kadran & Ada</button>
+          <button onClick={() => setIsVisionModalOpen(true)} className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 cursor-pointer"><Sparkles className="w-3.5 h-3.5 text-rose-400" />Hayatın Merkezi</button>
+          <button onClick={() => setIsMeetingShadowOpen(true)} className="ayzek-pill px-3.5 py-2 rounded-full text-xs font-semibold whitespace-nowrap flex items-center gap-1.5 cursor-pointer"><Video className="w-3.5 h-3.5 text-rose-400" />Toplantı Notu</button>
         </div>
 
         {/* AYZEK OS 2026: 6 Yeni Cazibe Gücü (Crimson Obsidian Kokpit Vitrini) */}
@@ -195,11 +202,11 @@ export const AkisView: React.FC = () => {
             </button>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+          <div className="flex gap-3 overflow-x-auto pb-1 no-scrollbar sm:grid sm:grid-cols-3 sm:overflow-visible">
             {/* 1. Voice Podcast */}
             <div
               onClick={() => setIsVoiceBriefingOpen(true)}
-              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
+              className="ayzek-feature-card min-w-[238px] sm:min-w-0 p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -223,7 +230,7 @@ export const AkisView: React.FC = () => {
             {/* 2. Cognitive Wrapped */}
             <div
               onClick={() => setIsCognitiveWrappedOpen(true)}
-              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
+              className="ayzek-feature-card min-w-[238px] sm:min-w-0 p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -247,7 +254,7 @@ export const AkisView: React.FC = () => {
             {/* 3. Polite Decline */}
             <div
               onClick={() => setIsPoliteDeclineOpen(true)}
-              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
+              className="ayzek-feature-card min-w-[238px] sm:min-w-0 p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -271,7 +278,7 @@ export const AkisView: React.FC = () => {
             {/* 4. Always-On Watch & Dynamic Island */}
             <div
               onClick={() => setIsAlwaysOnWatchOpen(true)}
-              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
+              className="ayzek-feature-card min-w-[238px] sm:min-w-0 p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -295,7 +302,7 @@ export const AkisView: React.FC = () => {
             {/* 5. Meeting Shadow AI */}
             <div
               onClick={() => setIsMeetingShadowOpen(true)}
-              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
+              className="ayzek-feature-card min-w-[238px] sm:min-w-0 p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">
@@ -319,7 +326,7 @@ export const AkisView: React.FC = () => {
             {/* 6. Future Self Dialogue */}
             <div
               onClick={() => setIsFutureSelfOpen(true)}
-              className="ayzek-feature-card p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
+              className="ayzek-feature-card min-w-[238px] sm:min-w-0 p-3.5 rounded-2xl transition-all cursor-pointer group flex flex-col justify-between"
             >
               <div>
                 <div className="flex items-center justify-between mb-1.5">

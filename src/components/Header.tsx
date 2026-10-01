@@ -6,8 +6,6 @@ import {
   Monitor,
   Sun,
   Moon,
-  Sparkles,
-  Watch,
   Headphones,
   Bell,
   Sliders,
@@ -28,9 +26,7 @@ export const Header: React.FC = () => {
     setActiveTab,
     balance,
     setIsIosInstallModalOpen,
-    setIsVisionModalOpen,
     setIsVoiceBriefingOpen,
-    setIsAlwaysOnWatchOpen,
     notifications,
     setIsNotificationsOpen,
   } = useApp();
@@ -84,28 +80,6 @@ export const Header: React.FC = () => {
           >
             <Headphones className="w-4 h-4 text-rose-400 animate-pulse shrink-0" />
             <span className="hidden lg:inline">Sesli Brifing</span>
-          </button>
-
-          {/* Canlı Kadran & Always-On */}
-          <button
-            onClick={() => setIsAlwaysOnWatchOpen(true)}
-            title="Apple Watch & Dinamik Ada Canlı Kadranı"
-            aria-label="Canlı Kadran"
-            className="ayzek-header-control flex items-center gap-1 p-2 sm:px-2.5 sm:py-1.5 rounded-full text-xs font-medium transition-all shadow-2xs min-h-[36px] justify-center cursor-pointer"
-          >
-            <Watch className="w-4 h-4 text-rose-400 shrink-0" />
-            <span className="hidden xl:inline">Kadran</span>
-          </button>
-
-          {/* Hayatın Merkezi 2026 Vision Button */}
-          <button
-            onClick={() => setIsVisionModalOpen(true)}
-            title="AYZEK 2026: Hayatın Merkezi Vizyonu"
-            aria-label="Hayatın Merkezi"
-            className="ayzek-header-control flex items-center gap-1.5 p-2 sm:px-2.5 sm:py-1.5 rounded-full text-xs font-bold transition-all shadow-2xs min-h-[36px] justify-center cursor-pointer"
-          >
-            <Sparkles className="w-4 h-4 text-rose-400 animate-pulse shrink-0" />
-            <span className="hidden sm:inline">Hayatın Merkezi</span>
           </button>
 
           {/* Desktop-only simulator toggle */}

@@ -216,6 +216,9 @@ export const ProfileView: React.FC = () => {
   };
 
   const emailVerified = Boolean(user && 'emailVerified' in user && user.emailVerified);
+  const trialEndsAt = userProfile?.trialEndsAt ? new Date(userProfile.trialEndsAt) : null;
+  const trialExpired = userProfile?.subscriptionStatus === 'past_due' || Boolean(trialEndsAt && trialEndsAt.getTime() <= Date.now());
+  const trialDaysLeft = trialEndsAt ? Math.max(0, Math.ceil((trialEndsAt.getTime() - Date.now()) / (24 * 60 * 60 * 1000))) : 3;
 
   return (
     <div className="space-y-6 pb-28 animate-fadeIn max-w-2xl mx-auto">
@@ -246,6 +249,11 @@ export const ProfileView: React.FC = () => {
               <span>{userProfile?.location || 'Konum eklenmedi'}</span>
             </div>
           </div>
+        </div>
+
+        <div className="ayzek-trial-card rounded-2xl p-4 flex flex-col sm:flex-row gap-3 sm:items-center sm:justify-between">
+          <div><p className="text-xs font-black uppercase tracking-wider">{trialExpired ? 'Ücretsiz deneme tamamlandı' : '3 gün ücretsiz deneme'}</p><p className="mt-1 text-xs ayzek-text-muted">{trialExpired ? 'Kişisel verilerin korunuyor. AI sohbetine devam etmek için bir plan seç.' : `Denemeni özgürce test edebilirsin. ${trialDaysLeft} gün kaldı.`}</p></div>
+          <button onClick={() => setActiveTab('pricing')} className="ayzek-pill-primary rounded-xl px-3.5 py-2 text-xs font-bold whitespace-nowrap">{trialExpired ? 'Planları görüntüle' : 'Paketleri incele'}</button>
         </div>
 
         {/* Holographic Obsidian & Crimson Metal Executive Member Card */}

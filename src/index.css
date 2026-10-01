@@ -375,6 +375,32 @@
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
+/* Account-first assistant and mobile-first reading surface. The chat keeps its
+   own hierarchy so light theme does not inherit dark-only utility colors. */
+.ayzek-chat-shell {
+  background: #0d0205;
+  color: #fff8fa;
+  border-color: rgba(245,34,79,.30);
+}
+.ayzek-chat-header, .ayzek-chat-composer, .ayzek-chat-quick-actions { background: rgba(20,5,10,.92); border-color: rgba(245,34,79,.20); }
+.ayzek-chat-input { background: rgba(0,0,0,.22); border-color: rgba(245,34,79,.25); color: #fff8fa; }
+.ayzek-chat-input::placeholder { color: rgba(255,225,232,.48); }
+.ayzek-chat-bubble-ai { background: rgba(24,5,14,.92); border-color: rgba(245,34,79,.25); color: #fff8fa; }
+.ayzek-chat-icon-button { color: #fda4af; background: rgba(255,255,255,.06); }
+.ayzek-step { width: 1.5rem; height: 1.5rem; border-radius: 999px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; font-weight: 800; background: rgba(245,34,79,.16); color: #fda4af; border: 1px solid rgba(245,34,79,.32); }
+.ayzek-login-start, .ayzek-trial-card { background: var(--ayzek-elevated); border: 1px solid var(--ayzek-border); box-shadow: var(--ayzek-shadow); }
+.ayzek-tools-rail { padding: .55rem .65rem; border-radius: 1rem; background: color-mix(in srgb, var(--ayzek-secondary) 88%, transparent); border: 1px solid var(--ayzek-soft-border); }
+html.light .ayzek-chat-shell { background: rgba(255,255,255,.98); color: var(--ayzek-text); border-color: var(--ayzek-border); }
+html.light .ayzek-chat-header, html.light .ayzek-chat-composer, html.light .ayzek-chat-quick-actions { background: rgba(255,248,250,.82); border-color: var(--ayzek-border); }
+html.light .ayzek-chat-input { background: #fff; border-color: var(--ayzek-border); color: var(--ayzek-text); }
+html.light .ayzek-chat-input::placeholder { color: var(--ayzek-muted); }
+html.light .ayzek-chat-bubble-ai { background: #fff8fa; border-color: var(--ayzek-border); color: var(--ayzek-text); box-shadow: 0 8px 22px -18px rgba(132,32,58,.3); }
+html.light .ayzek-chat-shell .text-white { color: var(--ayzek-text); }
+html.light .ayzek-chat-shell .text-rose-200\/70, html.light .ayzek-chat-shell .text-rose-200\/60, html.light .ayzek-chat-shell .text-rose-200 { color: var(--ayzek-muted); }
+html.light .crimson-glass { background: linear-gradient(180deg, rgba(255,247,249,.96), rgba(255,255,255,.98)); box-shadow: var(--ayzek-shadow), inset 0 1px 0 #fff; }
+html.light .crimson-glass .text-white { color: var(--ayzek-text); }
+html.light .crimson-glass .bg-\[\#14060a\]\/90 { background: var(--ayzek-secondary); }
+
 /* Typography matching the uploaded screenshot */
 .font-display {
   font-family: "Playfair Display", Georgia, serif;

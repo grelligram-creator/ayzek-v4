@@ -22,6 +22,8 @@ export const AyzekAssistantModal: React.FC = () => {
   const {
     isAssistantOpen,
     setIsAssistantOpen,
+    setIsAuthModalOpen,
+    user,
     messages,
     hasOlderMessages,
     isLoadingOlderMessages,
@@ -149,16 +151,36 @@ export const AyzekAssistantModal: React.FC = () => {
 
   if (!isAssistantOpen) return null;
 
+  if (!user) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/65 backdrop-blur-xl animate-fadeIn">
+        <section className="ayzek-chat-shell w-full max-w-md min-h-[62dvh] sm:min-h-0 rounded-t-[32px] sm:rounded-[32px] border shadow-2xl p-6 sm:p-8 flex flex-col justify-center relative overflow-hidden">
+          <button onClick={() => setIsAssistantOpen(false)} aria-label="Kapat" className="absolute right-4 top-4 w-10 h-10 rounded-full ayzek-chat-icon-button flex items-center justify-center"><X className="w-5 h-5" /></button>
+          <AyzekLogo size={54} theme="crimson" variant="boxed" glow />
+          <span className="mt-6 ayzek-action text-xs font-bold uppercase tracking-[0.16em]">Kişisel başlangıç</span>
+          <h2 className="mt-2 text-2xl font-black ayzek-text-primary">AYZEK seni tanımaya hazır.</h2>
+          <p className="mt-3 ayzek-text-muted text-sm leading-relaxed">Sohbet, hafıza ve onaylı aksiyonlar yalnızca senin hesabında saklanır. Teste giriş yaparak başla; e-postanı doğruladığında AI yanıtları açılır.</p>
+          <ol className="mt-6 space-y-3 text-sm ayzek-text-secondary">
+            <li className="flex gap-3"><span className="ayzek-step">1</span> Hesabını oluştur veya giriş yap.</li>
+            <li className="flex gap-3"><span className="ayzek-step">2</span> E-postandaki doğrulama bağlantısını aç.</li>
+            <li className="flex gap-3"><span className="ayzek-step">3</span> Kişisel bilgilerini tamamlayıp sohbeti test et.</li>
+          </ol>
+          <button onClick={() => { setIsAssistantOpen(false); setIsAuthModalOpen(true); }} className="mt-7 coral-gradient min-h-11 rounded-2xl px-5 text-sm font-bold text-white shadow-lg shadow-rose-500/25">Giriş yap veya hesap oluştur</button>
+        </section>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/85 backdrop-blur-xl animate-fadeIn">
-      <div className="w-full max-w-2xl h-[92vh] sm:h-[82vh] rounded-t-[36px] sm:rounded-[36px] bg-[#0d0205] border border-rose-500/30 text-white shadow-2xl flex flex-col overflow-hidden transition-colors">
+      <div className="ayzek-chat-shell w-full max-w-3xl h-[100dvh] sm:h-[84vh] rounded-none sm:rounded-[32px] border shadow-2xl flex flex-col overflow-hidden transition-colors">
         {/* Header */}
-        <div className="px-5 py-4 border-b border-rose-500/20 flex items-center justify-between bg-[#14050a]/90 backdrop-blur-xl">
+        <div className="ayzek-chat-header px-4 sm:px-5 py-3.5 border-b flex items-start justify-between backdrop-blur-xl">
           <div className="flex items-center gap-3">
             <AyzekLogo size={36} theme="crimson" variant="boxed" glow={false} />
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm sm:text-base font-bold text-white tracking-tight">
+                <h3 className="text-base sm:text-lg font-bold ayzek-text-primary tracking-tight">
                   AYZEK Bilişsel Mentör
                 </h3>
                 <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 flex items-center gap-1 font-mono">
@@ -166,7 +188,7 @@ export const AyzekAssistantModal: React.FC = () => {
                   <span>Güvenli öneri modu</span>
                 </span>
               </div>
-              <p className="text-[11px] text-rose-200/70 mt-0.5">
+              <p className="text-[11px] ayzek-text-muted mt-0.5 pr-2">
                 Yanıtlar kaydedilir; görev ve bağlantılı uygulama işlemleri ayrı onay gerektirir.
               </p>
               <div className="mt-2 flex items-center gap-2">
@@ -273,7 +295,7 @@ export const AyzekAssistantModal: React.FC = () => {
             value={messageSearch}
             onChange={(event) => setMessageSearch(event.target.value)}
             placeholder="Bu konuşmada ara"
-            className="w-full rounded-xl border border-rose-500/25 bg-black/20 px-3 py-2 text-xs text-white outline-none placeholder:text-rose-200/45 focus:border-rose-400/60"
+            className="ayzek-chat-input w-full rounded-xl border px-3 py-2 text-xs outline-none"
           />
           {normalizedMessageSearch && (
             <p className="mt-1 text-[11px] text-rose-200/65">{visibleMessages.length} mesaj bulundu</p>
@@ -301,10 +323,10 @@ export const AyzekAssistantModal: React.FC = () => {
                 )}
 
                 <div
-                  className={`max-w-[85%] sm:max-w-[75%] rounded-3xl p-4 text-xs sm:text-sm leading-relaxed ${
+                  className={`max-w-[92%] sm:max-w-[76%] rounded-3xl p-4 text-[14px] sm:text-sm leading-relaxed ${
                     isUser
                       ? 'coral-gradient text-white font-medium shadow-lg shadow-rose-950/60 rounded-br-xs'
-                      : 'bg-[#18050e]/90 border border-rose-500/25 text-white shadow-xl rounded-tl-xs space-y-2'
+                      : 'ayzek-chat-bubble-ai border shadow-xl rounded-tl-xs space-y-2'
                   }`}
                 >
                   <p className="whitespace-pre-wrap">{msg.content}</p>
@@ -365,7 +387,7 @@ export const AyzekAssistantModal: React.FC = () => {
         </div>
 
         {/* Quick prompt suggestions */}
-        <div className="p-3 border-t border-rose-500/20 bg-[#120409]/90 overflow-x-auto no-scrollbar flex items-center gap-2">
+        <div className="ayzek-chat-quick-actions p-3 border-t overflow-x-auto no-scrollbar flex items-center gap-2">
           <span className="text-[10px] font-bold text-rose-400 uppercase tracking-wider shrink-0 font-mono">
             Hızlı Eylemler:
           </span>
@@ -389,7 +411,7 @@ export const AyzekAssistantModal: React.FC = () => {
         {/* Input box with frosted glass and crimson gradients */}
         <form
           onSubmit={handleSend}
-          className="p-3 sm:p-4 border-t border-rose-500/25 flex items-center gap-2 bg-[#0d0205] backdrop-blur-xl"
+          className="ayzek-chat-composer p-3 sm:p-4 border-t flex items-center gap-2 backdrop-blur-xl"
         >
           <button
             type="button"
@@ -409,7 +431,7 @@ export const AyzekAssistantModal: React.FC = () => {
             value={input}
             onChange={(e) => setInput(e.target.value)}
             placeholder="AYZEK'e bir şey söyle, takvim düzenlet veya görev ata..."
-            className="flex-1 px-4 py-2.5 rounded-full text-xs sm:text-sm bg-[#15050b] border border-rose-500/25 text-white placeholder:text-rose-200/40 focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
+            className="ayzek-chat-input flex-1 px-4 py-3 rounded-full text-sm border focus:outline-hidden focus:ring-2 focus:ring-rose-500 transition-colors"
           />
 
           <button

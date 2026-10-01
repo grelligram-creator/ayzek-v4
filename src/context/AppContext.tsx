@@ -1307,6 +1307,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const sendMessage = async (userText: string) => {
     if (!userText.trim() || isChatLoading) return;
+    // Chat, memory and suggested actions are intentionally account-scoped. Do
+    // not let a guest create a message that the server will reject afterwards.
+    if (!user?.uid) {
+      setIsAssistantOpen(false);
+      setIsAuthModalOpen(true);
+      showSyncNotification('AYZEK ile konuşmak için önce giriş yap veya hesabını oluştur.');
+      return;
+    }
+    // A trial is free for three days. Once it ends, keep data untouched and
+    // guide the member to a plan instead of attempting a charge automatically.
+    if (userProfile?.subscriptionStatus === 'past_due') {
+      setIsAssistantOpen(false);
+      setActiveTab('pricing');
+      showSyncNotification('Ücretsiz denemen bitti. Devam etmek için sana uygun planı seçebilirsin.');
+      return;
+    }
 
     const userMessage: ChatMessage = {
       id: `msg-${Date.now()}`,
@@ -1496,6 +1512,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const openAssistantWithQuery = (query: string) => {
+    if (!user?.uid) {
+      setIsAuthModalOpen(true);
+      showSyncNotification('Bu kişisel öneriyi açmak için önce giriş yap veya hesap oluştur.');
+      return;
+    }
     setIsAssistantOpen(true);
     sendMessage(query);
   };
